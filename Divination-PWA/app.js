@@ -2,7 +2,7 @@
 'use strict';
 
 const MODS = ["首页","六爻","塔罗","雷诺曼","卢恩符文","占星骰子","玄天上帝感应灵签"];
-const MOD_TABS = ["首页","六爻","塔罗","雷诺曼","卢恩符文","占星骰子","灵签"];
+const MOD_TABS = ["首页","六爻","塔罗","雷诺曼","卢恩","占星","灵签"];
 const TAROT_TABS = ["通用","YES OR NO","大牌"];
 const HOME_TABS = ["综合占卜","日期预测"];
 const SPECIAL_TAROT_START = 156;
