@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#3f3a6c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Divination</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" href="icons/icon-192.png">
+<style>
+:root{ --sel:#b0c4de; --bg:#f5f4f9; --card:#fff; --border:#c9c6d8; }
+*{ box-sizing:border-box; margin:0; padding:0; }
+html,body{ height:100%; }
+body{
+  font-family:"Microsoft YaHei","PingFang SC","Noto Sans SC",sans-serif;
+  font-size:15px; background:var(--bg); color:#222;
+  display:flex; flex-direction:column; gap:8px;
+  padding:10px; padding-top:calc(10px + env(safe-area-inset-top));
+  max-width:760px; margin:0 auto;
+}
+#modbar{ display:flex; gap:4px; }
+#modbar .tab{ flex:1 1 0; min-width:0; padding:7px 2px; font-size:clamp(11px,2.9vw,15px); text-align:center; }
+#subbar{ display:none; gap:6px; align-items:center; flex-wrap:wrap; }
+.tab{
+  border:1px solid var(--border); background:var(--card); border-radius:6px;
+  padding:7px 8px; font-size:15px; cursor:pointer; white-space:nowrap;
+  overflow:hidden; text-overflow:ellipsis;
+}
+.tab.sel{ background:var(--sel); }
+.chk{ display:flex; align-items:center; gap:4px; font-size:14px; }
+.warn{ color:#d00; font-weight:bold; font-size:13px; }
+#inrow{ display:flex; align-items:center; gap:6px; }
+#q{ flex:1; padding:7px 9px; border:1px solid var(--border); border-radius:6px; font-size:15px; }
+#btnrow{ display:flex; gap:6px; }
+#btnrow button{
+  flex:1 1 0; min-width:0; padding:9px 2px; border-radius:6px; font-size:14px;
+  border:1px solid var(--border); background:var(--card); cursor:pointer; white-space:nowrap;
+}
+#btnrow button#go{ background:#4a5fa5; color:#fff; border-color:#4a5fa5; }
+#out{
+  flex:1; overflow-y:auto; background:var(--card); border:1px solid var(--border);
+  border-radius:6px; padding:10px; white-space:pre-wrap; word-break:break-word;
+  min-height:200px; -webkit-user-select:text; user-select:text;
+}
+.b{ font-weight:bold; }
+.i{ font-style:italic; }
+.red{ color:#d00; }
+.big{ font-size:1.15em; }
+.modal{
+  display:none; position:fixed; inset:0; background:rgba(0,0,0,.4);
+  align-items:center; justify-content:center; z-index:10; padding:16px;
+}
+.modal-box{
+  background:var(--card); border-radius:10px; width:100%; max-width:640px;
+  max-height:85vh; display:flex; flex-direction:column; padding:14px; gap:10px;
+}
+.modal-box h3{ font-size:16px; }
+.modal-body{
+  flex:1; overflow-y:auto; white-space:pre-wrap; word-break:break-word;
+  border:1px solid var(--border); border-radius:6px; padding:10px; min-height:120px;
+  -webkit-user-select:text; user-select:text;
+}
+.modal-btns{ display:flex; gap:8px; }
+.modal-btns button{ padding:8px 14px; border-radius:6px; border:1px solid var(--border); background:var(--card); cursor:pointer; }
+.modal-btns .modal-close{ margin-left:auto; }
+#toast{
+  position:fixed; left:50%; top:45%; transform:translateX(-50%);
+  background:rgba(0,0,0,.75); color:#fff; font-weight:bold;
+  padding:12px 24px; border-radius:10px; opacity:0; pointer-events:none;
+  transition:opacity .2s; z-index:99;
+}
+#toast.show{ opacity:1; }
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#1b1a22; --card:#2a2935; --border:#4a4860; --sel:#4a5fa5; }
+  body{ color:#eee; }
+  #q{ background:#2a2935; color:#eee; }
+  .tab,#btnrow button,.modal-btns button{ color:#eee; }
+}
+</style>
+</head>
+<body>
+  <div id="modbar"></div>
+  <div id="subbar"></div>
+  <div id="inrow">
+    <span>输入问题：</span><input id="q" type="text">
+  </div>
+  <div id="btnrow">
+    <button id="go">占 卜</button>
+    <button id="copy">复制结果</button>
+    <button id="clear">清空</button>
+    <button id="histbtn">历史</button>
+    <button id="helpbtn">说明</button>
+  </div>
+  <div id="out"></div>
+
+  <div class="modal" id="hist">
+    <div class="modal-box">
+      <h3 id="hist-title">历史记录</h3>
+      <div class="modal-body" id="hist-body"></div>
+      <div class="modal-btns">
+        <button id="hist-copy">复制全部</button>
+        <button id="hist-clear">清除全部</button>
+        <button class="modal-close">关 闭</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="help">
+    <div class="modal-box">
+      <h3>使用说明</h3>
+      <div class="modal-body" id="help-body"></div>
+      <div class="modal-btns">
+        <button class="modal-close">确 定</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast">已复制</div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
