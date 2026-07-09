@@ -1,6 +1,17 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+  <!-- 引入 manifest -->
+<link rel="manifest" href="./manifest.json">
+<!-- 强制 iOS Safari 开启全屏 App 模式 -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<!-- 控制 iOS 顶部状态栏颜色（可选 black 或 black-translucent） -->
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- 设置 iOS 桌面上显示的应用名称 -->
+<meta name="apple-mobile-web-app-title" content="占卜">
+<!-- 指定 iOS 桌面图标（强制要求，必须加上这行） -->
+<link rel="apple-touch-icon" href="./IMG_0854.JPG">
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#3f3a6c">
@@ -122,5 +133,14 @@ body{
 
 <script src="data.js"></script>
 <script src="app.js"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(registration => console.log('SW 注册成功:', registration.scope))
+        .catch(err => console.log('SW 注册失败:', err));
+    });
+  }
+</script>
 </body>
 </html>
