@@ -6,9 +6,12 @@
   const card = document.getElementById('card');
   const lotNo = document.getElementById('lotNo');
   const verse = document.getElementById('verse');
+  const translationPanel = document.getElementById('translationPanel');
+  const translationText = document.getElementById('translationText');
   const shakeBtn = document.getElementById('shakeBtn');
   const againBtn = document.getElementById('againBtn');
   const hint = document.getElementById('hint');
+  const TIP_COLORS = ['#2459a6', '#e4bd2b', '#b33137', '#f4efe2', '#df7626'];
 
   // 筒内签支（装饰）
   const N = 11;
@@ -66,6 +69,7 @@
 
     setTimeout(() => {
       const lot = randomLot();
+      flyStick.style.setProperty('--tip-color', TIP_COLORS[(lot.id - 1) % TIP_COLORS.length]);
       lotNo.textContent = `第${cnNumber(lot.id)}签`;
       verse.innerHTML = '';
       lot.lines.forEach(line => {
@@ -73,6 +77,8 @@
         sp.textContent = line;
         verse.appendChild(sp);
       });
+      translationText.textContent = lot.translation;
+      translationPanel.classList.add('revealed');
 
       cupWrap.classList.add('hidden');
       // 先无动画立正面朝背，再翻转
@@ -101,6 +107,8 @@
     shakeBtn.style.display = '';
     shakeBtn.disabled = false;
     hint.textContent = '默念所问之事，点击摇签';
+    translationText.textContent = '签出之后，译文显现';
+    translationPanel.classList.remove('revealed');
   }
 
   shakeBtn.addEventListener('click', shake);

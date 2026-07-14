@@ -1,10 +1,12 @@
 // 离线缓存
-const CACHE = 'drawing-lots-v1';
+const CACHE = 'drawing-lots-v5';
 const ASSETS = [
   './',
   './index.html',
   './app.js',
   './data.js',
+  './assets/bamboo-slips.png',
+  './assets/lotus-lacquer.png',
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png'

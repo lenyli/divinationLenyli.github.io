@@ -16,6 +16,8 @@
   --bg1:#4a1414; --bg2:#2b0b0b;
   --gold:#d9b36c; --gold-dim:#a8854a;
   --paper:#f7ecd7; --ink:#3a2c1a; --red:#8c2f2f;
+  --buddhist-blue:#2459a6; --buddhist-yellow:#e4bd2b;
+  --buddhist-red:#b33137; --buddhist-white:#f4efe2; --buddhist-orange:#df7626;
 }
 *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
 html,body{ height:100%; overflow:hidden; }
@@ -29,7 +31,7 @@ body{
   touch-action:manipulation;
 }
 
-header{ text-align:center; margin-top:8px; }
+header{ text-align:center; margin:8px 0 4px; flex:none; }
 header h1{
   font-size:26px; letter-spacing:.35em; text-indent:.35em; font-weight:600;
   text-shadow:0 0 18px rgba(217,179,108,.35);
@@ -41,6 +43,33 @@ header p{ font-size:12px; letter-spacing:.2em; color:var(--gold-dim); margin-top
   background:none; border:1px solid var(--gold-dim); border-radius:999px;
   padding:4px 14px; cursor:pointer; opacity:.85;
 }
+
+#oracleLayout{
+  flex:1; min-height:0; width:100%; max-width:1220px;
+  display:grid; grid-template-columns:minmax(250px,330px) minmax(310px,430px) minmax(250px,340px);
+  align-items:stretch; justify-content:center; gap:clamp(16px,3vw,38px);
+}
+.sutra-panel,.translation-panel{
+  position:relative; align-self:center; max-height:min(69vh,650px);
+  color:#3d2a16; border:1px solid rgba(218,177,94,.72);
+  box-shadow:0 18px 38px rgba(12,3,3,.38), inset 0 0 24px rgba(119,72,24,.12);
+}
+.sutra-panel{
+  height:min(69vh,650px); overflow:auto; padding:26px 24px;
+  background:
+    linear-gradient(90deg,rgba(120,74,26,.13) 1px,transparent 1px) 0 0/18px 100%,
+    linear-gradient(160deg,#f3e2bc,#dfc28b);
+  border-radius:5px;
+  scrollbar-width:thin; scrollbar-color:#9f7136 transparent;
+}
+.sutra-panel h2,.translation-panel h2{
+  color:#7f2929; text-align:center; font-size:18px; letter-spacing:.18em;
+  margin-bottom:16px; padding-bottom:10px; border-bottom:1px solid rgba(128,70,34,.32);
+}
+.sutra-panel p{ font-size:14px; line-height:2; text-align:justify; }
+.sutra-panel .deities{ margin:13px 0; text-align:center; line-height:2.05; }
+.sutra-panel .deities strong{ display:block; color:#6b2424; font-weight:800; }
+.center-column{ min-height:0; display:flex; flex-direction:column; align-items:center; }
 
 /* ============ 经文缘起弹层 ============ */
 #preface{
@@ -71,7 +100,7 @@ header p{ font-size:12px; letter-spacing:.2em; color:var(--gold-dim); margin-top
 }
 
 #stage{
-  flex:1; width:100%; max-width:420px; position:relative;
+  flex:1; min-height:360px; width:100%; max-width:430px; position:relative;
   display:flex; flex-direction:column; align-items:center; justify-content:center;
   perspective:900px;
 }
@@ -80,7 +109,7 @@ header p{ font-size:12px; letter-spacing:.2em; color:var(--gold-dim); margin-top
 #cupWrap{ position:relative; transition:opacity .4s, transform .4s; }
 #cupWrap.hidden{ opacity:0; pointer-events:none; transform:scale(.85); }
 #cup{
-  position:relative; width:150px; height:200px;
+  position:relative; width:126px; height:276px;
   transform-origin:50% 95%;
 }
 #cup.shake{ animation:cupShake 1.6s ease-in-out; }
@@ -97,40 +126,62 @@ header p{ font-size:12px; letter-spacing:.2em; color:var(--gold-dim); margin-top
   100%{ transform:rotate(0); }
 }
 .barrel{
-  position:absolute; left:0; bottom:0; width:150px; height:158px;
-  background:linear-gradient(90deg,#5a2e14 0%,#8a4a20 18%,#b06a30 45%,#8a4a20 78%,#4c2610 100%);
-  border-radius:14px 14px 20px 20px / 10px 10px 26px 26px;
-  box-shadow:inset 0 -14px 22px rgba(0,0,0,.45), 0 14px 26px rgba(0,0,0,.5);
+  position:absolute; left:4px; bottom:10px; width:118px; height:216px;
+  background:
+    linear-gradient(90deg,rgba(24,8,4,.64),transparent 17%,rgba(255,207,125,.13) 48%,transparent 73%,rgba(24,8,4,.68)),
+    linear-gradient(180deg,#7d3d1e 0%,#9b5529 38%,#6b3018 76%,#40170d 100%);
+  border-radius:12px 12px 18px 18px / 9px 9px 22px 22px;
+  border:1px solid rgba(228,184,102,.35);
+  box-shadow:inset 0 -18px 24px rgba(0,0,0,.5), inset 0 1px rgba(255,224,166,.22), 0 14px 26px rgba(0,0,0,.5);
 }
 .barrel::before{ /* 筒口内缘 */
-  content:""; position:absolute; left:0; top:-12px; width:150px; height:26px;
+  content:""; position:absolute; left:0; top:-11px; width:118px; height:24px;
   background:radial-gradient(ellipse at 50% 60%, #2c150a 55%, #6e3a1a 78%, #93582a 100%);
   border-radius:50%;
   box-shadow:inset 0 4px 8px rgba(0,0,0,.7);
 }
 .band{
-  position:absolute; left:-3px; width:156px; height:12px;
+  position:absolute; left:1px; width:124px; height:11px;
   background:linear-gradient(90deg,#7a5a20,#d9b36c 30%,#f2d894 50%,#d9b36c 70%,#6e5220);
   border-radius:6px; box-shadow:0 2px 4px rgba(0,0,0,.4);
 }
-.band.b1{ bottom:118px; } .band.b2{ bottom:16px; }
+.band.b1{
+  bottom:169px;
+  background:linear-gradient(90deg,var(--buddhist-blue) 0 20%,var(--buddhist-yellow) 20% 40%,var(--buddhist-red) 40% 60%,var(--buddhist-white) 60% 80%,var(--buddhist-orange) 80% 100%);
+  box-shadow:0 2px 4px rgba(0,0,0,.45),inset 0 1px rgba(255,255,255,.25);
+}
+.band.b2{ bottom:24px; }
+.lotus-base{
+  position:absolute; z-index:2; left:5px; bottom:11px; width:116px; height:58px;
+  background:
+    linear-gradient(90deg,rgba(18,5,3,.48),transparent 20%,transparent 78%,rgba(18,5,3,.5)),
+    url("./assets/lotus-lacquer.png") center/180px auto;
+  border-radius:0 0 16px 16px / 0 0 20px 20px;
+  opacity:.88; box-shadow:inset 0 10px 12px rgba(8,16,30,.22);
+}
 .mark{
-  position:absolute; left:50%; bottom:48px; transform:translateX(-50%);
+  position:absolute; left:50%; bottom:67px; transform:translateX(-50%);
   writing-mode:vertical-rl; font-size:20px; letter-spacing:6px;
   color:#f2dfae; text-shadow:0 1px 2px rgba(0,0,0,.6); font-weight:600;
 }
 /* 筒内签支 */
-.sticks{ position:absolute; left:50%; bottom:150px; width:0; height:0; }
+.sticks{ position:absolute; left:50%; bottom:218px; width:0; height:0; }
 .stick{
-  position:absolute; bottom:0; left:0; width:9px; height:74px;
+  --tip-color:var(--buddhist-red);
+  position:absolute; bottom:0; left:0; width:8px; height:91px;
   background:linear-gradient(180deg,#e8cf9a,#c9a865 70%,#b08c4a);
   border-radius:4px 4px 2px 2px; box-shadow:0 0 3px rgba(0,0,0,.35);
   transform-origin:50% 100%;
 }
 .stick::before{
-  content:""; position:absolute; top:0; left:0; width:9px; height:16px;
-  background:#a33c2a; border-radius:4px 4px 0 0;
+  content:""; position:absolute; top:0; left:0; width:8px; height:19px;
+  background:var(--tip-color); border-radius:4px 4px 0 0;
 }
+.stick:nth-child(5n+1){ --tip-color:var(--buddhist-blue); }
+.stick:nth-child(5n+2){ --tip-color:var(--buddhist-yellow); }
+.stick:nth-child(5n+3){ --tip-color:var(--buddhist-red); }
+.stick:nth-child(5n+4){ --tip-color:var(--buddhist-white); }
+.stick:nth-child(5n+5){ --tip-color:var(--buddhist-orange); }
 #cup.shake .stick{ animation:stickJig .22s ease-in-out 7 alternate; }
 @keyframes stickJig{
   from{ translate:0 0; } to{ translate:0 -7px; }
@@ -138,15 +189,16 @@ header p{ font-size:12px; letter-spacing:.2em; color:var(--gold-dim); margin-top
 
 /* 弹出的那支签 */
 #flyStick{
-  position:absolute; left:50%; bottom:190px; width:12px; height:110px;
+  --tip-color:var(--buddhist-blue);
+  position:absolute; left:50%; bottom:258px; width:11px; height:142px;
   margin-left:-6px;
   background:linear-gradient(180deg,#efd8a4,#cfa96a 70%,#b08c4a);
   border-radius:5px 5px 3px 3px; box-shadow:0 4px 10px rgba(0,0,0,.5);
   opacity:0; pointer-events:none; z-index:3;
 }
 #flyStick::before{
-  content:""; position:absolute; top:0; left:0; width:12px; height:22px;
-  background:#a33c2a; border-radius:5px 5px 0 0;
+  content:""; position:absolute; top:0; left:0; width:11px; height:25px;
+  background:var(--tip-color); border-radius:5px 5px 0 0;
 }
 #flyStick.fly{ animation:flyOut .9s cubic-bezier(.2,.7,.3,1) forwards; }
 @keyframes flyOut{
@@ -158,7 +210,7 @@ header p{ font-size:12px; letter-spacing:.2em; color:var(--gold-dim); margin-top
 /* ============ 签牌 ============ */
 #card{
   position:absolute; inset:0; margin:auto;
-  width:min(78vw,300px); height:min(112vw,430px);
+  width:min(94vw,420px); height:min(108vw,430px);
   transform-style:preserve-3d;
   transition:transform .9s cubic-bezier(.3,.8,.3,1), opacity .3s;
   opacity:0; pointer-events:none;
@@ -182,25 +234,55 @@ header p{ font-size:12px; letter-spacing:.2em; color:var(--gold-dim); margin-top
 }
 .face.front{
   transform:rotateY(180deg);
-  background:linear-gradient(160deg,#fbf3e0,#efe0c2);
-  border:3px solid var(--red); color:var(--ink);
+  background:
+    linear-gradient(rgba(245,220,164,.24),rgba(112,66,22,.1)),
+    url("./assets/bamboo-slips.png") center/cover;
+  border:3px solid #6f3c19; color:#2f2113;
   display:flex; flex-direction:column; align-items:center;
-  padding:18px 14px;
+  padding:20px 16px;
+  box-shadow:inset 0 0 22px rgba(72,38,11,.3),inset 0 0 0 2px rgba(239,203,132,.28);
 }
 .face.front .lotNo{
-  font-size:15px; letter-spacing:.3em; text-indent:.3em; color:var(--red);
-  border-bottom:1px solid rgba(140,47,47,.4); padding-bottom:8px; margin-bottom:4px;
+  font-size:15px; letter-spacing:.3em; text-indent:.3em; color:#742a27;
+  border-bottom:1px solid rgba(92,48,21,.46); padding-bottom:8px; margin-bottom:4px;
   width:100%; text-align:center; font-weight:700;
 }
 .verse{
   flex:1; display:flex; flex-direction:row-reverse; align-items:center; justify-content:center;
-  gap:clamp(10px,4vw,22px); width:100%;
+  gap:clamp(3px,1vw,9px); width:100%;
 }
 .verse span{
-  writing-mode:vertical-rl; font-size:clamp(24px,7.5vw,32px);
-  letter-spacing:.45em; line-height:1; font-weight:600;
+  writing-mode:vertical-rl; font-size:clamp(18px,2.25vw,24px);
+  letter-spacing:.34em; line-height:1; font-weight:600;
 }
-.face.front .source{ font-size:11px; color:#8a7350; letter-spacing:.15em; margin-top:4px; }
+.verse span:nth-child(even){ transform:translateY(.5em); }
+.face.front .source{ font-size:11px; color:#6e502d; letter-spacing:.15em; margin-top:4px; }
+
+/* ============ 竹帛译文 ============ */
+.translation-panel{
+  min-height:390px; padding:34px 30px;
+  background:
+    linear-gradient(rgba(245,222,173,.16),rgba(74,39,12,.08)),
+    url("./assets/bamboo-slips.png") center/cover;
+  border:2px solid #6d411c; border-radius:5px;
+  display:flex; flex-direction:column; justify-content:center;
+  box-shadow:0 18px 38px rgba(12,3,3,.42),inset 0 0 26px rgba(70,36,10,.3),inset 0 0 0 2px rgba(241,207,143,.24);
+}
+.translation-panel::before,.translation-panel::after{
+  content:""; position:absolute; left:-7px; right:-7px; height:9px;
+  background:repeating-linear-gradient(90deg,#4a2611 0 7px,#9c6b34 7px 10px,#503019 10px 17px);
+  border:1px solid #3d200e; border-radius:5px; box-shadow:0 2px 4px rgba(25,10,2,.4);
+}
+.translation-panel::before{ top:-5px; }
+.translation-panel::after{ bottom:-5px; }
+.translation-panel h2{ position:relative; z-index:1; }
+#translationText{
+  position:relative; z-index:1; font-size:15px; line-height:2; text-align:justify;
+  color:#302114; max-height:48vh; overflow:auto;
+}
+.translation-panel:not(.revealed) #translationText{
+  color:#806a4d; text-align:center; letter-spacing:.12em;
+}
 
 /* ============ 按钮 ============ */
 #actions{ min-height:64px; display:flex; align-items:center; justify-content:center; gap:14px; }
@@ -215,6 +297,24 @@ button.btn{
 button.btn:active{ transform:scale(.95); }
 button.btn[disabled]{ opacity:.4; pointer-events:none; }
 #hint{ font-size:12px; color:var(--gold-dim); letter-spacing:.15em; margin-top:10px; min-height:16px; text-align:center; }
+
+@media (max-width:920px){
+  html,body{ height:auto; min-height:100%; overflow:auto; }
+  body{ padding-bottom:30px; }
+  #oracleLayout{ display:flex; flex-direction:column; align-items:center; gap:28px; }
+  .center-column{ order:1; width:100%; min-height:620px; }
+  .translation-panel{ order:2; width:min(88vw,520px); min-height:300px; }
+  .sutra-panel{ order:3; width:min(88vw,620px); height:auto; max-height:none; overflow:visible; }
+  #stage{ min-height:470px; }
+}
+@media (max-width:480px){
+  header h1{ font-size:23px; }
+  .center-column{ min-height:590px; }
+  #stage{ min-height:445px; }
+  #card{ height:min(116vw,430px); }
+  .face.front{ padding:16px 8px; }
+  .verse span{ font-size:clamp(16px,4.6vw,20px); letter-spacing:.26em; }
+}
 </style>
 </head>
 <body>
@@ -232,33 +332,59 @@ button.btn[disabled]{ opacity:.4; pointer-events:none; }
     </div>
   </div>
 
-  <div id="stage">
-    <div id="cupWrap">
-      <div id="cup">
-        <div class="sticks" id="sticks"></div>
-        <div class="barrel"></div>
-        <div class="band b1"></div>
-        <div class="band b2"></div>
-        <div class="mark">神策</div>
+  <main id="oracleLayout">
+    <aside class="sutra-panel" aria-label="灌顶章句经文">
+      <h2>灌顶无上偈颂</h2>
+      <p>佛语梵天大王。汝今以为一切人民。说此神策竟。利益一切功德不少。令诸疑惑各得开解。我今当演善神灌顶章句以为劝助。若有人民闻策之者。或信不信令得正念。使一切魔不得破坏生嫉恶心。设有恶意自然消灭。说是语竟。梵王请佛唯愿说之。于是世尊即说灌顶无上偈颂。神名如是。</p>
+      <div class="deities">
+        <strong>地神毕栗絺毗。</strong>
+        <strong>水神阿婆提婆多。</strong>
+        <strong>火神帝沙陀提婆哆。</strong>
+        <strong>风神婆由驮提婆哆。</strong>
+        <strong>山神阿迦奢提婆哆。</strong>
+        <strong>三头神坻梨尸弃提婆哆。</strong>
+        <strong>六眼神毗摩提婆哆。</strong>
+        <strong>五头神般阇尸弃。</strong>
       </div>
-      <div id="flyStick"></div>
-    </div>
+      <p>佛告阿难梵天大王等。若四辈弟子欲为人行此神策法时。当以竹帛书此上偈。以五色彩作囊盛之。若欲卜时探取三策。至于七策审定无疑。澡漱口齿莫食酒肉及啖五辛。出策之法不得过七人。后设探者众事不中不护人也。梵王说已。佛于众中印可善哉。四众闻说梵王神策。净心欢喜作礼奉行。</p>
+    </aside>
 
-    <div id="card">
-      <div class="face back"><div class="emblem">签</div></div>
-      <div class="face front">
-        <div class="lotNo" id="lotNo"></div>
-        <div class="verse" id="verse"></div>
-        <div class="source">灌顶梵天神策经 · 卷第十</div>
+    <section class="center-column">
+      <div id="stage">
+        <div id="cupWrap">
+          <div id="cup">
+            <div class="sticks" id="sticks"></div>
+            <div class="barrel"></div>
+            <div class="band b1"></div>
+            <div class="band b2"></div>
+            <div class="lotus-base" aria-hidden="true"></div>
+            <div class="mark">神策</div>
+          </div>
+          <div id="flyStick"></div>
+        </div>
+
+        <div id="card">
+          <div class="face back"><div class="emblem">签</div></div>
+          <div class="face front">
+            <div class="lotNo" id="lotNo"></div>
+            <div class="verse" id="verse"></div>
+            <div class="source">灌顶梵天神策经 · 卷第十</div>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
 
-  <div id="actions">
-    <button class="btn" id="shakeBtn">诚心摇签</button>
-    <button class="btn" id="againBtn" style="display:none">再求一签</button>
-  </div>
-  <div id="hint">默念所问之事，点击摇签</div>
+      <div id="actions">
+        <button class="btn" id="shakeBtn">诚心摇签</button>
+        <button class="btn" id="againBtn" style="display:none">再求一签</button>
+      </div>
+      <div id="hint">默念所问之事，点击摇签</div>
+    </section>
+
+    <aside class="translation-panel" id="translationPanel" aria-live="polite">
+      <h2>竹帛译文</h2>
+      <p id="translationText">签出之后，译文显现</p>
+    </aside>
+  </main>
 
 <script src="./data.js"></script>
 <script src="./app.js"></script>
