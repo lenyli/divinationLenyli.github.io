@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#5c1a1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="摇签">
+<title>梵天神策 · 摇签</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<link rel="icon" href="./icons/icon-192.png">
+<style>
+:root{
+  --bg1:#4a1414; --bg2:#2b0b0b;
+  --gold:#d9b36c; --gold-dim:#a8854a;
+  --paper:#f7ecd7; --ink:#3a2c1a; --red:#8c2f2f;
+}
+*{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+html,body{ height:100%; overflow:hidden; }
+body{
+  font-family:"Songti SC","Noto Serif SC","STSong","SimSun",serif;
+  background:radial-gradient(ellipse at 50% 30%, var(--bg1), var(--bg2));
+  color:var(--gold);
+  display:flex; flex-direction:column; align-items:center;
+  padding:calc(12px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));
+  user-select:none; -webkit-user-select:none;
+  touch-action:manipulation;
+}
+
+header{ text-align:center; margin-top:8px; }
+header h1{
+  font-size:26px; letter-spacing:.35em; text-indent:.35em; font-weight:600;
+  text-shadow:0 0 18px rgba(217,179,108,.35);
+}
+header p{ font-size:12px; letter-spacing:.2em; color:var(--gold-dim); margin-top:6px; }
+#prefaceBtn{
+  margin-top:8px; display:inline-block; font-family:inherit; font-size:12px;
+  letter-spacing:.2em; text-indent:.2em; color:var(--gold);
+  background:none; border:1px solid var(--gold-dim); border-radius:999px;
+  padding:4px 14px; cursor:pointer; opacity:.85;
+}
+
+/* ============ 经文缘起弹层 ============ */
+#preface{
+  display:none; position:fixed; inset:0; z-index:20;
+  background:rgba(20,6,6,.72); backdrop-filter:blur(2px);
+  align-items:center; justify-content:center; padding:20px;
+}
+#preface.open{ display:flex; }
+.preface-box{
+  background:linear-gradient(160deg,#fbf3e0,#efe0c2);
+  color:var(--ink); border:3px solid var(--red); border-radius:12px;
+  width:100%; max-width:420px; max-height:80vh;
+  display:flex; flex-direction:column; padding:18px 16px; gap:10px;
+}
+.preface-box h2{
+  font-size:17px; color:var(--red); text-align:center;
+  letter-spacing:.15em; font-weight:700;
+  border-bottom:1px solid rgba(140,47,47,.4); padding-bottom:10px;
+}
+.preface-body{
+  flex:1; overflow-y:auto; font-size:15px; line-height:1.9;
+  text-align:justify; -webkit-overflow-scrolling:touch;
+}
+.preface-box .close{
+  align-self:center; font-family:inherit; font-size:15px; letter-spacing:.25em; text-indent:.25em;
+  padding:8px 28px; border-radius:999px; cursor:pointer;
+  background:var(--red); color:#f2dfae; border:none;
+}
+
+#stage{
+  flex:1; width:100%; max-width:420px; position:relative;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  perspective:900px;
+}
+
+/* ============ 签筒 ============ */
+#cupWrap{ position:relative; transition:opacity .4s, transform .4s; }
+#cupWrap.hidden{ opacity:0; pointer-events:none; transform:scale(.85); }
+#cup{
+  position:relative; width:150px; height:200px;
+  transform-origin:50% 95%;
+}
+#cup.shake{ animation:cupShake 1.6s ease-in-out; }
+@keyframes cupShake{
+  0%{ transform:rotate(0); }
+  10%{ transform:rotate(-14deg); }
+  22%{ transform:rotate(12deg); }
+  34%{ transform:rotate(-11deg); }
+  46%{ transform:rotate(10deg); }
+  58%{ transform:rotate(-8deg); }
+  70%{ transform:rotate(7deg); }
+  82%{ transform:rotate(-4deg); }
+  92%{ transform:rotate(2deg); }
+  100%{ transform:rotate(0); }
+}
+.barrel{
+  position:absolute; left:0; bottom:0; width:150px; height:158px;
+  background:linear-gradient(90deg,#5a2e14 0%,#8a4a20 18%,#b06a30 45%,#8a4a20 78%,#4c2610 100%);
+  border-radius:14px 14px 20px 20px / 10px 10px 26px 26px;
+  box-shadow:inset 0 -14px 22px rgba(0,0,0,.45), 0 14px 26px rgba(0,0,0,.5);
+}
+.barrel::before{ /* 筒口内缘 */
+  content:""; position:absolute; left:0; top:-12px; width:150px; height:26px;
+  background:radial-gradient(ellipse at 50% 60%, #2c150a 55%, #6e3a1a 78%, #93582a 100%);
+  border-radius:50%;
+  box-shadow:inset 0 4px 8px rgba(0,0,0,.7);
+}
+.band{
+  position:absolute; left:-3px; width:156px; height:12px;
+  background:linear-gradient(90deg,#7a5a20,#d9b36c 30%,#f2d894 50%,#d9b36c 70%,#6e5220);
+  border-radius:6px; box-shadow:0 2px 4px rgba(0,0,0,.4);
+}
+.band.b1{ bottom:118px; } .band.b2{ bottom:16px; }
+.mark{
+  position:absolute; left:50%; bottom:48px; transform:translateX(-50%);
+  writing-mode:vertical-rl; font-size:20px; letter-spacing:6px;
+  color:#f2dfae; text-shadow:0 1px 2px rgba(0,0,0,.6); font-weight:600;
+}
+/* 筒内签支 */
+.sticks{ position:absolute; left:50%; bottom:150px; width:0; height:0; }
+.stick{
+  position:absolute; bottom:0; left:0; width:9px; height:74px;
+  background:linear-gradient(180deg,#e8cf9a,#c9a865 70%,#b08c4a);
+  border-radius:4px 4px 2px 2px; box-shadow:0 0 3px rgba(0,0,0,.35);
+  transform-origin:50% 100%;
+}
+.stick::before{
+  content:""; position:absolute; top:0; left:0; width:9px; height:16px;
+  background:#a33c2a; border-radius:4px 4px 0 0;
+}
+#cup.shake .stick{ animation:stickJig .22s ease-in-out 7 alternate; }
+@keyframes stickJig{
+  from{ translate:0 0; } to{ translate:0 -7px; }
+}
+
+/* 弹出的那支签 */
+#flyStick{
+  position:absolute; left:50%; bottom:190px; width:12px; height:110px;
+  margin-left:-6px;
+  background:linear-gradient(180deg,#efd8a4,#cfa96a 70%,#b08c4a);
+  border-radius:5px 5px 3px 3px; box-shadow:0 4px 10px rgba(0,0,0,.5);
+  opacity:0; pointer-events:none; z-index:3;
+}
+#flyStick::before{
+  content:""; position:absolute; top:0; left:0; width:12px; height:22px;
+  background:#a33c2a; border-radius:5px 5px 0 0;
+}
+#flyStick.fly{ animation:flyOut .9s cubic-bezier(.2,.7,.3,1) forwards; }
+@keyframes flyOut{
+  0%{ opacity:0; transform:translateY(30px) rotate(0); }
+  25%{ opacity:1; }
+  100%{ opacity:1; transform:translateY(-120px) rotate(14deg); }
+}
+
+/* ============ 签牌 ============ */
+#card{
+  position:absolute; inset:0; margin:auto;
+  width:min(78vw,300px); height:min(112vw,430px);
+  transform-style:preserve-3d;
+  transition:transform .9s cubic-bezier(.3,.8,.3,1), opacity .3s;
+  opacity:0; pointer-events:none;
+}
+#card.show{ opacity:1; pointer-events:auto; transform:rotateY(180deg); }
+#card.instant{ transition:none; }
+.face{
+  position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden;
+  border-radius:12px; overflow:hidden;
+}
+.face.back{
+  background:linear-gradient(145deg,#7a1f1f,#4d1010);
+  border:3px solid var(--gold-dim);
+  display:flex; align-items:center; justify-content:center;
+}
+.face.back .emblem{
+  width:110px; height:110px; border:2px solid var(--gold); border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:44px; color:var(--gold); letter-spacing:0;
+  box-shadow:0 0 0 6px rgba(217,179,108,.15);
+}
+.face.front{
+  transform:rotateY(180deg);
+  background:linear-gradient(160deg,#fbf3e0,#efe0c2);
+  border:3px solid var(--red); color:var(--ink);
+  display:flex; flex-direction:column; align-items:center;
+  padding:18px 14px;
+}
+.face.front .lotNo{
+  font-size:15px; letter-spacing:.3em; text-indent:.3em; color:var(--red);
+  border-bottom:1px solid rgba(140,47,47,.4); padding-bottom:8px; margin-bottom:4px;
+  width:100%; text-align:center; font-weight:700;
+}
+.verse{
+  flex:1; display:flex; flex-direction:row-reverse; align-items:center; justify-content:center;
+  gap:clamp(10px,4vw,22px); width:100%;
+}
+.verse span{
+  writing-mode:vertical-rl; font-size:clamp(24px,7.5vw,32px);
+  letter-spacing:.45em; line-height:1; font-weight:600;
+}
+.face.front .source{ font-size:11px; color:#8a7350; letter-spacing:.15em; margin-top:4px; }
+
+/* ============ 按钮 ============ */
+#actions{ min-height:64px; display:flex; align-items:center; justify-content:center; gap:14px; }
+button.btn{
+  font-family:inherit; font-size:17px; letter-spacing:.25em; text-indent:.25em;
+  padding:12px 34px; border-radius:999px; cursor:pointer;
+  background:linear-gradient(180deg,#8c2f2f,#601c1c);
+  color:#f2dfae; border:1.5px solid var(--gold-dim);
+  box-shadow:0 6px 16px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.15);
+  transition:transform .15s, opacity .3s;
+}
+button.btn:active{ transform:scale(.95); }
+button.btn[disabled]{ opacity:.4; pointer-events:none; }
+#hint{ font-size:12px; color:var(--gold-dim); letter-spacing:.15em; margin-top:10px; min-height:16px; text-align:center; }
+</style>
+</head>
+<body>
+  <header>
+    <h1>梵天神策</h1>
+    <p>灌顶梵天神策经 · 梵天结愿神策</p>
+    <button id="prefaceBtn">经文缘起</button>
+  </header>
+
+  <div id="preface">
+    <div class="preface-box">
+      <h2>灌顶梵天神策经卷第十</h2>
+      <div class="preface-body">闻如是。一时佛在因沙崛山中。与千二百五十比丘俱。菩萨三万人。佛为天龙八部说法。人民鬼神各随业缘得道不同。说法既竟。于是梵王从座而起。长跪合掌而白佛言。世尊我于众生。有微因缘多归依者。又见人民悉受苦恼。心中疑惑不能决了。今欲承佛威神之力。出梵天结愿一百偈颂以为神策。惟愿世尊许可此事。复作是言。我常见诸异道辈九十五种。各有杂术为人决疑。而今世尊正觉最上更无此法。是故启问唯愿听许。佛言梵王善哉善哉。汝能为未来五浊恶世。像法众生多诸疑惑。信邪倒见不识真正。汝既慈悲欲为说者。嘉也梵王我助汝喜。善也梵王随意演说。梵王闻佛赞叹策经欢喜踊跃。即于众中语四辈言。今我梵王承佛威神。演说卜经一百偈颂以示万姓。决了狐疑知人吉凶。今以偈颂而说卦曰。</div>
+      <button class="close" id="prefaceClose">关 闭</button>
+    </div>
+  </div>
+
+  <div id="stage">
+    <div id="cupWrap">
+      <div id="cup">
+        <div class="sticks" id="sticks"></div>
+        <div class="barrel"></div>
+        <div class="band b1"></div>
+        <div class="band b2"></div>
+        <div class="mark">神策</div>
+      </div>
+      <div id="flyStick"></div>
+    </div>
+
+    <div id="card">
+      <div class="face back"><div class="emblem">签</div></div>
+      <div class="face front">
+        <div class="lotNo" id="lotNo"></div>
+        <div class="verse" id="verse"></div>
+        <div class="source">灌顶梵天神策经 · 卷第十</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="actions">
+    <button class="btn" id="shakeBtn">诚心摇签</button>
+    <button class="btn" id="againBtn" style="display:none">再求一签</button>
+  </div>
+  <div id="hint">默念所问之事，点击摇签</div>
+
+<script src="./data.js"></script>
+<script src="./app.js"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>

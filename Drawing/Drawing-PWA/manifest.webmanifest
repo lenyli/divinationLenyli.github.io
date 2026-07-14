@@ -1,0 +1,16 @@
+{
+  "name": "梵天神策摇签",
+  "short_name": "摇签",
+  "description": "灌顶梵天神策经一百偈颂 · 摇签求策",
+  "lang": "zh-CN",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#2b0b0b",
+  "theme_color": "#5c1a1a",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
