@@ -185,16 +185,15 @@ header p{ font-size:12px; letter-spacing:.2em; color:var(--gold-dim); margin-top
 }
 #cup > .sticks,#cup > .barrel,#cup > .band,#cup > .lotus-base,#cup > .mark{ display:none; }
 #shakeLotus{
-  position:absolute; z-index:4; left:50%; top:62%; width:180px; height:180px;
+  position:absolute; z-index:4; left:50%; top:62%; width:clamp(280px,21vw,420px); aspect-ratio:1;
   object-fit:contain; transform:translate(-50%,-50%); opacity:0; pointer-events:none;
 }
 #shakeLotus.pulse{ animation:shakeLotusPulse 1.6s ease-in-out both; }
 @keyframes shakeLotusPulse{
   0%,100%{ opacity:0; }
-  12%{ opacity:.55; } 24%{ opacity:0; }
-  38%{ opacity:.68; } 51%{ opacity:0; }
-  65%{ opacity:.72; } 79%{ opacity:0; }
-  91%{ opacity:.5; }
+  15%{ opacity:.6; } 30%{ opacity:0; }
+  50%{ opacity:.72; } 65%{ opacity:0; }
+  85%{ opacity:.62; }
 }
 #cup.shake{ animation:cupShake 1.6s ease-in-out; }
 @keyframes cupShake{
@@ -387,6 +386,7 @@ button.btn[disabled]{ opacity:.4; pointer-events:none; }
 }
 @media (orientation:portrait){
   body::before{ background-image:url("./assets/sequence/bg-portrait-source.png"); }
+  #shakeLotus{ width:clamp(190px,48vw,280px); }
 }
 @media (max-width:480px){
   header h1{ font-size:23px; }
@@ -535,8 +535,8 @@ button.btn[disabled]{ opacity:.4; pointer-events:none; }
     </aside>
   </main>
 
-<script src="./data.js?v=21"></script>
-<script src="./app.js?v=21"></script>
+<script src="./data.js?v=22"></script>
+<script src="./app.js?v=22"></script>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
