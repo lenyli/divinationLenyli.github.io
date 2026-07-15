@@ -28,6 +28,30 @@
   const scrollLotNo = document.getElementById('scrollLotNo');
   const scrollVerse = document.getElementById('scrollVerse');
   const TIP_COLORS = ['#2459a6', '#e4bd2b', '#b33137', '#f4efe2', '#df7626'];
+  const bgLotusLayer = document.getElementById('bgLotusLayer');
+
+  // 将莲花纹动画对齐到背景图中的莲花圆章（背景为 center/cover 铺放）
+  const BG_MEDALLION = {
+    landscape: { w: 1672, h: 941, cx: 838.5, cy: 448, diam: 409 },
+    portrait:  { w: 941, h: 1672, cx: 467.5, cy: 859, diam: 344 }
+  };
+  function positionShakeLotus() {
+    const vw = bgLotusLayer.clientWidth;
+    const vh = bgLotusLayer.clientHeight;
+    if (!vw || !vh) return;
+    const m = window.matchMedia('(orientation:portrait)').matches
+      ? BG_MEDALLION.portrait : BG_MEDALLION.landscape;
+    const scale = Math.max(vw / m.w, vh / m.h);
+    const x = vw / 2 + (m.cx - m.w / 2) * scale;
+    const y = vh / 2 + (m.cy - m.h / 2) * scale;
+    const size = m.diam * scale * 1.04;
+    shakeLotus.style.left = `${x}px`;
+    shakeLotus.style.top = `${y}px`;
+    shakeLotus.style.width = `${size}px`;
+  }
+  window.addEventListener('resize', positionShakeLotus);
+  window.addEventListener('orientationchange', positionShakeLotus);
+  positionShakeLotus();
 
   // 筒内签支（装饰）
   const N = 11;
@@ -214,13 +238,8 @@
       appendRecords(lot);
       card.classList.remove('show');
       card.style.opacity = '';
-      if (isMobileLayout()) {
-        cupWrap.classList.remove('hidden');
-        scrollResult.classList.remove('open');
-      } else {
-        cupWrap.classList.add('hidden');
-        openScrollResult(lot);
-      }
+      cupWrap.classList.add('hidden');
+      openScrollResult(lot);
 
       shakeBtn.style.display = 'none';
       if (drawCount < 7) {

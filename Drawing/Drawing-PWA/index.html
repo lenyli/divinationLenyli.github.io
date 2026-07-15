@@ -33,9 +33,14 @@ body{
   touch-action:manipulation;
 }
 body::before{
-  content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
-  width:100%; height:100vh; height:100dvh;
+  content:""; position:fixed; inset:0 auto auto 0; z-index:-2; pointer-events:none;
+  width:100%; height:100vh; height:100lvh;
   background:#071a37 url("./assets/sequence/bg-landscape-source.png") center/cover no-repeat;
+}
+#bgLotusLayer{
+  position:fixed; inset:0 auto auto 0; z-index:-1; pointer-events:none;
+  width:100%; height:100vh; height:100lvh;
+  overflow:hidden;
 }
 
 header{ text-align:center; margin:8px 0 4px; flex:none; }
@@ -185,7 +190,7 @@ header p{ font-size:12px; letter-spacing:.2em; color:var(--gold-dim); margin-top
 }
 #cup > .sticks,#cup > .barrel,#cup > .band,#cup > .lotus-base,#cup > .mark{ display:none; }
 #shakeLotus{
-  position:absolute; z-index:4; left:50%; top:62%; width:clamp(280px,21vw,420px); aspect-ratio:1;
+  position:absolute; left:0; top:0; width:100px; aspect-ratio:1;
   object-fit:contain; transform:translate(-50%,-50%); opacity:0; pointer-events:none;
 }
 #shakeLotus.pulse{ animation:shakeLotusPulse 1.6s ease-in-out both; }
@@ -386,7 +391,6 @@ button.btn[disabled]{ opacity:.4; pointer-events:none; }
 }
 @media (orientation:portrait){
   body::before{ background-image:url("./assets/sequence/bg-portrait-source.png"); }
-  #shakeLotus{ width:clamp(190px,48vw,280px); }
 }
 @media (max-width:480px){
   header h1{ font-size:23px; }
@@ -432,6 +436,9 @@ button.btn[disabled]{ opacity:.4; pointer-events:none; }
 </style>
 </head>
 <body>
+  <div id="bgLotusLayer" aria-hidden="true">
+    <img id="shakeLotus" src="./assets/sequence/lotus-overlay.png" alt="">
+  </div>
   <header>
     <h1>梵天神策</h1>
     <p>灌顶梵天神策经 · 梵天结愿神策</p>
@@ -495,7 +502,6 @@ button.btn[disabled]{ opacity:.4; pointer-events:none; }
             <div class="lotus-base" aria-hidden="true"></div>
             <div class="mark">神策</div>
           </div>
-          <img id="shakeLotus" src="./assets/sequence/lotus-overlay.png" alt="" aria-hidden="true">
           <div id="flyStick"></div>
         </div>
 
@@ -535,8 +541,8 @@ button.btn[disabled]{ opacity:.4; pointer-events:none; }
     </aside>
   </main>
 
-<script src="./data.js?v=22"></script>
-<script src="./app.js?v=22"></script>
+<script src="./data.js?v=23"></script>
+<script src="./app.js?v=23"></script>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
