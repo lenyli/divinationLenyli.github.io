@@ -20,10 +20,15 @@
   --buddhist-red:#b33137; --buddhist-white:#f4efe2; --buddhist-orange:#df7626;
 }
 *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+[hidden]{ display:none !important; }
 html,body{ height:100%; overflow:hidden; }
 body{
   font-family:"Songti SC","Noto Serif SC","STSong","SimSun",serif;
-  background:radial-gradient(ellipse at 50% 30%, var(--bg1), var(--bg2));
+  background-color:#071a37;
+  background-image:url("./assets/sequence/bg-landscape-source.png");
+  background-position:center;
+  background-size:cover;
+  background-attachment:fixed;
   color:var(--gold);
   display:flex; flex-direction:column; align-items:center;
   padding:calc(12px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));
@@ -43,32 +48,49 @@ header p{ font-size:12px; letter-spacing:.2em; color:var(--gold-dim); margin-top
   background:none; border:1px solid var(--gold-dim); border-radius:999px;
   padding:4px 14px; cursor:pointer; opacity:.85;
 }
+.oracle-rule{
+  margin-top:7px; font-size:13px; line-height:1.5; letter-spacing:.08em;
+  color:#e0c58f; text-shadow:0 1px 4px rgba(0,0,0,.55);
+}
 
 #oracleLayout{
   flex:1; min-height:0; width:100%; max-width:1220px;
   display:grid; grid-template-columns:minmax(250px,330px) minmax(310px,430px) minmax(250px,340px);
   align-items:stretch; justify-content:center; gap:clamp(16px,3vw,38px);
 }
+#oracleLayout.empty-round{ grid-template-columns:minmax(310px,430px); }
 .sutra-panel,.translation-panel{
   position:relative; align-self:center; max-height:min(69vh,650px);
   color:#3d2a16; border:1px solid rgba(218,177,94,.72);
   box-shadow:0 18px 38px rgba(12,3,3,.38), inset 0 0 24px rgba(119,72,24,.12);
 }
 .sutra-panel{
-  height:min(69vh,650px); overflow:auto; padding:26px 24px;
+  height:min(69vh,650px); overflow:hidden; padding:22px 20px;
   background:
     linear-gradient(90deg,rgba(120,74,26,.13) 1px,transparent 1px) 0 0/18px 100%,
     linear-gradient(160deg,#f3e2bc,#dfc28b);
   border-radius:5px;
   scrollbar-width:thin; scrollbar-color:#9f7136 transparent;
+  display:flex; flex-direction:column;
 }
 .sutra-panel h2,.translation-panel h2{
   color:#7f2929; text-align:center; font-size:18px; letter-spacing:.18em;
   margin-bottom:16px; padding-bottom:10px; border-bottom:1px solid rgba(128,70,34,.32);
 }
-.sutra-panel p{ font-size:14px; line-height:2; text-align:justify; }
-.sutra-panel .deities{ margin:13px 0; text-align:center; line-height:2.05; }
-.sutra-panel .deities strong{ display:block; color:#6b2424; font-weight:800; }
+.panel-heading{ flex:none; }
+.round-count{ display:block; margin-top:-8px; margin-bottom:12px; text-align:center; color:#80613a; font-size:12px; }
+.record-list{
+  flex:1; min-height:0; overflow-y:auto; padding-right:5px;
+  scrollbar-width:thin; scrollbar-color:#9f7136 transparent;
+  user-select:text; -webkit-user-select:text;
+}
+.record-empty{ color:#806a4d; text-align:center; font-size:14px; line-height:2; padding:36px 8px; }
+.record-entry{ padding:12px 2px; border-bottom:1px solid rgba(92,48,21,.25); }
+.record-entry:first-child{ padding-top:2px; }
+.record-entry strong{ color:#742a27; font-size:15px; line-height:1.8; }
+.record-entry p{ color:#302114; font-size:14px; line-height:1.9; text-align:justify; }
+#roundReset{ flex:none; align-self:center; margin-top:14px; padding:9px 24px; font-size:14px; }
+.mobile-results-toolbar{ display:none; }
 .center-column{ min-height:0; display:flex; flex-direction:column; align-items:center; }
 
 /* ============ 经文缘起弹层 ============ */
@@ -99,6 +121,52 @@ header p{ font-size:12px; letter-spacing:.2em; color:var(--gold-dim); margin-top
   background:var(--red); color:#f2dfae; border:none;
 }
 
+/* ============ 每轮首次摇签前的灌顶颂 ============ */
+#invocation{
+  display:none; position:fixed; inset:0; z-index:25;
+  background:rgba(4,14,34,.82); backdrop-filter:blur(4px);
+  align-items:center; justify-content:center; padding:20px; cursor:pointer;
+}
+#invocation.open{ display:flex; }
+.invocation-box{
+  width:min(92vw,430px); padding:28px 28px 22px;
+  color:#f3ddb0; text-align:center;
+  background:linear-gradient(160deg,rgba(76,23,24,.97),rgba(35,10,15,.98));
+  border:2px solid var(--gold); border-radius:12px;
+  box-shadow:0 22px 60px rgba(0,0,0,.55),inset 0 0 30px rgba(217,179,108,.12);
+}
+.invocation-box h2{ font-size:20px; letter-spacing:.2em; margin-bottom:18px; color:#f1d28f; }
+.invocation-box strong{ display:block; font-size:16px; line-height:2.15; font-weight:700; }
+.invocation-box small{ display:block; margin-top:18px; color:#bea370; letter-spacing:.15em; }
+
+/* ============ 单签卷轴动画 ============ */
+#scrollResult{
+  display:flex; position:fixed; inset:0; z-index:24;
+  align-items:center; justify-content:center;
+  background:rgba(3,12,30,.78); backdrop-filter:blur(3px);
+  opacity:0; visibility:hidden; pointer-events:none;
+  transition:opacity .28s ease,visibility 0s linear .28s;
+}
+#scrollResult.open{
+  opacity:1; visibility:visible; pointer-events:auto;
+  transition-delay:0s;
+}
+.scroll-shell{
+  position:relative; width:min(94vw,70.4vh,650px); aspect-ratio:1122/1402;
+  overflow:hidden; isolation:isolate;
+}
+.scroll-background{ position:absolute; inset:0; width:100%; height:100%; object-fit:contain; pointer-events:none; }
+.scroll-copy{ position:absolute; z-index:3; color:#352211; pointer-events:none; }
+.scroll-sign-copy{ left:18%; right:18%; top:28%; bottom:25%; display:flex; flex-direction:column; align-items:center; }
+.scroll-lot-no{ color:#762c27; font-size:16px; font-weight:700; letter-spacing:.2em; margin-bottom:10px; }
+.scroll-verse{ flex:1; width:100%; display:flex; flex-direction:row-reverse; justify-content:center; align-items:center; gap:clamp(3px,.8vw,9px); }
+.scroll-verse span{ writing-mode:vertical-rl; font-size:clamp(18px,2vw,25px); line-height:1; letter-spacing:.3em; font-weight:600; }
+.scroll-verse span:nth-child(even){ transform:translateY(.5em); }
+@media (max-width:600px){
+  .scroll-shell{ width:min(98vw,70.4vh); }
+  .scroll-lot-no{ font-size:13px; margin-bottom:6px; }
+}
+
 #stage{
   flex:1; min-height:360px; width:100%; max-width:430px; position:relative;
   display:flex; flex-direction:column; align-items:center; justify-content:center;
@@ -109,9 +177,11 @@ header p{ font-size:12px; letter-spacing:.2em; color:var(--gold-dim); margin-top
 #cupWrap{ position:relative; transition:opacity .4s, transform .4s; }
 #cupWrap.hidden{ opacity:0; pointer-events:none; transform:scale(.85); }
 #cup{
-  position:relative; width:126px; height:276px;
+  position:relative; width:190px; height:390px;
+  background:url("./assets/cup-render.webp") center/contain no-repeat;
   transform-origin:50% 95%;
 }
+#cup > .sticks,#cup > .barrel,#cup > .band,#cup > .lotus-base,#cup > .mark{ display:none; }
 #cup.shake{ animation:cupShake 1.6s ease-in-out; }
 @keyframes cupShake{
   0%{ transform:rotate(0); }
@@ -265,7 +335,7 @@ header p{ font-size:12px; letter-spacing:.2em; color:var(--gold-dim); margin-top
     linear-gradient(rgba(245,222,173,.16),rgba(74,39,12,.08)),
     url("./assets/bamboo-slips.png") center/cover;
   border:2px solid #6d411c; border-radius:5px;
-  display:flex; flex-direction:column; justify-content:center;
+  display:flex; flex-direction:column;
   box-shadow:0 18px 38px rgba(12,3,3,.42),inset 0 0 26px rgba(70,36,10,.3),inset 0 0 0 2px rgba(241,207,143,.24);
 }
 .translation-panel::before,.translation-panel::after{
@@ -276,13 +346,7 @@ header p{ font-size:12px; letter-spacing:.2em; color:var(--gold-dim); margin-top
 .translation-panel::before{ top:-5px; }
 .translation-panel::after{ bottom:-5px; }
 .translation-panel h2{ position:relative; z-index:1; }
-#translationText{
-  position:relative; z-index:1; font-size:15px; line-height:2; text-align:justify;
-  color:#302114; max-height:48vh; overflow:auto;
-}
-.translation-panel:not(.revealed) #translationText{
-  color:#806a4d; text-align:center; letter-spacing:.12em;
-}
+.translation-panel .record-list{ position:relative; z-index:1; }
 
 /* ============ 按钮 ============ */
 #actions{ min-height:64px; display:flex; align-items:center; justify-content:center; gap:14px; }
@@ -307,6 +371,9 @@ button.btn[disabled]{ opacity:.4; pointer-events:none; }
   .sutra-panel{ order:3; width:min(88vw,620px); height:auto; max-height:none; overflow:visible; }
   #stage{ min-height:470px; }
 }
+@media (orientation:portrait){
+  body{ background-image:url("./assets/sequence/bg-portrait-source.png"); }
+}
 @media (max-width:480px){
   header h1{ font-size:23px; }
   .center-column{ min-height:590px; }
@@ -315,6 +382,37 @@ button.btn[disabled]{ opacity:.4; pointer-events:none; }
   .face.front{ padding:16px 8px; }
   .verse span{ font-size:clamp(16px,4.6vw,20px); letter-spacing:.26em; }
 }
+@media (max-width:600px){
+  #oracleLayout{ gap:18px; }
+  .center-column{ order:1; }
+  .mobile-results-toolbar{
+    order:2; width:min(92vw,620px); display:flex; align-items:center;
+    justify-content:space-between; gap:12px; margin-top:2px;
+  }
+  #oracleLayout.empty-round .mobile-results-toolbar{ display:none; }
+  .mobile-tools-left{ display:flex; align-items:center; gap:8px; min-width:0; }
+  .mobile-view-switch{
+    display:flex; padding:2px; border:1px solid rgba(217,179,108,.72);
+    border-radius:999px; background:rgba(5,18,40,.72);
+  }
+  .mobile-tool-btn{
+    min-height:36px; padding:7px 12px; border:1px solid rgba(217,179,108,.64);
+    border-radius:999px; background:rgba(8,25,52,.88); color:#ecd59f;
+    font-family:inherit; font-size:13px; letter-spacing:.08em; cursor:pointer;
+  }
+  .mobile-view-switch .mobile-tool-btn{ min-height:30px; padding:5px 12px; border:0; background:transparent; }
+  .mobile-view-switch .mobile-tool-btn[aria-pressed="true"]{ background:#8c2f2f; color:#fff0c7; }
+  .mobile-tool-btn[disabled]{ opacity:.38; pointer-events:none; }
+  #mobileRoundReset{ margin-left:auto; }
+  #roundReset{ display:none; }
+  .sutra-panel,.translation-panel{
+    order:3; width:min(92vw,620px); min-height:300px; height:auto;
+    max-height:none; overflow:visible;
+  }
+  #oracleLayout[data-mobile-view="sign"] .translation-panel{ display:none; }
+  #oracleLayout[data-mobile-view="translation"] .sutra-panel{ display:none; }
+  .record-list{ overflow:visible; padding-right:0; }
+}
 </style>
 </head>
 <body>
@@ -322,6 +420,7 @@ button.btn[disabled]{ opacity:.4; pointer-events:none; }
     <h1>梵天神策</h1>
     <p>灌顶梵天神策经 · 梵天结愿神策</p>
     <button id="prefaceBtn">经文缘起</button>
+    <p class="oracle-rule">若欲卜时探取三策。至于七策审定无疑。</p>
   </header>
 
   <div id="preface">
@@ -332,21 +431,41 @@ button.btn[disabled]{ opacity:.4; pointer-events:none; }
     </div>
   </div>
 
-  <main id="oracleLayout">
-    <aside class="sutra-panel" aria-label="灌顶章句经文">
-      <h2>灌顶无上偈颂</h2>
-      <p>佛语梵天大王。汝今以为一切人民。说此神策竟。利益一切功德不少。令诸疑惑各得开解。我今当演善神灌顶章句以为劝助。若有人民闻策之者。或信不信令得正念。使一切魔不得破坏生嫉恶心。设有恶意自然消灭。说是语竟。梵王请佛唯愿说之。于是世尊即说灌顶无上偈颂。神名如是。</p>
-      <div class="deities">
-        <strong>地神毕栗絺毗。</strong>
-        <strong>水神阿婆提婆多。</strong>
-        <strong>火神帝沙陀提婆哆。</strong>
-        <strong>风神婆由驮提婆哆。</strong>
-        <strong>山神阿迦奢提婆哆。</strong>
-        <strong>三头神坻梨尸弃提婆哆。</strong>
-        <strong>六眼神毗摩提婆哆。</strong>
-        <strong>五头神般阇尸弃。</strong>
+  <div id="invocation" role="dialog" aria-modal="true" aria-labelledby="invocationTitle">
+    <div class="invocation-box">
+      <h2 id="invocationTitle">灌顶无上偈颂</h2>
+      <strong>地神毕栗絺毗。</strong>
+      <strong>水神阿婆提婆多。</strong>
+      <strong>火神帝沙陀提婆哆。</strong>
+      <strong>风神婆由驮提婆哆。</strong>
+      <strong>山神阿迦奢提婆哆。</strong>
+      <strong>三头神坻梨尸弃提婆哆。</strong>
+      <strong>六眼神毗摩提婆哆。</strong>
+      <strong>五头神般阇尸弃。</strong>
+      <small>再次点击关闭</small>
+    </div>
+  </div>
+
+  <div id="scrollResult" role="dialog" aria-modal="true" aria-label="本次签文">
+    <div class="scroll-shell" id="scrollShell">
+      <img class="scroll-background" src="./assets/sequence/lot-transition-aligned.png" alt="">
+      <div class="scroll-copy scroll-sign-copy">
+        <div class="scroll-lot-no" id="scrollLotNo"></div>
+        <div class="scroll-verse" id="scrollVerse"></div>
       </div>
-      <p>佛告阿难梵天大王等。若四辈弟子欲为人行此神策法时。当以竹帛书此上偈。以五色彩作囊盛之。若欲卜时探取三策。至于七策审定无疑。澡漱口齿莫食酒肉及啖五辛。出策之法不得过七人。后设探者众事不中不护人也。梵王说已。佛于众中印可善哉。四众闻说梵王神策。净心欢喜作礼奉行。</p>
+    </div>
+  </div>
+
+  <main id="oracleLayout" class="empty-round" data-mobile-view="sign">
+    <aside class="sutra-panel" id="lotRecordsPanel" aria-label="本轮签文记录" hidden>
+      <div class="panel-heading">
+        <h2>本轮签文</h2>
+        <span class="round-count" id="roundCount">已探 0 / 7 策</span>
+      </div>
+      <div class="record-list" id="lotRecords">
+        <p class="record-empty" id="lotRecordsEmpty">本轮尚未探策</p>
+      </div>
+      <button class="btn" id="roundReset" disabled>刷 新</button>
     </aside>
 
     <section class="center-column">
@@ -380,14 +499,27 @@ button.btn[disabled]{ opacity:.4; pointer-events:none; }
       <div id="hint">默念所问之事，点击摇签</div>
     </section>
 
-    <aside class="translation-panel" id="translationPanel" aria-live="polite">
-      <h2>竹帛译文</h2>
-      <p id="translationText">签出之后，译文显现</p>
+    <div class="mobile-results-toolbar" aria-label="结果工具栏">
+      <div class="mobile-tools-left">
+        <div class="mobile-view-switch" role="group" aria-label="切换结果">
+          <button class="mobile-tool-btn" id="mobileShowSign" type="button" aria-pressed="true">签文</button>
+          <button class="mobile-tool-btn" id="mobileShowTranslation" type="button" aria-pressed="false">译文</button>
+        </div>
+        <button class="mobile-tool-btn" id="copyCurrentResult" type="button">复制结果</button>
+      </div>
+      <button class="mobile-tool-btn" id="mobileRoundReset" type="button" disabled>刷 新</button>
+    </div>
+
+    <aside class="translation-panel" id="translationPanel" aria-live="polite" hidden>
+      <div class="panel-heading"><h2>本轮译文</h2></div>
+      <div class="record-list" id="translationRecords">
+        <p class="record-empty" id="translationRecordsEmpty">本轮尚无译文</p>
+      </div>
     </aside>
   </main>
 
-<script src="./data.js"></script>
-<script src="./app.js"></script>
+<script src="./data.js?v=20"></script>
+<script src="./app.js?v=20"></script>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
