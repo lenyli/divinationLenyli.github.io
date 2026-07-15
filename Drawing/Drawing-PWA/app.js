@@ -1,6 +1,7 @@
 (() => {
   const cup = document.getElementById('cup');
   const cupWrap = document.getElementById('cupWrap');
+  const shakeLotus = document.getElementById('shakeLotus');
   const sticksBox = document.getElementById('sticks');
   const flyStick = document.getElementById('flyStick');
   const card = document.getElementById('card');
@@ -24,7 +25,6 @@
   const invocation = document.getElementById('invocation');
   const hint = document.getElementById('hint');
   const scrollResult = document.getElementById('scrollResult');
-  const scrollShell = document.getElementById('scrollShell');
   const scrollLotNo = document.getElementById('scrollLotNo');
   const scrollVerse = document.getElementById('scrollVerse');
   const TIP_COLORS = ['#2459a6', '#e4bd2b', '#b33137', '#f4efe2', '#df7626'];
@@ -94,6 +94,7 @@
       lot.lines.slice(4).join('，')
     ]);
     appendTextRecord(translationRecords, lot, [lot.translation]);
+    if (isMobileLayout()) fadeMobileResult();
   }
 
   let busy = false;
@@ -109,6 +110,17 @@
     oracleLayout.dataset.mobileView = showingTranslation ? 'translation' : 'sign';
     mobileShowSign.setAttribute('aria-pressed', String(!showingTranslation));
     mobileShowTranslation.setAttribute('aria-pressed', String(showingTranslation));
+    fadeMobileResult();
+  }
+
+  function fadeMobileResult() {
+    if (!isMobileLayout()) return;
+    const panel = oracleLayout.dataset.mobileView === 'translation' ? translationPanel : lotRecordsPanel;
+    if (panel.hidden) return;
+    panel.classList.remove('mobile-result-fade');
+    void panel.offsetWidth;
+    panel.classList.add('mobile-result-fade');
+    setTimeout(() => panel.classList.remove('mobile-result-fade'), 320);
   }
 
   async function copyCurrentResult() {
@@ -176,9 +188,13 @@
     hint.textContent = '摇签中……';
     vibrate([60, 60, 60, 60, 60, 60, 120]);
 
+    shakeLotus.classList.remove('pulse');
+    void shakeLotus.offsetWidth;
+    shakeLotus.classList.add('pulse');
     cup.classList.add('shake');
     setTimeout(() => {
       cup.classList.remove('shake');
+      shakeLotus.classList.remove('pulse');
       flyStick.classList.add('fly');
       vibrate(80);
     }, 1600);
@@ -263,7 +279,6 @@
     invocationSeen = true;
     hint.textContent = '灌顶颂已诵，点击摇签';
   });
-  scrollShell.addEventListener('click', e => e.stopPropagation());
   scrollResult.addEventListener('click', closeScrollResult);
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeScrollResult();

@@ -1,16 +1,16 @@
 // 离线缓存
-const CACHE = 'drawing-lots-v20';
+const CACHE = 'drawing-lots-v21';
 const ASSETS = [
   './',
   './index.html',
-  './app.js?v=20',
-  './data.js?v=20',
+  './app.js?v=21',
+  './data.js?v=21',
   './assets/bamboo-slips.png',
   './assets/lotus-lacquer.png',
   './assets/cup-render.webp',
   './assets/sequence/cup-source.png',
   './assets/sequence/lot-transition-aligned.png',
-  './assets/sequence/lotus-overlay-source.png',
+  './assets/sequence/lotus-overlay.png',
   './assets/sequence/bg-landscape-source.png',
   './assets/sequence/bg-portrait-source.png',
   './manifest.webmanifest',

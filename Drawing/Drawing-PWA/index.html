@@ -22,18 +22,20 @@
 *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
 [hidden]{ display:none !important; }
 html,body{ height:100%; overflow:hidden; }
+html{ background:#071a37; }
 body{
   font-family:"Songti SC","Noto Serif SC","STSong","SimSun",serif;
-  background-color:#071a37;
-  background-image:url("./assets/sequence/bg-landscape-source.png");
-  background-position:center;
-  background-size:cover;
-  background-attachment:fixed;
+  position:relative; isolation:isolate; background:transparent;
   color:var(--gold);
   display:flex; flex-direction:column; align-items:center;
   padding:calc(12px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));
   user-select:none; -webkit-user-select:none;
   touch-action:manipulation;
+}
+body::before{
+  content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
+  width:100%; height:100vh; height:100dvh;
+  background:#071a37 url("./assets/sequence/bg-landscape-source.png") center/cover no-repeat;
 }
 
 header{ text-align:center; margin:8px 0 4px; flex:none; }
@@ -143,7 +145,7 @@ header p{ font-size:12px; letter-spacing:.2em; color:var(--gold-dim); margin-top
 #scrollResult{
   display:flex; position:fixed; inset:0; z-index:24;
   align-items:center; justify-content:center;
-  background:rgba(3,12,30,.78); backdrop-filter:blur(3px);
+  background:rgba(3,12,30,.78); cursor:pointer;
   opacity:0; visibility:hidden; pointer-events:none;
   transition:opacity .28s ease,visibility 0s linear .28s;
 }
@@ -153,7 +155,7 @@ header p{ font-size:12px; letter-spacing:.2em; color:var(--gold-dim); margin-top
 }
 .scroll-shell{
   position:relative; width:min(94vw,70.4vh,650px); aspect-ratio:1122/1402;
-  overflow:hidden; isolation:isolate;
+  overflow:hidden; isolation:isolate; pointer-events:none;
 }
 .scroll-background{ position:absolute; inset:0; width:100%; height:100%; object-fit:contain; pointer-events:none; }
 .scroll-copy{ position:absolute; z-index:3; color:#352211; pointer-events:none; }
@@ -182,6 +184,18 @@ header p{ font-size:12px; letter-spacing:.2em; color:var(--gold-dim); margin-top
   transform-origin:50% 95%;
 }
 #cup > .sticks,#cup > .barrel,#cup > .band,#cup > .lotus-base,#cup > .mark{ display:none; }
+#shakeLotus{
+  position:absolute; z-index:4; left:50%; top:62%; width:180px; height:180px;
+  object-fit:contain; transform:translate(-50%,-50%); opacity:0; pointer-events:none;
+}
+#shakeLotus.pulse{ animation:shakeLotusPulse 1.6s ease-in-out both; }
+@keyframes shakeLotusPulse{
+  0%,100%{ opacity:0; }
+  12%{ opacity:.55; } 24%{ opacity:0; }
+  38%{ opacity:.68; } 51%{ opacity:0; }
+  65%{ opacity:.72; } 79%{ opacity:0; }
+  91%{ opacity:.5; }
+}
 #cup.shake{ animation:cupShake 1.6s ease-in-out; }
 @keyframes cupShake{
   0%{ transform:rotate(0); }
@@ -364,7 +378,7 @@ button.btn[disabled]{ opacity:.4; pointer-events:none; }
 
 @media (max-width:920px){
   html,body{ height:auto; min-height:100%; overflow:auto; }
-  body{ padding-bottom:30px; }
+  body{ padding-bottom:calc(120px + env(safe-area-inset-bottom)); }
   #oracleLayout{ display:flex; flex-direction:column; align-items:center; gap:28px; }
   .center-column{ order:1; width:100%; min-height:620px; }
   .translation-panel{ order:2; width:min(88vw,520px); min-height:300px; }
@@ -372,7 +386,7 @@ button.btn[disabled]{ opacity:.4; pointer-events:none; }
   #stage{ min-height:470px; }
 }
 @media (orientation:portrait){
-  body{ background-image:url("./assets/sequence/bg-portrait-source.png"); }
+  body::before{ background-image:url("./assets/sequence/bg-portrait-source.png"); }
 }
 @media (max-width:480px){
   header h1{ font-size:23px; }
@@ -412,7 +426,9 @@ button.btn[disabled]{ opacity:.4; pointer-events:none; }
   #oracleLayout[data-mobile-view="sign"] .translation-panel{ display:none; }
   #oracleLayout[data-mobile-view="translation"] .sutra-panel{ display:none; }
   .record-list{ overflow:visible; padding-right:0; }
+  .mobile-result-fade{ animation:mobileResultFade .28s ease both; }
 }
+@keyframes mobileResultFade{ from{ opacity:0; } to{ opacity:1; } }
 </style>
 </head>
 <body>
@@ -479,6 +495,7 @@ button.btn[disabled]{ opacity:.4; pointer-events:none; }
             <div class="lotus-base" aria-hidden="true"></div>
             <div class="mark">神策</div>
           </div>
+          <img id="shakeLotus" src="./assets/sequence/lotus-overlay.png" alt="" aria-hidden="true">
           <div id="flyStick"></div>
         </div>
 
@@ -518,8 +535,8 @@ button.btn[disabled]{ opacity:.4; pointer-events:none; }
     </aside>
   </main>
 
-<script src="./data.js?v=20"></script>
-<script src="./app.js?v=20"></script>
+<script src="./data.js?v=21"></script>
+<script src="./app.js?v=21"></script>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
