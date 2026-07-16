@@ -114,10 +114,7 @@
     oracleLayout.classList.remove('empty-round');
     lotRecordsEmpty.hidden = true;
     translationRecordsEmpty.hidden = true;
-    appendTextRecord(lotRecords, lot, [
-      lot.lines.slice(0, 4).join('，'),
-      lot.lines.slice(4).join('，')
-    ]);
+    appendTextRecord(lotRecords, lot, [lot.lines.join('，')]);
     appendTextRecord(translationRecords, lot, [lot.translation]);
     if (isMobileLayout()) fadeMobileResult();
   }

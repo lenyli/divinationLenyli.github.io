@@ -11,7 +11,7 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" href="./icons/icon-192.png">
 <link rel="icon" href="./icons/icon-192.png">
-<link rel="stylesheet" href="./assets/fonts/lxgw-wenkai/lxgwwenkai-sign.css?v=25">
+<link rel="stylesheet" href="./assets/fonts/lxgw-wenkai/lxgwwenkai-sign.css?v=26">
 <style>
 :root{
   --bg1:#4a1414; --bg2:#2b0b0b;
@@ -97,6 +97,8 @@ header p{ font-size:12px; letter-spacing:.2em; color:var(--gold-dim); margin-top
 .record-entry:first-child{ padding-top:2px; }
 .record-entry strong{ color:#742a27; font-size:15px; line-height:1.8; }
 .record-entry p{ color:#302114; font-size:14px; line-height:1.9; text-align:justify; }
+#lotRecords .record-entry p{ font-size:13px; text-align:justify; text-align-last:left; }
+#lotRecords .record-entry strong{ font-size:inherit; line-height:inherit; }
 #roundReset{ flex:none; align-self:center; margin-top:14px; padding:9px 24px; font-size:14px; }
 .mobile-results-toolbar{ display:none; }
 .center-column{ min-height:0; display:flex; flex-direction:column; align-items:center; }
@@ -557,9 +559,9 @@ button.btn[disabled]{ opacity:.4; pointer-events:none; }
     </aside>
   </main>
 
-<script type="module" src="./programmatic-scroll.js?v=25"></script>
-<script src="./data.js?v=25"></script>
-<script src="./app.js?v=25"></script>
+<script type="module" src="./programmatic-scroll.js?v=26"></script>
+<script src="./data.js?v=26"></script>
+<script src="./app.js?v=26"></script>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
