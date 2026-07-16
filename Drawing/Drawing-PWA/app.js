@@ -25,6 +25,7 @@
   const invocation = document.getElementById('invocation');
   const hint = document.getElementById('hint');
   const scrollResult = document.getElementById('scrollResult');
+  const resultScroll = document.getElementById('resultScroll');
   const scrollLotNo = document.getElementById('scrollLotNo');
   const scrollVerse = document.getElementById('scrollVerse');
   const TIP_COLORS = ['#2459a6', '#e4bd2b', '#b33137', '#f4efe2', '#df7626'];
@@ -124,6 +125,8 @@
   let busy = false;
   let drawCount = 0;
   let invocationSeen = false;
+  let scrollAnimationFrame = 0;
+  let scrollState = 'hidden';
 
   function isMobileLayout() {
     return window.matchMedia('(max-width:600px)').matches;
@@ -172,6 +175,43 @@
     setTimeout(() => { copyCurrentResultBtn.textContent = original; }, 1200);
   }
 
+  function sizeResultScroll() {
+    const widthLimit = Math.min(window.innerWidth * .92, 840);
+    const heightLimit = Math.max(180, window.innerHeight * .58);
+    const paperHeight = Math.max(180, Math.min(360, heightLimit, widthLimit * .62));
+    const componentWidth = Math.min(widthLimit, paperHeight * 2.55);
+    const paperWidth = Math.max(180, componentWidth - 58);
+    const slatWidth = paperWidth / 14;
+    resultScroll.style.width = `${Math.round(componentWidth)}px`;
+    resultScroll.style.setProperty('--scroll-height', `${Math.round(paperHeight)}px`);
+    resultScroll.style.setProperty('--scroll-max-width', `${Math.round(paperWidth)}px`);
+    resultScroll.style.setProperty('--scroll-slat-width', `${slatWidth.toFixed(2)}px`);
+    resultScroll.style.setProperty('--scroll-verse-width', `${(slatWidth * 8).toFixed(2)}px`);
+    resultScroll.style.setProperty('--scroll-verse-font-size', `${Math.min(32, Math.max(20, slatWidth * .82)).toFixed(1)}px`);
+  }
+
+  function animateResultScroll(target, duration, onComplete) {
+    cancelAnimationFrame(scrollAnimationFrame);
+    const start = Number(resultScroll.progress ?? resultScroll.getAttribute('progress')) || 0;
+    const startedAt = performance.now();
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+    const runFor = reducedMotion ? 0 : duration;
+    const step = now => {
+      const linear = runFor ? Math.min(1, (now - startedAt) / runFor) : 1;
+      const eased = target > start
+        ? 1 - Math.pow(1 - linear, 3)
+        : Math.pow(linear, 3);
+      resultScroll.progress = start + (target - start) * eased;
+      if (linear < 1) {
+        scrollAnimationFrame = requestAnimationFrame(step);
+      } else {
+        scrollAnimationFrame = 0;
+        onComplete?.();
+      }
+    };
+    scrollAnimationFrame = requestAnimationFrame(step);
+  }
+
   function openScrollResult(lot) {
     const title = `第${cnNumber(lot.id)}签`;
     scrollLotNo.textContent = title;
@@ -181,13 +221,23 @@
       span.textContent = line;
       scrollVerse.appendChild(span);
     });
+    sizeResultScroll();
+    resultScroll.progress = 0;
+    scrollState = 'opening';
+    scrollResult.setAttribute('aria-hidden', 'false');
     scrollResult.classList.add('open');
+    animateResultScroll(1, 820, () => { scrollState = 'open'; });
   }
 
   function closeScrollResult() {
-    if (!scrollResult.classList.contains('open')) return;
-    scrollResult.classList.remove('open');
-    if (drawCount < 7) prepareNextDraw();
+    if (!scrollResult.classList.contains('open') || scrollState === 'closing') return;
+    scrollState = 'closing';
+    animateResultScroll(0, 560, () => {
+      scrollResult.classList.remove('open');
+      scrollResult.setAttribute('aria-hidden', 'true');
+      scrollState = 'hidden';
+      if (drawCount < 7) prepareNextDraw();
+    });
   }
 
   function updateRoundStatus() {
@@ -299,6 +349,8 @@
     hint.textContent = '灌顶颂已诵，点击摇签';
   });
   scrollResult.addEventListener('click', closeScrollResult);
+  window.addEventListener('resize', sizeResultScroll);
+  window.addEventListener('orientationchange', sizeResultScroll);
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeScrollResult();
   });
@@ -342,5 +394,6 @@
   }
 
   updateRoundStatus();
+  sizeResultScroll();
   enableMotion();
 })();

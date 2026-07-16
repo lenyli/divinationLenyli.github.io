@@ -11,6 +11,7 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" href="./icons/icon-192.png">
 <link rel="icon" href="./icons/icon-192.png">
+<link rel="stylesheet" href="./assets/fonts/lxgw-wenkai/lxgwwenkai-sign.css?v=25">
 <style>
 :root{
   --bg1:#4a1414; --bg2:#2b0b0b;
@@ -158,20 +159,38 @@ header p{ font-size:12px; letter-spacing:.2em; color:var(--gold-dim); margin-top
   opacity:1; visibility:visible; pointer-events:auto;
   transition-delay:0s;
 }
-.scroll-shell{
-  position:relative; width:min(94vw,70.4vh,650px); aspect-ratio:1122/1402;
-  overflow:hidden; isolation:isolate; pointer-events:none;
+#resultScroll{
+  display:block; flex:none; cursor:pointer;
+  --scroll-height:280px;
+  --scroll-max-width:680px;
+  --scroll-closed-width:46px;
+  --scroll-paper-color:#e4bd77;
+  --scroll-ink-color:#4b2017;
+  --scroll-rod-color:#682417;
+  --scroll-gold-color:#d7a94b;
+  --scroll-slat-width:44px;
+  --scroll-verse-width:352px;
+  --scroll-verse-font-size:30px;
+  --scroll-paper-image:url("./assets/sequence/scroll-paper-source.png");
+  --scroll-roll-image:url("./assets/sequence/scroll-roll-plain.png");
 }
-.scroll-background{ position:absolute; inset:0; width:100%; height:100%; object-fit:contain; pointer-events:none; }
-.scroll-copy{ position:absolute; z-index:3; color:#352211; pointer-events:none; }
-.scroll-sign-copy{ left:18%; right:18%; top:28%; bottom:25%; display:flex; flex-direction:column; align-items:center; }
-.scroll-lot-no{ color:#762c27; font-size:16px; font-weight:700; letter-spacing:.2em; margin-bottom:10px; }
-.scroll-verse{ flex:1; width:100%; display:flex; flex-direction:row-reverse; justify-content:center; align-items:center; gap:clamp(3px,.8vw,9px); }
-.scroll-verse span{ writing-mode:vertical-rl; font-size:clamp(18px,2vw,25px); line-height:1; letter-spacing:.3em; font-weight:600; }
-.scroll-verse span:nth-child(even){ transform:translateY(.5em); }
+.scroll-lot-no{
+  display:block; color:#762c27; font-family:"LXGW WenKai","Kaiti SC","STKaiti",serif;
+  font-size:clamp(17px,2.2vw,22px); font-weight:400; letter-spacing:.18em; text-indent:.18em;
+}
+.scroll-verse{
+  width:var(--scroll-verse-width); height:calc(var(--scroll-height) - 82px);
+  display:flex; flex-direction:row-reverse; justify-content:center; align-items:center;
+  color:#3d2114; font-family:"LXGW WenKai","Kaiti SC","STKaiti",serif;
+}
+.scroll-verse span{
+  flex:0 0 var(--scroll-slat-width); display:flex; justify-content:center; align-items:center;
+  writing-mode:vertical-rl; font-size:var(--scroll-verse-font-size); line-height:1;
+  letter-spacing:.22em; text-indent:.22em; font-weight:400;
+}
 @media (max-width:600px){
-  .scroll-shell{ width:min(98vw,70.4vh); }
-  .scroll-lot-no{ font-size:13px; margin-bottom:6px; }
+  .scroll-lot-no{ font-size:17px; }
+  .scroll-verse span{ letter-spacing:.16em; text-indent:.16em; }
 }
 
 #stage{
@@ -469,14 +488,11 @@ button.btn[disabled]{ opacity:.4; pointer-events:none; }
     </div>
   </div>
 
-  <div id="scrollResult" role="dialog" aria-modal="true" aria-label="本次签文">
-    <div class="scroll-shell" id="scrollShell">
-      <img class="scroll-background" src="./assets/sequence/lot-transition-aligned.png" alt="">
-      <div class="scroll-copy scroll-sign-copy">
-        <div class="scroll-lot-no" id="scrollLotNo"></div>
-        <div class="scroll-verse" id="scrollVerse"></div>
-      </div>
-    </div>
+  <div id="scrollResult" role="dialog" aria-modal="true" aria-label="本次签文" aria-hidden="true">
+    <programmatic-scroll id="resultScroll" progress="0" aria-label="点击收起签文卷轴">
+      <span slot="title" class="scroll-lot-no" id="scrollLotNo"></span>
+      <div slot="body" class="scroll-verse" id="scrollVerse"></div>
+    </programmatic-scroll>
   </div>
 
   <main id="oracleLayout" class="empty-round" data-mobile-view="sign">
@@ -541,8 +557,9 @@ button.btn[disabled]{ opacity:.4; pointer-events:none; }
     </aside>
   </main>
 
-<script src="./data.js?v=23"></script>
-<script src="./app.js?v=23"></script>
+<script type="module" src="./programmatic-scroll.js?v=25"></script>
+<script src="./data.js?v=25"></script>
+<script src="./app.js?v=25"></script>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
