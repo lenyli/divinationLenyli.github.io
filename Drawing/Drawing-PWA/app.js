@@ -173,18 +173,22 @@
   }
 
   function sizeResultScroll() {
+    const mobile = isMobileLayout();
     const widthLimit = Math.min(window.innerWidth * .92, 840);
     const heightLimit = Math.max(180, window.innerHeight * .58);
     const paperHeight = Math.max(180, Math.min(360, heightLimit, widthLimit * .62));
     const componentWidth = Math.min(widthLimit, paperHeight * 2.55);
     const paperWidth = Math.max(180, componentWidth - 58);
-    const slatWidth = paperWidth / 14;
+    const slatWidth = paperWidth / (mobile ? 14.45 : 14.48);
+    const verseFontSize = mobile
+      ? Math.min(19, Math.max(17, slatWidth * .78))
+      : Math.min(31, Math.max(20, slatWidth * .7));
     resultScroll.style.width = `${Math.round(componentWidth)}px`;
     resultScroll.style.setProperty('--scroll-height', `${Math.round(paperHeight)}px`);
     resultScroll.style.setProperty('--scroll-max-width', `${Math.round(paperWidth)}px`);
     resultScroll.style.setProperty('--scroll-slat-width', `${slatWidth.toFixed(2)}px`);
     resultScroll.style.setProperty('--scroll-verse-width', `${(slatWidth * 8).toFixed(2)}px`);
-    resultScroll.style.setProperty('--scroll-verse-font-size', `${Math.min(32, Math.max(20, slatWidth * .82)).toFixed(1)}px`);
+    resultScroll.style.setProperty('--scroll-verse-font-size', `${verseFontSize.toFixed(1)}px`);
   }
 
   function animateResultScroll(target, duration, onComplete) {

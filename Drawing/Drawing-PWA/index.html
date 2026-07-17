@@ -11,8 +11,12 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" href="./icons/icon-192.png">
 <link rel="icon" href="./icons/icon-192.png">
-<link rel="stylesheet" href="./assets/fonts/lxgw-wenkai/lxgwwenkai-sign.css?v=26">
 <style>
+@font-face{
+  font-family:"Fahua WenKai";
+  src:url("./assets/fonts/fahua-wenkai/FahuaWenKai-Regular.ttf") format("truetype");
+  font-style:normal; font-weight:400; font-display:swap;
+}
 :root{
   --bg1:#4a1414; --bg2:#2b0b0b;
   --gold:#d9b36c; --gold-dim:#a8854a;
@@ -173,26 +177,32 @@ header p{ font-size:12px; letter-spacing:.2em; color:var(--gold-dim); margin-top
   --scroll-slat-width:44px;
   --scroll-verse-width:352px;
   --scroll-verse-font-size:30px;
+  --scroll-verse-column-shift:15px;
+  --scroll-verse-letter-spacing:.18em;
   --scroll-paper-image:url("./assets/sequence/scroll-paper-source.png");
   --scroll-roll-image:url("./assets/sequence/scroll-roll-plain.png");
 }
 .scroll-lot-no{
-  display:block; color:#762c27; font-family:"LXGW WenKai","Kaiti SC","STKaiti",serif;
+  display:block; color:#762c27; font-family:"Fahua WenKai","Kaiti SC","STKaiti",serif;
   font-size:clamp(17px,2.2vw,22px); font-weight:400; letter-spacing:.18em; text-indent:.18em;
 }
 .scroll-verse{
   width:var(--scroll-verse-width); height:calc(var(--scroll-height) - 82px);
   display:flex; flex-direction:row-reverse; justify-content:center; align-items:center;
-  color:#3d2114; font-family:"LXGW WenKai","Kaiti SC","STKaiti",serif;
+  color:#3d2114; font-family:"Fahua WenKai","Kaiti SC","STKaiti",serif;
+  transform:translateX(var(--scroll-verse-column-shift));
 }
 .scroll-verse span{
   flex:0 0 var(--scroll-slat-width); display:flex; justify-content:center; align-items:center;
   writing-mode:vertical-rl; font-size:var(--scroll-verse-font-size); line-height:1;
-  letter-spacing:.22em; text-indent:.22em; font-weight:400;
+  letter-spacing:var(--scroll-verse-letter-spacing); text-indent:var(--scroll-verse-letter-spacing); font-weight:400;
 }
 @media (max-width:600px){
+  #resultScroll{
+    --scroll-verse-column-shift:-2px;
+    --scroll-verse-letter-spacing:.1em;
+  }
   .scroll-lot-no{ font-size:17px; }
-  .scroll-verse span{ letter-spacing:.16em; text-indent:.16em; }
 }
 
 #stage{
@@ -352,6 +362,7 @@ header p{ font-size:12px; letter-spacing:.2em; color:var(--gold-dim); margin-top
   box-shadow:inset 0 0 22px rgba(72,38,11,.3),inset 0 0 0 2px rgba(239,203,132,.28);
 }
 .face.front .lotNo{
+  font-family:"Fahua WenKai","Kaiti SC","STKaiti",serif;
   font-size:15px; letter-spacing:.3em; text-indent:.3em; color:#742a27;
   border-bottom:1px solid rgba(92,48,21,.46); padding-bottom:8px; margin-bottom:4px;
   width:100%; text-align:center; font-weight:700;
@@ -359,6 +370,7 @@ header p{ font-size:12px; letter-spacing:.2em; color:var(--gold-dim); margin-top
 .verse{
   flex:1; display:flex; flex-direction:row-reverse; align-items:center; justify-content:center;
   gap:clamp(3px,1vw,9px); width:100%;
+  font-family:"Fahua WenKai","Kaiti SC","STKaiti",serif;
 }
 .verse span{
   writing-mode:vertical-rl; font-size:clamp(18px,2.25vw,24px);
@@ -559,9 +571,9 @@ button.btn[disabled]{ opacity:.4; pointer-events:none; }
     </aside>
   </main>
 
-<script type="module" src="./programmatic-scroll.js?v=26"></script>
-<script src="./data.js?v=26"></script>
-<script src="./app.js?v=26"></script>
+<script type="module" src="./programmatic-scroll.js?v=28"></script>
+<script src="./data.js?v=28"></script>
+<script src="./app.js?v=28"></script>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {

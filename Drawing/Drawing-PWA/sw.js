@@ -1,13 +1,12 @@
 // 离线缓存
-const CACHE = 'drawing-lots-v26';
+const CACHE = 'drawing-lots-v28';
 const ASSETS = [
   './',
   './index.html',
-  './app.js?v=26',
-  './data.js?v=26',
-  './programmatic-scroll.js?v=26',
-  './assets/fonts/lxgw-wenkai/lxgwwenkai-sign.css?v=26',
-  './assets/fonts/lxgw-wenkai/LXGWWenKai-Sign.ttf',
+  './app.js?v=28',
+  './data.js?v=28',
+  './programmatic-scroll.js?v=28',
+  './assets/fonts/fahua-wenkai/FahuaWenKai-Regular.ttf',
   './assets/bamboo-slips.png',
   './assets/lotus-lacquer.png',
   './assets/cup-render.webp',
