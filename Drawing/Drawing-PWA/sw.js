@@ -1,11 +1,11 @@
 // 离线缓存
-const CACHE = 'drawing-lots-v28';
+const CACHE = 'drawing-lots-v29';
 const ASSETS = [
   './',
   './index.html',
-  './app.js?v=28',
-  './data.js?v=28',
-  './programmatic-scroll.js?v=28',
+  './app.js?v=29',
+  './data.js?v=29',
+  './programmatic-scroll.js?v=29',
   './assets/fonts/fahua-wenkai/FahuaWenKai-Regular.ttf',
   './assets/bamboo-slips.png',
   './assets/lotus-lacquer.png',
