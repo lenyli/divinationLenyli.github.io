@@ -184,7 +184,9 @@
       : Math.min(31, 19 + (slatWidth - 36) * .67);
     const spacingProgress = Math.min(1, Math.max(0, (slatWidth - 20.8) / 33.2));
     const verseLetterSpacing = 1.7 + 3.9 * spacingProgress * spacingProgress;
-    const verseColumnShift = Math.min(15, Math.max(-2, (paperWidth - 327) * .08));
+    const touchLayout = window.matchMedia('(pointer:coarse)').matches ||
+      navigator.maxTouchPoints > 0 || componentWidth < 620;
+    const verseColumnShift = touchLayout ? slatWidth * .5 : 15;
     resultScroll.style.width = `${Math.round(componentWidth)}px`;
     resultScroll.style.setProperty('--scroll-height', `${Math.round(paperHeight)}px`);
     resultScroll.style.setProperty('--scroll-max-width', `${Math.round(paperWidth)}px`);

@@ -1,11 +1,11 @@
 // 离线缓存
-const CACHE = 'drawing-lots-v29';
+const CACHE = 'drawing-lots-v30';
 const ASSETS = [
   './',
   './index.html',
-  './app.js?v=29',
-  './data.js?v=29',
-  './programmatic-scroll.js?v=29',
+  './app.js?v=30',
+  './data.js?v=30',
+  './programmatic-scroll.js?v=30',
   './assets/fonts/fahua-wenkai/FahuaWenKai-Regular.ttf',
   './assets/bamboo-slips.png',
   './assets/lotus-lacquer.png',
@@ -30,6 +30,8 @@ self.addEventListener('activate', e => {
     caches.keys().then(keys =>
       Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
     ).then(() => self.clients.claim())
+      .then(() => self.clients.matchAll({ type: 'window' }))
+      .then(clients => Promise.all(clients.map(client => client.navigate(client.url))))
   );
 });
 
