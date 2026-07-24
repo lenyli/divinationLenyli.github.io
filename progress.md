@@ -3,6 +3,12 @@
 > 仓库级记录。**具体改动请记到子项目自己的 progress**：[Divination](Divination/progress.md) · [Drawing](Drawing/progress.md)。
 > 同步副本见 Obsidian：`obsidian/Projects/zhanbu`。
 
+## 2026-07-24 · [cc] 配置项目级子 agent（父准则规则 8）
+
+- 写入 `.claude/agents/`（随本项目 git，不进父同步仓）：frontend-developer(sonnet)。主对话模型 Opus 4.8。
+- 分配原则：写码用 Sonnet／深度设计·推理用 Opus／轻量铺量用 Haiku，均可派发时按需临时覆盖。
+- 来源 agency-agents 库，已转 Claude 格式（name→kebab 小写、删 color/emoji/vibe、钉 `model:`，正文原样保留作系统提示）。
+
 ## 2026-07-23 · Divination 灵签乱码修复完成
 
 - **改了什么**：重写遗失的转换脚本 `Divination/gen_data.py`；修掉 `Divination.cs` 剩余 6 处 `U+E5F1`（第 4 处按用户指正为「命蹇时乖处是非」）；回流 PWA / iOS / macOS 三端；PWA 缓存版本升 v3。详见 [Divination/progress.md](Divination/progress.md)。
