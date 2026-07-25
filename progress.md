@@ -3,6 +3,12 @@
 > 仓库级记录。**具体改动请记到子项目自己的 progress**：[Divination](Divination/progress.md) · [Drawing](Drawing/progress.md)。
 > 同步副本见 Obsidian：`obsidian/Projects/zhanbu`。
 
+## 2026-07-25 · [cx] 配置项目级 Codex 子 agent（父准则规则 8）
+
+- **改了什么**：新增 `.codex/config.toml` 与 2 个仓库级 agent：frontend_developer（gpt-5.6-terra/medium）、pwa_release_checker（gpt-5.6-luna/low）。
+- **为什么改**：保留静态 PWA 前端执行职责，并新增专门核查 `sw.js` 缓存、版本和 GitHub Pages 子路径的轻量发布 agent；两者均明确保持 Divination/Drawing 独立。
+- **如何验证**：使用 Python `tomllib` 解析全部 TOML；确认 1 份项目配置、2 份 agent 配置均含必填字段，名称、模型和推理强度与议定清单一致。
+
 ## 2026-07-24 · [cc] 配置项目级子 agent（父准则规则 8）
 
 - 写入 `.claude/agents/`（随本项目 git，不进父同步仓）：frontend-developer(sonnet)。主对话模型 Opus 4.8。
