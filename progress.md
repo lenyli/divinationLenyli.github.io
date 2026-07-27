@@ -73,6 +73,32 @@
 - **为什么改**：项目准则要求每个项目在本地维护 `progress.md`，与 Obsidian 双向对齐。
 - **如何验证**：`git log` 最后一次提交为 2026-07-18「move」（目录整理）；此后 `Divination/Divination.cs` 于 2026-07-21 有文件改动但**未提交**，改动内容无记录；工作区无新增文件。
 
+
+## 当前状态（2026-07-27）
+
+仓库下是**两个相互独立的小项目**，各有 README 与 progress：
+
+| 子项目 | 内容 | 状态 |
+| --- | --- | --- |
+| **Divination** | 七模块综合占卜，四端（Windows/PWA/iOS/macOS），`Divination.cs` 为数据源 | 可用；乱码已修、英译/多语言/图标等已推进 |
+| **Drawing** | 梵天神策摇签 PWA，99 签 | 可用；**第 100 签疑缺** |
+
+- 两个 PWA 静态站点可用，GitHub Pages 发布路径已通
+- 近期大量改动**尚未提交**（等用户操作）
+
+## 检查列表
+
+- [x] Drawing 签文数据与 PWA
+- [x] Divination 综合占卜 PWA
+- [x] GitHub Pages 部署说明
+- [x] 统一仓库顶层 README ✅ 2026-07-23
+- [x] 两个子项目各自的 README 与 progress ✅ 2026-07-23
+- [x] 重写 `gen_data.py`、回流三端、清掉 7 处乱码 ✅ 2026-07-23
+- [ ] **提交** Divination / Drawing 近期改动
+- [ ] **核对 Drawing 第 397/398 条偈句，确认第 100 签是否补齐**
+- [ ] `make_excel.py` 内 Windows 绝对路径改为相对路径
+- [ ] 清理/归档历史 exe、ipa、Excel 原型是否还需保留
+
 ## 基线状态（截至 2026-07-21，状态：已完成）
 
 **已完成**
@@ -88,11 +114,14 @@
 - `DivinationOS.ipa`、`Divination-iOS`、`Divination-macOS`
 - `抽牌.xlsm`、`塔罗普通牌含义.xlsx`、`特殊牌.txt`
 
-**未完成**
+**当时未完成（部分已于后续条目闭环）**
 
-- 统一仓库顶层 README（目前说明主要在 Drawing 侧）
-- 清理/归档上述历史 exe、ipa、Excel 原型
-- iOS / macOS 包装是否继续维护
-- **`Divination.cs` 的 07-21 未提交改动需确认后提交或还原**
+- ~~统一仓库顶层 README~~ ✅ 2026-07-23
+- ~~重写 gen_data.py 并清乱码~~ ✅ 2026-07-23
+- 清理/归档上述历史 exe、ipa、Excel 原型是否还需保留
+- iOS / macOS 包装是否继续维护（已在继续维护多语言等）
+- **提交** Divination.cs / gen_data / 回流改动（仍待用户操作）
+- 核对 Drawing 第 397/398 条偈句，确认第 100 签是否补齐
+- `make_excel.py` 内 Windows 绝对路径改为相对路径
 
 > 2026-07-21 及之前的详细过程无本地记录，以上为回填基线。
