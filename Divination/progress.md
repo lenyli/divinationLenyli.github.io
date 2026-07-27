@@ -2,6 +2,12 @@
 
 > 每次实质更新在此追加一条（最新在上）。上级记录见 [`../progress.md`](../progress.md)，Obsidian 同步副本：`obsidian/Projects/zhanbu`。
 
+## 2026-07-27 · macOS 应用图标
+
+- **改了什么**：`Divination-macOS` 新增 `Assets.xcassets/AppIcon.appiconset`（小巫师图各尺寸），工程挂上 `ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon`。
+- **为什么改**：用户提供图标，要求 mac 端使用。
+- **如何验证**：Xcode 重新 Run；Dock / Finder 应显示新图标（若仍旧可清 DerivedData 或注销重登）。
+
 ## 2026-07-27 · 英文模式特殊牌选项另起一行（iOS + PWA）
 
 - **改了什么**：英文 UI 下塔罗「Include special cards」不再挤在子标签同一横滑行里，改为下一行显示；中文布局不变。PWA `app.js`/`index.html` 同步；`sw.js` → `v8`。

@@ -3,6 +3,12 @@
 > 仓库级记录。**具体改动请记到子项目自己的 progress**：[Divination](Divination/progress.md) · [Drawing](Drawing/progress.md)。
 > 同步副本见 Obsidian：`obsidian/Projects/zhanbu`。
 
+## 2026-07-27 · Divination macOS 应用图标
+
+- **改了什么**：macOS 工程加入 `Assets.xcassets/AppIcon`（小巫师图）。详见 [Divination/progress.md](Divination/progress.md)。
+- **为什么改**：用户指定图标。
+- **如何验证**：Xcode Run 后 Dock/Finder 显示新图标。
+
 ## 2026-07-27 · Divination 英文特殊牌选项另起一行
 
 - **改了什么**：iOS + PWA 英文模式下塔罗「Include special cards」改到标签下一行；中文不变；SW `v8`。详见 [Divination/progress.md](Divination/progress.md)。
