@@ -1,16 +1,201 @@
 // 占卜逻辑：完整移植自 Divination.cs
 'use strict';
 
-const MODS = ["首页","六爻","塔罗","雷诺曼","卢恩符文","占星骰子","玄天上帝感应灵签"];
-const MOD_TABS = ["首页","六爻","塔罗","雷诺曼","卢恩符文","占星骰子","灵签"];
-const TAROT_TABS = ["通用","YES OR NO","大牌"];
-const HOME_TABS = ["综合占卜","日期预测"];
+const LANG_KEY = 'divination_lang';
 const SPECIAL_TAROT_START = 156;
-const HELP_TEXT = "1. 首页-综合占卜：一次生成塔罗三张牌、雷诺曼三张、卢恩三枚、占星骰子、六爻。灵签只在历史记录中追加签头，界面结果和复制结果不包含灵签。\n\n"
-  + "2. 首页-日期预测：理论上无法验证准确时间，仅供参考，自行甄别。\n\n"
-  + "3. 塔罗-通用：默认不包含特殊牌；勾选“包含特殊牌”后，通用塔罗与首页综合占卜的塔罗部分都会纳入特殊牌。YES OR NO 与大牌不受此选项影响。\n\n"
-  + "4. 历史记录会保存30条，下次打开程序仍可查看。\n\n"
-  + "5. 复制结果可直接粘贴到AI解读。";
+
+const STR = {
+  zh: {
+    mods: ["首页","六爻","塔罗","雷诺曼","卢恩符文","占星骰子","玄天上帝感应灵签"],
+    modTabs: ["首页","六爻","塔罗","雷诺曼","卢恩符文","占星骰子","灵签"],
+    tarotTabs: ["通用","YES OR NO","大牌"],
+    homeTabs: ["综合占卜","日期预测"],
+    qianLabels: ["圣意","谋望","家宅","婚姻","失物","官事","行人","占病","解曰"],
+    cardPre: ["第一张","第二张","第三张"],
+    runePre: ["第一枚","第二枚","第三枚"],
+    liuYaoRows: [
+      ["本卦", "【事情的现状】"],
+      ["变卦", "【事情的最终结果】"],
+      ["互卦", "【事情发展过程中的内在矛盾/隐藏动态】"],
+      ["错卦", "【事情的反面状态，即\"不是什么\"】"],
+      ["综卦", "【从另一个角度看这件事，或错误处理方式的后果】"]
+    ],
+    inputLabel: "输入问题：",
+    copy: "复制结果",
+    clear: "清空",
+    history: "历史",
+    help: "说明",
+    histTitle: "历史记录",
+    histCopyAll: "复制全部",
+    histClearAll: "清除全部",
+    close: "关 闭",
+    ok: "确 定",
+    helpTitle: "使用说明",
+    copied: "已复制",
+    includeSpecial: "包含特殊牌",
+    dateWarn: "未作校准，仅供参考，自行甄别",
+    emptyQuestion: "（未填写问题）",
+    briefNote: "―― 简要说明 ――",
+    specialCards: "特殊牌",
+    none: "无",
+    histTitleFmt: name => `历史记录 - ${name}（最近30条）`,
+    specialWarnTitle: "特殊塔罗牌说明",
+    specialWarnText: "如果没有特殊牌义的解读包，建议给 AI 的解读不要使用特殊牌。",
+    am: "上午",
+    pm: "下午",
+    goHome: "占 卜",
+    goLiuYao: "起 卦",
+    goDice: "掷骰子",
+    goQian: "求 签",
+    goDraw: "抽 牌",
+    planet: "行星",
+    sign: "星座",
+    house: "宫位",
+    planetDesc: "【做什么：发挥这股能量】",
+    signDesc: "【怎么做：以这种方式】",
+    houseDesc: "【在哪里做：在这个领域】",
+    dongYao: "动爻",
+    dongYaoNone: "无",
+    shiYao: "世爻",
+    yingYao: "应爻",
+    tarotPred: "塔罗预测",
+    astroPred: "占星预测",
+    baseDuration: "基础时长",
+    unit: "计量单位",
+    adjustNum: "调整数字",
+    tarotOrder: "塔罗抽牌顺序",
+    astroDice: "占星骰子",
+    noWithinYear: "一年内无",
+    langBtn: "EN",
+    langTitle: "切换为 English",
+    helpText: "1. 首页-综合占卜：一次生成塔罗三张牌、雷诺曼三张、卢恩三枚、占星骰子、六爻。灵签只在历史记录中追加签头，界面结果和复制结果不包含灵签。\n\n"
+      + "2. 首页-日期预测：理论上无法验证准确时间，仅供参考，自行甄别。\n\n"
+      + "3. 塔罗-通用：默认不包含特殊牌；勾选“包含特殊牌”后，通用塔罗与首页综合占卜的塔罗部分都会纳入特殊牌。YES OR NO 与大牌不受此选项影响。若无特殊牌义解读包，建议给 AI 的解读不要使用特殊牌。\n\n"
+      + "4. 历史记录会保存30条，下次打开程序仍可查看。\n\n"
+      + "5. 复制结果可直接粘贴到AI解读。",
+    liuYaoSummary: (ben, dong, shi, ying, bian, hu, cuo, zong) => {
+      const dongText = dong.length ? dong.join("、") : "无";
+      return `本卦${ben[0]}，动爻${dongText}，世爻${ben[shi]}，应爻${ben[ying]}，变卦${bian[0]}，互卦${hu[0]}，错卦${cuo[0]}，综卦${zong[0]}；`;
+    }
+  },
+  en: {
+    mods: ["Home","I Ching","Tarot","Lenormand","Runes","Astro Dice","Fortune Slip"],
+    modTabs: ["Home","I Ching","Tarot","Lenormand","Runes","Astro Dice","Slip"],
+    tarotTabs: ["General","YES OR NO","Major"],
+    homeTabs: ["Combined","Date forecast"],
+    qianLabels: ["Oracle","Ambition","Home","Marriage","Lost item","Legal","Traveler","Illness","Summary"],
+    cardPre: ["Card 1","Card 2","Card 3"],
+    runePre: ["Rune 1","Rune 2","Rune 3"],
+    liuYaoRows: [
+      ["Primary", "【Current situation】"],
+      ["Changed", "【Final outcome】"],
+      ["Mutual", "【Hidden dynamics during the process】"],
+      ["Opposite", "【What it is not】"],
+      ["Inverted", "【Another angle, or consequences of mishandling】"]
+    ],
+    inputLabel: "Question:",
+    copy: "Copy",
+    clear: "Clear",
+    history: "History",
+    help: "Help",
+    histTitle: "History",
+    histCopyAll: "Copy all",
+    histClearAll: "Clear all",
+    close: "Close",
+    ok: "OK",
+    helpTitle: "Help",
+    copied: "Copied",
+    includeSpecial: "Include special cards",
+    dateWarn: "Uncalibrated; for reference only",
+    emptyQuestion: "(No question entered)",
+    briefNote: "―― Brief notes ――",
+    specialCards: "Special cards",
+    none: "None",
+    histTitleFmt: name => `History - ${name} (last 30)`,
+    specialWarnTitle: "About special Tarot cards",
+    specialWarnText: "If you do not have a meaning pack for special cards, do not include special cards when sending a reading to AI.",
+    am: "AM",
+    pm: "PM",
+    goHome: "Divine",
+    goLiuYao: "Cast",
+    goDice: "Roll",
+    goQian: "Draw slip",
+    goDraw: "Draw",
+    planet: "Planet",
+    sign: "Sign",
+    house: "House",
+    planetDesc: "【Action: how to apply this energy】",
+    signDesc: "【Manner: in this way】",
+    houseDesc: "【Area: in this life domain】",
+    dongYao: "Moving lines",
+    dongYaoNone: "None",
+    shiYao: "Self line",
+    yingYao: "Other line",
+    tarotPred: "Tarot timing",
+    astroPred: "Astro timing",
+    baseDuration: "Base duration",
+    unit: "Unit",
+    adjustNum: "Adjustment",
+    tarotOrder: "Tarot draw order",
+    astroDice: "Astro dice",
+    noWithinYear: "None within a year",
+    langBtn: "中文",
+    langTitle: "Switch to 中文",
+    helpText: "1. Home - Combined: draws 3 Tarot, 3 Lenormand, 3 Runes, astro dice, and I Ching in one go. The fortune slip is appended to history only; on-screen and copied results exclude the slip body.\n\n"
+      + "2. Home - Date forecast: timing cannot be verified; for reference only.\n\n"
+      + "3. Tarot - General: special cards off by default. When enabled, they apply to General and Home combined Tarot. YES OR NO and Major Arcana are unaffected. Without a special-card meaning pack, avoid including special cards in AI readings.\n\n"
+      + "4. History keeps the last 30 entries per module.\n\n"
+      + "5. Copy results and paste into an AI for interpretation.\n\n"
+      + "Note: card names, runes, and hexagrams remain in Chinese; fortune-slip text is translated in English mode.",
+    liuYaoSummary: (ben, dong, shi, ying, bian, hu, cuo, zong) => {
+      const dongText = dong.length ? dong.join(", ") : "None";
+      return `Primary ${ben[0]}, moving ${dongText}, self ${ben[shi]}, other ${ben[ying]}, changed ${bian[0]}, mutual ${hu[0]}, opposite ${cuo[0]}, inverted ${zong[0]};`;
+    }
+  }
+};
+
+function initLang() {
+  try {
+    const saved = localStorage.getItem(LANG_KEY);
+    if (saved === 'zh' || saved === 'en') return saved;
+  } catch (e) {}
+  const nav = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
+  return /^zh\b/.test(nav) ? 'zh' : 'en';
+}
+
+let lang = initLang();
+const L = () => STR[lang];
+
+function setLang(next) {
+  if (next !== 'zh' && next !== 'en') return;
+  lang = next;
+  try { localStorage.setItem(LANG_KEY, next); } catch (e) {}
+  document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+  applyStaticI18n();
+  renderAll();
+}
+
+function toggleLang() {
+  setLang(lang === 'zh' ? 'en' : 'zh');
+}
+
+function applyStaticI18n() {
+  const s = L();
+  $('input-label').textContent = s.inputLabel;
+  $('copy').textContent = s.copy;
+  $('clear').textContent = s.clear;
+  $('histbtn').textContent = s.history;
+  $('helpbtn').textContent = s.help;
+  $('hist-copy').textContent = s.histCopyAll;
+  $('hist-clear').textContent = s.histClearAll;
+  $('hist-close').textContent = s.close;
+  $('help-ok').textContent = s.ok;
+  $('help-title').textContent = s.helpTitle;
+  $('toast').textContent = s.copied;
+  const lb = $('langbtn');
+  lb.textContent = s.langBtn;
+  lb.title = s.langTitle;
+}
 
 const state = {
   curModule: 0, curTab: 0, curHomeTab: 0,
@@ -40,7 +225,8 @@ function renderSegs() {
 
 function timeStamp() {
   const t = new Date(), p = n => String(n).padStart(2,'0');
-  return `${t.getFullYear()}-${p(t.getMonth()+1)}-${p(t.getDate())} ${t.getHours()<12?'上午':'下午'}${p(t.getHours())}：${p(t.getMinutes())}`;
+  const s = L();
+  return `${t.getFullYear()}-${p(t.getMonth()+1)}-${p(t.getDate())} ${t.getHours()<12?s.am:s.pm}${p(t.getHours())}：${p(t.getMinutes())}`;
 }
 
 function toClipboard(s) {
@@ -111,13 +297,14 @@ function divineLiuYao(lines) {
   const zong = hexg(elem(h[0],h[1],h[2]), elem(h[3],h[4],h[5]));
   const dong=[];
   for (let i=0;i<6;i++) if (h[i].includes('○')) dong.push(POS[i]);
-  lines.push(["本卦", ben[0],  ben[3],  "【事情的现状】"]);
-  lines.push(["变卦", bian[0], bian[3], "【事情的最终结果】"]);
-  lines.push(["互卦", hu[0],   hu[3],   "【事情发展过程中的内在矛盾/隐藏动态】"]);
-  lines.push(["错卦", cuog[0], cuog[3], "【事情的反面状态，即\"不是什么\"】"]);
-  lines.push(["综卦", zong[0], zong[3], "【从另一个角度看这件事，或错误处理方式的后果】"]);
-  return "本卦"+ben[0]+"，动爻"+dong.join("、")+"，世爻"+ben[1]+"，应爻"+ben[2]
-       +"，变卦"+bian[0]+"，互卦"+hu[0]+"，错卦"+cuog[0]+"，综卦"+zong[0]+"；";
+  const rows = L().liuYaoRows;
+  lines.push([rows[0][0], ben[0],  ben[3],  rows[0][1]]);
+  lines.push([rows[1][0], bian[0], bian[3], rows[1][1]]);
+  lines.push([rows[2][0], hu[0],   hu[3],   rows[2][1]]);
+  lines.push([rows[3][0], cuog[0], cuog[3], rows[3][1]]);
+  lines.push([rows[4][0], zong[0], zong[3], rows[4][1]]);
+  const s = L();
+  return s.liuYaoSummary(ben, dong, 1, 2, bian, hu, cuog, zong);
 }
 
 // ================= 占星骰子 =================
@@ -126,36 +313,41 @@ function cjk(s) {
   return m ? m[0] : s;
 }
 function divineAstro(lines) {
-  const p = PLANETS[rnd(12)], s = SIGNS[rnd(12)], h = HOUSES[rnd(12)];
-  lines.push(["行星", p[0], p[1], "【做什么：发挥这股能量】"]);
-  lines.push(["星座", s[0], s[1], "【怎么做：以这种方式】"]);
-  lines.push(["宫位", h[0], h[1], "【在哪里做：在这个领域】"]);
-  return cjk(p[0])+"、"+cjk(s[0])+"、"+h[0]+"；";
+  const s = L();
+  const p = PLANETS[rnd(12)], sg = SIGNS[rnd(12)], h = HOUSES[rnd(12)];
+  lines.push([s.planet, p[0], p[1], s.planetDesc]);
+  lines.push([s.sign, sg[0], sg[1], s.signDesc]);
+  lines.push([s.house, h[0], h[1], s.houseDesc]);
+  return cjk(p[0])+"、"+cjk(sg[0])+"、"+h[0]+"；";
 }
 
 // ================= 雷诺曼 / 卢恩 =================
 function divineLenormand(lines) {
   const idx=[];
   while (idx.length<3){ const i=rnd(LENORMAND.length); if(!idx.includes(i)) idx.push(i); }
-  const pre=["第一张","第二张","第三张"], names=[];
+  const pre = L().cardPre, names=[];
   idx.forEach((v,k)=>{ names.push(LENORMAND[v][0]); lines.push([pre[k],LENORMAND[v][0],LENORMAND[v][1],""]); });
   return names.join("、")+"；";
 }
 function divineRunes(lines) {
   const idx=[], used=[];
   while (idx.length<3){ const i=rnd(RUNES.length); if(!used.includes(RUNES[i][2])){ idx.push(i); used.push(RUNES[i][2]); } }
-  const pre=["第一枚","第二枚","第三枚"], names=[];
+  const pre = L().runePre, names=[];
   idx.forEach((v,k)=>{ names.push(RUNES[v][0]); lines.push([pre[k],RUNES[v][0],RUNES[v][1],""]); });
   return names.join("、")+"；";
 }
 
 // ================= 灵签 =================
-const QIAN_LABELS = ["圣意","谋望","家宅","婚姻","失物","官事","行人","占病","解曰"];
+function qianTable() {
+  return (lang === 'en' && typeof QIAN_EN !== 'undefined') ? QIAN_EN : QIAN;
+}
 function divineQian(q) {
-  const s = QIAN[rnd(QIAN.length)];
+  const table = qianTable();
+  const s = table[rnd(table.length)];
+  const labels = L().qianLabels;
   const head = s[0]+"　"+s[1]+"　"+s[2];
   let sb = q+"："+head;
-  QIAN_LABELS.forEach((lb,i)=>{ sb += "\n"+lb+"："+s[i+3]; });
+  labels.forEach((lb,i)=>{ sb += "\n"+lb+"："+s[i+3]; });
   state.copyText = sb;
   addHistory();
   state.segs = [];
@@ -163,11 +355,12 @@ function divineQian(q) {
   flushOut();
 }
 function appendQian(s) {
+  const labels = L().qianLabels;
   segC(s[0]+"　"+s[1]+"　"+s[2]+"\n");
-  QIAN_LABELS.forEach((lb,i)=>{
+  labels.forEach((lb,i)=>{
     seg(lb+"：",{bold:true});
     seg(s[i+3]);
-    if (i<QIAN_LABELS.length-1) seg("\n");
+    if (i<labels.length-1) seg("\n");
   });
 }
 
@@ -206,12 +399,13 @@ function tarotDraw(q, gen, lo, hi) {
     if (gen) state.sessGen=h.length-1; else state.sessMaj=h.length-1;
   }
   saveHistories();
+  const s = L();
   state.segs=[];
-  seg(state.copyText+"\n\n―― 简要说明 ――\n");
+  seg(state.copyText+"\n\n"+s.briefNote+"\n");
   if (gen) {
     const specials = drawn.filter(i=>i>=SPECIAL_TAROT_START).map(i=>TAROT[i][0]);
-    seg("特殊牌",{bold:true});
-    seg("："+(specials.length?specials.join("、"):"无")+"\n");
+    seg(s.specialCards,{bold:true});
+    seg("："+(specials.length?specials.join("、"):s.none)+"\n");
   }
   drawn.forEach((d,k)=>{
     seg(TAROT[d][0],{bold:true});
@@ -245,12 +439,13 @@ function divineHome(q) {
   const runes = divineRunes(dummy);
   const astro = divineAstro(dummy);
   const liuyao = divineLiuYao(dummy);
-  const qs = QIAN[rnd(QIAN.length)];
+  const qTable = qianTable();
+  const qs = qTable[rnd(qTable.length)];
   const qianHead = qs[0]+"　"+qs[1]+"　"+qs[2];
-  state.copyText = q+"："+tarot+len+runes+astro+liuyao; // 复制不含灵签
-  addHistoryText(state.copyText+"\n"+qianHead);         // 历史仅追加灵签签头
+  state.copyText = q+"："+tarot+len+runes+astro+liuyao;
+  addHistoryText(state.copyText+"\n"+qianHead);
   state.segs=[];
-  seg(state.copyText+"\n");                             // 界面显示包含灵签全文
+  seg(state.copyText+"\n");
   appendQian(qs);
   flushOut();
 }
@@ -265,8 +460,9 @@ function divineDate(q) {
     drawn.push(name);
     if (["权杖1","圣杯1","宝剑1","星币1"].includes(name)){ ace=name; break; }
   }
+  const s = L();
   let tarotResult=null;
-  if (ace===null) tarotResult="一年内无";
+  if (ace===null) tarotResult=s.noWithinYear;
   else {
     let season=null;
     for (const row of DATE12){
@@ -279,15 +475,15 @@ function divineDate(q) {
     }
     if (tarotResult===null) tarotResult=season+"季";
   }
-  const p2=PLANETS[rnd(12)], s2=SIGNS[rnd(12)], h2=HOUSES[rnd(12)];
-  state.copyText = q+"\n塔罗预测："+tarotResult+"\n\n占星预测：\n基础时长："+p2[2]+"\n计量单位："+s2[2]+"\n调整数字："+h2[2];
+  const p2=PLANETS[rnd(12)], sg2=SIGNS[rnd(12)], h2=HOUSES[rnd(12)];
+  state.copyText = q+"\n"+s.tarotPred+"："+tarotResult+"\n\n"+s.astroPred+"：\n"+s.baseDuration+"："+p2[2]+"\n"+s.unit+"："+sg2[2]+"\n"+s.adjustNum+"："+h2[2];
   addHistory();
   state.segs=[];
-  seg(state.copyText+"\n\n―― 简要说明 ――\n");
-  seg("塔罗抽牌顺序",{bold:true});
+  seg(state.copyText+"\n\n"+s.briefNote+"\n");
+  seg(s.tarotOrder,{bold:true});
   seg("："+drawn.join("、")+"\n");
-  seg("占星骰子",{bold:true});
-  seg("："+cjk(p2[0])+"、"+cjk(s2[0])+"、"+h2[0]);
+  seg(s.astroDice,{bold:true});
+  seg("："+cjk(p2[0])+"、"+cjk(sg2[0])+"、"+h2[0]);
   flushOut();
 }
 
@@ -313,26 +509,28 @@ function loadHistories(){
 function $(id){ return document.getElementById(id); }
 
 function goText(){
+  const s = L();
   switch(state.curModule){
-    case 0: return "占 卜"; case 1: return "起 卦";
-    case 5: return "掷骰子"; case 6: return "求 签";
-    default: return "抽 牌";
+    case 0: return s.goHome; case 1: return s.goLiuYao;
+    case 5: return s.goDice; case 6: return s.goQian;
+    default: return s.goDraw;
   }
 }
 
 function renderTabs(){
+  const s = L();
   const bar=$('modbar'); bar.innerHTML='';
-  MOD_TABS.forEach((t,i)=>{
+  s.modTabs.forEach((t,i)=>{
     const b=document.createElement('button');
     b.className='tab'+(state.curModule===i?' sel':'');
-    b.textContent=t; b.title=MODS[i];
+    b.textContent=t; b.title=s.mods[i];
     b.onclick=()=>{ saveState(); state.curModule=i; restoreState(); renderAll(); };
     bar.appendChild(b);
   });
   const sub=$('subbar'); sub.innerHTML=''; sub.style.display='none';
   if (state.curModule===2){
     sub.style.display='flex';
-    TAROT_TABS.forEach((t,i)=>{
+    s.tarotTabs.forEach((t,i)=>{
       const b=document.createElement('button');
       b.className='tab'+(state.curTab===i?' sel':'');
       b.textContent=t;
@@ -341,12 +539,16 @@ function renderTabs(){
     });
     const lb=document.createElement('label'); lb.className='chk';
     const c=document.createElement('input'); c.type='checkbox'; c.checked=state.includeSpecial;
-    c.onchange=()=>{ state.includeSpecial=c.checked; resetTarotSessions(); };
-    lb.appendChild(c); lb.appendChild(document.createTextNode('包含特殊牌'));
+    c.onchange=()=>{
+      state.includeSpecial=c.checked;
+      resetTarotSessions();
+      if (c.checked) openSpecialWarn();
+    };
+    lb.appendChild(c); lb.appendChild(document.createTextNode(s.includeSpecial));
     sub.appendChild(lb);
   } else if (state.curModule===0){
     sub.style.display='flex';
-    HOME_TABS.forEach((t,i)=>{
+    s.homeTabs.forEach((t,i)=>{
       const b=document.createElement('button');
       b.className='tab'+(state.curHomeTab===i?' sel':'');
       b.textContent=t;
@@ -355,7 +557,7 @@ function renderTabs(){
     });
     if (state.curHomeTab===1){
       const w=document.createElement('span'); w.className='warn';
-      w.textContent='未作校准，仅供参考，自行甄别';
+      w.textContent=s.dateWarn;
       sub.appendChild(w);
     }
   }
@@ -366,7 +568,7 @@ function renderAll(){ renderTabs(); }
 
 function divine(){
   let q=$('q').value.trim();
-  if (!q) q="（未填写问题）";
+  if (!q) q=L().emptyQuestion;
   if (state.curModule===0){ state.curHomeTab===0 ? divineHome(q) : divineDate(q); }
   else if (state.curModule===6) divineQian(q);
   else if (state.curModule===2) divineTarot(q);
@@ -380,7 +582,8 @@ function divine(){
     state.copyText=q+"："+result;
     state.segs=[];
     addHistory();
-    seg(state.copyText+"\n\n―― 简要说明 ――\n");
+    const s = L();
+    seg(state.copyText+"\n\n"+s.briefNote+"\n");
     lines.forEach((ln,i)=>{
       seg(ln[0]);
       seg(ln[1],{bold:true});
@@ -402,10 +605,18 @@ function clearPage(){
   state.pageHtml[p]=null; state.pageCopy[p]=null;
 }
 
-// 历史弹窗
+function openSpecialWarn(){
+  const s = L();
+  $('special-title').textContent = s.specialWarnTitle;
+  $('special-body').textContent = s.specialWarnText;
+  $('special-ok').textContent = s.ok;
+  $('special-warn').style.display = 'flex';
+}
+
 function openHistory(){
   const mod=state.curModule;
-  $('hist-title').textContent='历史记录 - '+MODS[mod]+'（最近30条）';
+  const s = L();
+  $('hist-title').textContent=s.histTitleFmt(s.mods[mod]);
   renderHistoryBody(mod);
   $('hist-copy').onclick=()=>{
     const h=state.histories[mod];
@@ -429,14 +640,17 @@ function renderHistoryBody(mod){
 
 // ================= 初始化 =================
 window.addEventListener('DOMContentLoaded', ()=>{
+  document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
   loadHistories();
+  applyStaticI18n();
   renderAll();
   $('go').onclick=divine;
   $('q').addEventListener('keydown',e=>{ if(e.key==='Enter') divine(); });
   $('copy').onclick=()=>{ if(state.copyText) toClipboard(state.copyText); };
   $('clear').onclick=clearPage;
   $('histbtn').onclick=openHistory;
-  $('helpbtn').onclick=()=>{ $('help-body').textContent=HELP_TEXT; $('help').style.display='flex'; };
+  $('helpbtn').onclick=()=>{ $('help-body').textContent=L().helpText; $('help').style.display='flex'; };
+  $('langbtn').onclick=toggleLang;
   document.querySelectorAll('.modal-close').forEach(b=>{
     b.onclick=()=>{ b.closest('.modal').style.display='none'; };
   });

@@ -32,7 +32,12 @@ body{
   padding:10px; padding-top:calc(10px + env(safe-area-inset-top));
   max-width:760px; margin:0 auto;
 }
-#modbar{ display:flex; gap:4px; }
+#topbar{ display:flex; gap:6px; align-items:center; }
+#modbar{ display:flex; gap:4px; flex:1; min-width:0; }
+#langbtn{
+  flex:0 0 auto; padding:7px 10px; font-size:13px; border:1px solid var(--border);
+  background:var(--card); border-radius:6px; cursor:pointer; white-space:nowrap;
+}
 #modbar .tab{ flex:1 1 0; min-width:0; padding:7px 2px; font-size:clamp(11px,2.9vw,15px); text-align:center; }
 #subbar{ display:none; gap:6px; align-items:center; flex-wrap:wrap; }
 .tab{
@@ -93,10 +98,13 @@ body{
 </style>
 </head>
 <body>
-  <div id="modbar"></div>
+  <div id="topbar">
+    <div id="modbar"></div>
+    <button type="button" id="langbtn" title="Switch language">EN</button>
+  </div>
   <div id="subbar"></div>
   <div id="inrow">
-    <span>输入问题：</span><input id="q" type="text">
+    <span id="input-label">输入问题：</span><input id="q" type="text">
   </div>
   <div id="btnrow">
     <button id="go">占 卜</button>
@@ -114,17 +122,27 @@ body{
       <div class="modal-btns">
         <button id="hist-copy">复制全部</button>
         <button id="hist-clear">清除全部</button>
-        <button class="modal-close">关 闭</button>
+        <button class="modal-close" id="hist-close">关 闭</button>
       </div>
     </div>
   </div>
 
   <div class="modal" id="help">
     <div class="modal-box">
-      <h3>使用说明</h3>
+      <h3 id="help-title">使用说明</h3>
       <div class="modal-body" id="help-body"></div>
       <div class="modal-btns">
-        <button class="modal-close">确 定</button>
+        <button class="modal-close" id="help-ok">确 定</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="special-warn">
+    <div class="modal-box">
+      <h3 id="special-title">特殊塔罗牌说明</h3>
+      <div class="modal-body" id="special-body"></div>
+      <div class="modal-btns">
+        <button class="modal-close" id="special-ok">确 定</button>
       </div>
     </div>
   </div>
@@ -132,6 +150,7 @@ body{
   <div id="toast">已复制</div>
 
 <script src="data.js"></script>
+<script src="qian-en.js"></script>
 <script src="app.js"></script>
 <script>
   if ('serviceWorker' in navigator) {

@@ -3,6 +3,30 @@
 > 仓库级记录。**具体改动请记到子项目自己的 progress**：[Divination](Divination/progress.md) · [Drawing](Drawing/progress.md)。
 > 同步副本见 Obsidian：`obsidian/Projects/zhanbu`。
 
+## 2026-07-27 · Divination iOS/macOS 同步多语言与特殊牌说明
+
+- **改了什么**：iOS / macOS 同步 PWA 能力——中英自动检测 + 手动切换（`UserDefaults`）、49 签英译、六爻「动爻无」、启用特殊牌弹窗说明。详见 [Divination/progress.md](Divination/progress.md)。
+- **为什么改**：用户确认 PWA 效果后要求原生端同样改。
+- **如何验证**：两端 `xcodebuild` Debug 均 **BUILD SUCCEEDED**。
+
+## 2026-07-27 · Divination PWA 灵签英译 + 特殊牌启用说明
+
+- **改了什么**：PWA 新增 `qian-en.js`（49 签全文英译）；英文模式显示英文签文；启用「包含特殊牌」时弹中英说明（无特殊牌义解读包则勿交 AI）；SW 升 `v7`。详见 [Divination/progress.md](Divination/progress.md)。
+- **为什么改**：用户要先在 PWA 看签文英译效果，并在打开特殊牌时给出 AI 解读提醒。
+- **如何验证**：本地 8765 硬刷新；EN 求签见英文正文；勾选特殊牌见弹窗。
+
+## 2026-07-27 · Divination「无挂碍」补修 + PWA 多语言 + 六爻动爻无
+
+- **改了什么**：第二十九签「无坚碍」→「无挂碍」（用户确认，仅此一处）；`gen_data.py` 回流三端；PWA 加中英自动检测 + 手动切换（`localStorage`）；六爻无动爻时显示「动爻无」/ `moving None`；SW 缓存升 v6。详见 [Divination/progress.md](Divination/progress.md)。
+- **为什么改**：用户确认用字；PWA 需非中文环境默认可用英文 UI。
+- **如何验证**：`gen_data.py --check` 通过；本地 `python3 -m http.server 8080` 预览 PWA 语言切换。
+
+## 2026-07-27 · Divination 玄天灵签 OCR 错字批量修正
+
+- **改了什么**：修正 `Divination.cs` 中 QIAN 高置信 OCR/录入错字（如有绿→有缘、综迹→踪迹等），`gen_data.py` 回流三端，PWA 缓存升 v4。详见 [Divination/progress.md](Divination/progress.md)。
+- **为什么改**：签文数据源本身是识别/录入错误，不是「原文如此、不要改」。
+- **如何验证**：`gen_data.py --check` 通过；关键错形抽检已就位；存疑项已在子项目 progress 单列未改。
+
 ## 2026-07-25 · [cx] 配置项目级 Codex 子 agent（父准则规则 8）
 
 - **改了什么**：新增 `.codex/config.toml` 与 2 个仓库级 agent：frontend_developer（gpt-5.6-terra/medium）、pwa_release_checker（gpt-5.6-luna/low）。

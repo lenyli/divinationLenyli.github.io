@@ -11,6 +11,8 @@
 		AA00000000000000000000B2 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000000000000000000F2 /* ContentView.swift */; };
 		AA00000000000000000000B3 /* Engine.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000000000000000000F3 /* Engine.swift */; };
 		AA00000000000000000000B4 /* DivinationData.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000000000000000000F4 /* DivinationData.swift */; };
+		AA00000000000000000000B5 /* L10n.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000000000000000000F5 /* L10n.swift */; };
+		AA00000000000000000000B6 /* QianEnData.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000000000000000000F6 /* QianEnData.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -18,6 +20,8 @@
 		AA00000000000000000000F2 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		AA00000000000000000000F3 /* Engine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Engine.swift; sourceTree = "<group>"; };
 		AA00000000000000000000F4 /* DivinationData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DivinationData.swift; sourceTree = "<group>"; };
+		AA00000000000000000000F5 /* L10n.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = L10n.swift; sourceTree = "<group>"; };
+		AA00000000000000000000F6 /* QianEnData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QianEnData.swift; sourceTree = "<group>"; };
 		AA00000000000000000000FA /* Divination.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Divination.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -47,6 +51,8 @@
 				AA00000000000000000000F2 /* ContentView.swift */,
 				AA00000000000000000000F3 /* Engine.swift */,
 				AA00000000000000000000F4 /* DivinationData.swift */,
+				AA00000000000000000000F5 /* L10n.swift */,
+				AA00000000000000000000F6 /* QianEnData.swift */,
 			);
 			path = Divination;
 			sourceTree = "<group>";
@@ -131,6 +137,8 @@
 				AA00000000000000000000B2 /* ContentView.swift in Sources */,
 				AA00000000000000000000B3 /* Engine.swift in Sources */,
 				AA00000000000000000000B4 /* DivinationData.swift in Sources */,
+				AA00000000000000000000B5 /* L10n.swift in Sources */,
+				AA00000000000000000000B6 /* QianEnData.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -1,10 +1,11 @@
 // 离线缓存
-const CACHE = 'divination-v3';
+const CACHE = 'divination-v7';
 const ASSETS = [
   './',
   './index.html',
   './app.js',
   './data.js',
+  './qian-en.js',
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png'

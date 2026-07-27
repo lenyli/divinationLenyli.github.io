@@ -35,23 +35,27 @@ struct ContentView: View {
     @StateObject var eng = Engine()
     @State private var showHistory = false
     @State private var showHelp = false
+    @State private var showSpecialWarn = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            // 模块行
             HStack(spacing: 6) {
                 ForEach(0..<eng.mods.count, id: \.self) { i in
                     TabButton(title: eng.mods[i], selected: eng.curModule == i) { eng.switchModule(i) }
                 }
+                Spacer(minLength: 8)
+                Button(eng.S.langBtn) { eng.toggleLang() }
             }
-            // 子标签行
             if eng.curModule == 2 {
                 HStack(spacing: 6) {
                     ForEach(0..<eng.tarotTabs.count, id: \.self) { i in
                         TabButton(title: eng.tarotTabs[i], selected: eng.curTab == i) { eng.switchTab(i) }
                     }
-                    Toggle("包含特殊牌", isOn: $eng.includeSpecial)
-                        .onChange(of: eng.includeSpecial) { _ in eng.resetTarotSessions() }
+                    Toggle(eng.S.includeSpecial, isOn: $eng.includeSpecial)
+                        .onChange(of: eng.includeSpecial) { newVal in
+                            eng.resetTarotSessions()
+                            if newVal { showSpecialWarn = true }
+                        }
                 }
             }
             if eng.curModule == 0 {
@@ -60,26 +64,23 @@ struct ContentView: View {
                         TabButton(title: eng.homeTabs[i], selected: eng.curHomeTab == i) { eng.switchHomeTab(i) }
                     }
                     if eng.curHomeTab == 1 {
-                        Text("未作校准，仅供参考，自行甄别").bold().foregroundColor(.red)
+                        Text(eng.S.dateWarn).bold().foregroundColor(.red)
                     }
                 }
             }
-            // 输入
             HStack {
-                Text("输入问题：")
+                Text(eng.S.inputLabel)
                 TextField("", text: $eng.question)
                     .textFieldStyle(.roundedBorder)
                     .onSubmit { eng.divine() }
             }
-            // 按钮行
             HStack(spacing: 10) {
                 Button(eng.goButtonText) { eng.divine() }.keyboardShortcut(.defaultAction)
-                Button("复制结果") { eng.copyResult() }
-                Button("清 空") { eng.clearPage() }
-                Button("历史记录") { showHistory = true }
-                Button("使用说明") { showHelp = true }
+                Button(eng.S.copy) { eng.copyResult() }
+                Button(eng.S.clear) { eng.clearPage() }
+                Button(eng.S.history) { showHistory = true }
+                Button(eng.S.help) { showHelp = true }
             }
-            // 输出
             ScrollView {
                 Text(render(eng.output))
                     .textSelection(.enabled)
@@ -91,14 +92,19 @@ struct ContentView: View {
         }
         .padding(14)
         .frame(minWidth: 700, minHeight: 540)
-        .overlay { CopiedToast(show: eng.showCopied) }
+        .overlay { CopiedToast(show: eng.showCopied, text: eng.S.copied) }
         .sheet(isPresented: $showHistory) {
             HistoryView(eng: eng, module: eng.curModule)
         }
-        .alert("使用说明", isPresented: $showHelp) {
-            Button("确定", role: .cancel) {}
+        .alert(eng.S.helpTitle, isPresented: $showHelp) {
+            Button(eng.S.ok, role: .cancel) {}
         } message: {
             Text(eng.helpText)
+        }
+        .alert(eng.S.specialWarnTitle, isPresented: $showSpecialWarn) {
+            Button(eng.S.ok, role: .cancel) {}
+        } message: {
+            Text(eng.S.specialWarnText)
         }
     }
 }
@@ -127,7 +133,7 @@ struct HistoryView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("历史记录 - \(eng.mods[module])（最近30条）").font(.headline)
+            Text(eng.S.histTitleLong(eng.mods[module])).font(.headline)
             ScrollView {
                 Text(attributed)
                     .textSelection(.enabled)
@@ -137,27 +143,28 @@ struct HistoryView: View {
             .background(Color(NSColor.textBackgroundColor))
             .overlay(RoundedRectangle(cornerRadius: 4).stroke(Color.gray.opacity(0.4)))
             HStack {
-                Button("复制全部") {
+                Button(eng.S.histCopyAll) {
                     let h = eng.histories[module]
                     if !h.isEmpty { Engine.toClipboard(h.joined(separator: "\n\n")); eng.flashCopied() }
                 }
-                Button("清除全部") { eng.clearHistory(module: module) }
+                Button(eng.S.histClearAll) { eng.clearHistory(module: module) }
                 Spacer()
-                Button("关 闭") { dismiss() }.keyboardShortcut(.cancelAction)
+                Button(eng.S.close) { dismiss() }.keyboardShortcut(.cancelAction)
             }
         }
         .padding(14)
         .frame(minWidth: 620, minHeight: 480)
-        .overlay { CopiedToast(show: eng.showCopied) }
+        .overlay { CopiedToast(show: eng.showCopied, text: eng.S.copied) }
     }
 }
 
 struct CopiedToast: View {
     let show: Bool
+    let text: String
     var body: some View {
         Group {
             if show {
-                Text("已复制")
+                Text(text)
                     .font(.system(size: 15, weight: .bold))
                     .foregroundColor(.white)
                     .padding(.horizontal, 22).padding(.vertical, 12)
