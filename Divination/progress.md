@@ -2,6 +2,12 @@
 
 > 每次实质更新在此追加一条（最新在上）。上级记录见 [`../progress.md`](../progress.md)，Obsidian 同步副本：`obsidian/Projects/zhanbu`。
 
+## 2026-07-27 · iOS 英文模块标签两行排版
+
+- **改了什么**：英文模式下模块标签在 Lenormand / Runes 之间换行（上：Home…Lenormand；下：Runes…Slip）；中文仍单行。
+- **为什么改**：手机英文标签挤在一行看不清。
+- **如何验证**：iOS 切 EN，标签栏应两行显示。
+
 ## 2026-07-27 · macOS 应用图标
 
 - **改了什么**：`Divination-macOS` 新增 `Assets.xcassets/AppIcon.appiconset`（小巫师图各尺寸），工程挂上 `ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon`。

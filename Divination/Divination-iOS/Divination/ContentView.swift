@@ -46,13 +46,42 @@ struct ContentView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 4) {
-                ForEach(0..<eng.S.modTabs.count, id: \.self) { i in
-                    TabButton(title: eng.S.modTabs[i], selected: eng.curModule == i, expand: true, fontSize: 15) { eng.switchModule(i) }
+            Group {
+                if eng.lang == .en {
+                    // English: wrap after Lenormand (index 3) before Runes
+                    HStack(alignment: .top, spacing: 4) {
+                        VStack(spacing: 4) {
+                            HStack(spacing: 4) {
+                                ForEach(0..<4, id: \.self) { i in
+                                    TabButton(title: eng.S.modTabs[i], selected: eng.curModule == i, expand: true, fontSize: 14) {
+                                        eng.switchModule(i)
+                                    }
+                                }
+                            }
+                            HStack(spacing: 4) {
+                                ForEach(4..<eng.S.modTabs.count, id: \.self) { i in
+                                    TabButton(title: eng.S.modTabs[i], selected: eng.curModule == i, expand: true, fontSize: 14) {
+                                        eng.switchModule(i)
+                                    }
+                                }
+                            }
+                        }
+                        Button(eng.S.langBtn) { eng.toggleLang() }
+                            .buttonStyle(.bordered)
+                            .fixedSize()
+                    }
+                } else {
+                    HStack(spacing: 4) {
+                        ForEach(0..<eng.S.modTabs.count, id: \.self) { i in
+                            TabButton(title: eng.S.modTabs[i], selected: eng.curModule == i, expand: true, fontSize: 15) {
+                                eng.switchModule(i)
+                            }
+                        }
+                        Button(eng.S.langBtn) { eng.toggleLang() }
+                            .buttonStyle(.bordered)
+                            .fixedSize()
+                    }
                 }
-                Button(eng.S.langBtn) { eng.toggleLang() }
-                    .buttonStyle(.bordered)
-                    .fixedSize()
             }
             if eng.curModule == 2 {
                 let specialToggle = Toggle(eng.S.includeSpecial, isOn: $eng.includeSpecial)
