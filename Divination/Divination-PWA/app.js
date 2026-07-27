@@ -528,14 +528,19 @@ function renderTabs(){
     bar.appendChild(b);
   });
   const sub=$('subbar'); sub.innerHTML=''; sub.style.display='none';
+  sub.classList.remove('en-special');
   if (state.curModule===2){
     sub.style.display='flex';
+    const enSpecial = lang === 'en';
+    if (enSpecial) sub.classList.add('en-special');
+    const tabHost = enSpecial ? document.createElement('div') : sub;
+    if (enSpecial) { tabHost.id = 'subrow'; sub.appendChild(tabHost); }
     s.tarotTabs.forEach((t,i)=>{
       const b=document.createElement('button');
       b.className='tab'+(state.curTab===i?' sel':'');
       b.textContent=t;
       b.onclick=()=>{ saveState(); state.curTab=i; restoreState(); renderAll(); };
-      sub.appendChild(b);
+      tabHost.appendChild(b);
     });
     const lb=document.createElement('label'); lb.className='chk';
     const c=document.createElement('input'); c.type='checkbox'; c.checked=state.includeSpecial;

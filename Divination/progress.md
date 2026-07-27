@@ -2,6 +2,12 @@
 
 > 每次实质更新在此追加一条（最新在上）。上级记录见 [`../progress.md`](../progress.md)，Obsidian 同步副本：`obsidian/Projects/zhanbu`。
 
+## 2026-07-27 · 英文模式特殊牌选项另起一行（iOS + PWA）
+
+- **改了什么**：英文 UI 下塔罗「Include special cards」不再挤在子标签同一横滑行里，改为下一行显示；中文布局不变。PWA `app.js`/`index.html` 同步；`sw.js` → `v8`。
+- **为什么改**：手机英文文案较长，特殊牌开关被挤出看不见。
+- **如何验证**：iOS/PWA 切 EN → 塔罗，开关应在标签下一行可见；切回中文仍与标签同行。
+
 ## 2026-07-27 · iOS / macOS 同步 PWA 多语言与特殊牌说明
 
 - **改了什么**：

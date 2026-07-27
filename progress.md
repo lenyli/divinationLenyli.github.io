@@ -3,6 +3,12 @@
 > 仓库级记录。**具体改动请记到子项目自己的 progress**：[Divination](Divination/progress.md) · [Drawing](Drawing/progress.md)。
 > 同步副本见 Obsidian：`obsidian/Projects/zhanbu`。
 
+## 2026-07-27 · Divination 英文特殊牌选项另起一行
+
+- **改了什么**：iOS + PWA 英文模式下塔罗「Include special cards」改到标签下一行；中文不变；SW `v8`。详见 [Divination/progress.md](Divination/progress.md)。
+- **为什么改**：手机英文文案长，开关被挤出看不见。
+- **如何验证**：切 EN 进塔罗，开关应在下一行可见。
+
 ## 2026-07-27 · Divination iOS/macOS 同步多语言与特殊牌说明
 
 - **改了什么**：iOS / macOS 同步 PWA 能力——中英自动检测 + 手动切换（`UserDefaults`）、49 签英译、六爻「动爻无」、启用特殊牌弹窗说明。详见 [Divination/progress.md](Divination/progress.md)。

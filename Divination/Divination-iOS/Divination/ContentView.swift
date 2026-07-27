@@ -55,18 +55,27 @@ struct ContentView: View {
                     .fixedSize()
             }
             if eng.curModule == 2 {
-                ScrollView(.horizontal, showsIndicators: false) {
+                let specialToggle = Toggle(eng.S.includeSpecial, isOn: $eng.includeSpecial)
+                    .fixedSize()
+                    .onChange(of: eng.includeSpecial) { newVal in
+                        eng.resetTarotSessions()
+                        if newVal { showSpecialWarn = true }
+                    }
+                let tarotTabRow = ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 6) {
                         ForEach(0..<eng.tarotTabs.count, id: \.self) { i in
                             TabButton(title: eng.tarotTabs[i], selected: eng.curTab == i) { eng.switchTab(i) }
                         }
-                        Toggle(eng.S.includeSpecial, isOn: $eng.includeSpecial)
-                            .fixedSize()
-                            .onChange(of: eng.includeSpecial) { newVal in
-                                eng.resetTarotSessions()
-                                if newVal { showSpecialWarn = true }
-                            }
+                        if eng.lang != .en { specialToggle }
                     }
+                }
+                if eng.lang == .en {
+                    VStack(alignment: .leading, spacing: 6) {
+                        tarotTabRow
+                        specialToggle
+                    }
+                } else {
+                    tarotTabRow
                 }
             }
             if eng.curModule == 0 {
