@@ -23,7 +23,7 @@
 
 | 端 | 位置 | 构建 / 运行 | 数据表 |
 | --- | --- | --- | --- |
-| **Windows** | `Divination.cs` + `build.bat` | 双击 `build.bat`，用系统自带 .NET 编译器出单 exe（约 30KB，无依赖） | 源文件内嵌 |
+| **Windows** | `Divination.cs` + `Divination.bat` / `build.bat` | 双击 `Divination.bat` 编译并启动；或 `build.bat` 只编译出 exe（约 30KB，无依赖） | 源文件内嵌 |
 | **PWA** | `Divination-PWA/` | 静态托管或 `python3 -m http.server`；需 https/localhost 才能安装与离线 | `data.js` |
 | **iOS** | `Divination-iOS/` | Xcode 14+ / iOS 16+，需选 Team 签名；免费账号签名有效期 7 天 | `DivinationData.swift` |
 | **macOS** | `Divination-macOS/` | Xcode 14+ / macOS 13+，SwiftUI 实现 | `DivinationData.swift` |
@@ -32,7 +32,7 @@
 
 历史记录：Windows/macOS 存 `~/Library/Application Support/Divination/history.dat`（同格式），iOS 存 App 沙盒同名路径，PWA 存 `localStorage`。
 
-各端另有更细的说明：`Divination-PWA/README-PWA.txt`、`Divination-iOS/README-iOS.txt`、`Divination-macOS/README-macOS.txt`、`使用说明.txt`。
+各端另有更细的说明：`Divination-PWA/README-PWA.txt`、`Divination-iOS/README-iOS.txt`、`Divination-macOS/README-macOS.txt`。
 
 ## 数据同步
 
@@ -65,6 +65,6 @@ python3 gen_data.py --check    # 只校验现有文件是否与 cs 一致（可�
 
 现状：四份文件乱码计数均为 **0**，`gen_data.py --check` 三端全部通过。
 
-## 历史 / 实验产物
+## 参考资料（保留）
 
-`Divination.exe`、`DivinationOS.ipa`、`Divination-macOS/*.zip`（打包快照）、`抽牌.xlsm`（算法原始出处）、`塔罗普通牌含义.xlsx`、`特殊牌.txt`。是否保留待定，见 [`progress.md`](progress.md)。
+`抽牌.xlsm`（算法原始出处）、`塔罗普通牌含义.xlsx`、`特殊牌.txt`（牌义已写入 `Divination.cs`，原文留作对照）。

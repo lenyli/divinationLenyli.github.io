@@ -2,6 +2,16 @@
 
 > 每次实质更新在此追加一条（最新在上）。上级记录见 [`../progress.md`](../progress.md)，Obsidian 同步副本：`obsidian/Projects/zhanbu`。
 
+## 2026-07-27 · 清理废产物 + 新 Divination.bat
+
+- **改了什么**：
+  1. 删除构建/过期产物：`Divination.exe`、`DivinationOS.ipa`、`.derived-macos/`、`Divination-macOS/Divination/Divination.app`、日期快照文件夹与 zip、过时 `使用说明.txt`、旧自包含 `Divination.bat`。
+  2. 新建 `Divination.bat`：用系统 `csc` 编译 `Divination.cs` → `Divination.exe` 并启动（`build.bat` 仍只负责编译）。
+  3. PWA：删重复 `manifest.json`、两份 `IMG_0854.JPG`；`index.html` 只保留一份 manifest / apple meta / icon；`sw.js` → `v9`。
+  4. 参考资料保留：`抽牌.xlsm`、`塔罗普通牌含义.xlsx`、`特殊牌.txt`；README 同步。
+- **为什么改**：用户要求清废代码/文件；旧 bat 与 cs 脱节；PWA 头里双份 manifest/图标是历史残留。
+- **如何验证**：根目录应无 exe/ipa/derived；有新的短 `Divination.bat`；PWA `index.html` 仅一处 `manifest.webmanifest`；参考资料三文件仍在。Windows 上双击 bat 应出 exe 并启动。
+
 ## 2026-07-27 · iOS 英文模块标签两行排版
 
 - **改了什么**：英文模式下模块标签在 Lenormand / Runes 之间换行（上：Home…Lenormand；下：Runes…Slip）；中文仍单行。

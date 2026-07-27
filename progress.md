@@ -3,6 +3,12 @@
 > 仓库级记录。**具体改动请记到子项目自己的 progress**：[Divination](Divination/progress.md) · [Drawing](Drawing/progress.md)。
 > 同步副本见 Obsidian：`obsidian/Projects/zhanbu`。
 
+## 2026-07-27 · Divination 清理废产物 + 新 Divination.bat
+
+- **改了什么**：删 exe/ipa/DerivedData/旧 app 包/过时说明/旧自包含 bat；新 bat 编译并启动 cs；PWA 去重 manifest/图标，SW `v9`；参考资料留。详见 [Divination/progress.md](Divination/progress.md)。
+- **为什么改**：用户要求清废文件；旧 bat 已与 cs 脱节。
+- **如何验证**：废产物已不在目录；新 bat 存在；参考资料三文件仍在。
+
 ## 2026-07-27 · Divination macOS 应用图标
 
 - **改了什么**：macOS 工程加入 `Assets.xcassets/AppIcon`（小巫师图）。详见 [Divination/progress.md](Divination/progress.md)。
