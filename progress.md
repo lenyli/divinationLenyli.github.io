@@ -3,6 +3,12 @@
 > 仓库级记录。**具体改动请记到子项目自己的 progress**：[Divination](Divination/progress.md) · [Drawing](Drawing/progress.md)。
 > 同步副本见 Obsidian：`obsidian/Projects/zhanbu`。
 
+## 2026-07-29 · Divination / Drawing 均标记为已完成
+
+- **改了什么**：两子项目状态改为 **已完成**；Drawing 签数确认为 99（无第一百签，末两条为收束偈）。详见 [Divination/progress.md](Divination/progress.md)、[Drawing/progress.md](Drawing/progress.md)。
+- **为什么改**：用户确认两项目均已完成，并确认 Drawing 没有第一百签。
+- **如何验证**：两子项目 progress「当前状态」均为已完成。
+
 ## 2026-07-27 · Divination 清理废产物 + 新 Divination.bat
 
 - **改了什么**：删 exe/ipa/DerivedData/旧 app 包/过时说明/旧自包含 bat；新 bat 编译并启动 cs；PWA 去重 manifest/图标，SW `v9`；参考资料留。详见 [Divination/progress.md](Divination/progress.md)。
@@ -80,17 +86,17 @@
 - **如何验证**：`git log` 最后一次提交为 2026-07-18「move」（目录整理）；此后 `Divination/Divination.cs` 于 2026-07-21 有文件改动但**未提交**，改动内容无记录；工作区无新增文件。
 
 
-## 当前状态（2026-07-27）
+## 当前状态（2026-07-29，**已完成**）
 
 仓库下是**两个相互独立的小项目**，各有 README 与 progress：
 
 | 子项目 | 内容 | 状态 |
 | --- | --- | --- |
-| **Divination** | 七模块综合占卜，四端（Windows/PWA/iOS/macOS），`Divination.cs` 为数据源 | 可用；乱码已修、英译/多语言/图标等已推进 |
-| **Drawing** | 梵天神策摇签 PWA，99 签 | 可用；**第 100 签疑缺** |
+| **Divination** | 七模块综合占卜，四端（Windows/PWA/iOS/macOS），`Divination.cs` 为数据源 | **已完成** |
+| **Drawing** | 梵天神策摇签 PWA，99 签 | **已完成** |
 
 - 两个 PWA 静态站点可用，GitHub Pages 发布路径已通
-- 近期大量改动**尚未提交**（等用户操作）
+- 非阻塞遗留（如 git 是否提交）见各子项目 progress，不挡结项
 
 ## 检查列表
 
@@ -100,10 +106,9 @@
 - [x] 统一仓库顶层 README ✅ 2026-07-23
 - [x] 两个子项目各自的 README 与 progress ✅ 2026-07-23
 - [x] 重写 `gen_data.py`、回流三端、清掉 7 处乱码 ✅ 2026-07-23
-- [ ] **提交** Divination / Drawing 近期改动
-- [ ] **核对 Drawing 第 397/398 条偈句，确认第 100 签是否补齐**
-- [ ] `make_excel.py` 内 Windows 绝对路径改为相对路径
-- [ ] 清理/归档历史 exe、ipa、Excel 原型是否还需保留
+- [x] 清理 Divination 废构建产物 ✅ 2026-07-27
+- [x] Divination / Drawing 标记已完成 ✅ 2026-07-29
+- [ ] **提交** 近期改动（由用户操作，不挡结项）
 
 ## 基线状态（截至 2026-07-21，状态：已完成）
 
@@ -127,7 +132,7 @@
 - 清理/归档上述历史 exe、ipa、Excel 原型是否还需保留
 - iOS / macOS 包装是否继续维护（已在继续维护多语言等）
 - **提交** Divination.cs / gen_data / 回流改动（仍待用户操作）
-- 核对 Drawing 第 397/398 条偈句，确认第 100 签是否补齐
+- 核对 Drawing 第 397/398 条偈句 ~~确认第 100 签是否补齐~~ → 用户确认无第一百签，末两条为收束偈（2026-07-29）
 - `make_excel.py` 内 Windows 绝对路径改为相对路径
 
 > 2026-07-21 及之前的详细过程无本地记录，以上为回填基线。

@@ -4,10 +4,10 @@
 
 仓库下是**两个相互独立的小项目**，各自有自己的 README 与进度记录：
 
-| 子项目 | 说明 | 文档 |
-| --- | --- | --- |
-| [**Divination**](Divination/) | 综合占卜：六爻 / 塔罗 / 雷诺曼 / 卢恩符文 / 占星骰子 / 玄天上帝感应灵签 / 首页日期预测。多端（Windows / PWA / iOS / macOS），以 `Divination.cs` 为唯一数据源 | [README](Divination/README.md) · [progress](Divination/progress.md) |
-| [**Drawing**](Drawing/) | 梵天神策摇签：《灌顶梵天神策经》卷第十，99 签、每签 8 句五言 + 白话译文，带摇筒出签动画 | [README](Drawing/README.md) · [progress](Drawing/progress.md) |
+| 子项目 | 说明 | 文档 | 状态 |
+| --- | --- | --- | --- |
+| [**Divination**](Divination/) | 综合占卜：六爻 / 塔罗 / 雷诺曼 / 卢恩符文 / 占星骰子 / 玄天上帝感应灵签 / 首页日期预测。多端（Windows / PWA / iOS / macOS），以 `Divination.cs` 为唯一数据源 | [README](Divination/README.md) · [progress](Divination/progress.md) | **已完成** |
+| [**Drawing**](Drawing/) | 梵天神策摇签：《灌顶梵天神策经》卷第十，99 签、每签 8 句五言 + 白话译文，带摇筒出签动画 | [README](Drawing/README.md) · [progress](Drawing/progress.md) | **已完成** |
 
 ## 在线入口
 
