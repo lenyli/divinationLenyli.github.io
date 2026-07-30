@@ -35,4 +35,4 @@ PWA 的安装与离线需要 https 或 localhost，直接双击 `index.html` 只
 ## 记录
 
 仓库级进度见 [`progress.md`](progress.md)；具体改动记在各子项目自己的 `progress.md` 里。
-Obsidian 同步副本：`obsidian/Projects/zhanbu`。
+Obsidian 同步副本：`obsidian/Projects/Zhanbu`。

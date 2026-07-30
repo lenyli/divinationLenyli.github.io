@@ -1,7 +1,7 @@
 # zhanbu 进度记录
 
 > 仓库级记录。**具体改动请记到子项目自己的 progress**：[Divination](Divination/progress.md) · [Drawing](Drawing/progress.md)。
-> 同步副本见 Obsidian：`obsidian/Projects/zhanbu`。
+> 同步副本见 Obsidian：`obsidian/Projects/Zhanbu`。
 
 ## 2026-07-29 · Divination / Drawing 均标记为已完成
 

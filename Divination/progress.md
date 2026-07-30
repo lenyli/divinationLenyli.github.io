@@ -1,6 +1,6 @@
 # Divination（综合占卜）进度记录
 
-> 每次实质更新在此追加一条（最新在上）。上级记录见 [`../progress.md`](../progress.md)，Obsidian 同步副本：`obsidian/Projects/zhanbu`。
+> 每次实质更新在此追加一条（最新在上）。上级记录见 [`../progress.md`](../progress.md)，Obsidian 同步副本：`obsidian/Projects/Zhanbu`。
 
 ## 2026-07-29 · 项目标记为已完成
 
