@@ -57,5 +57,6 @@ PWA 的安装与离线需要 https 或 localhost，直接双击 `index.html` 只
 
 - 开始任务先读本文件与 `CURRENT_STATUS.md`；只维护本项目根及 `/Volumes/Leny/ProjectRecord/Zhanbu/`，不修改其他项目记录。
 - 状态变化只覆盖更新两处 `CURRENT_STATUS.md`；不新建 progress、Next、Notes、HANDOFF 或 audit 状态文档。
+- 状态变化时同步更新根 `PROJECT_NEXT.md` 中本项目的 `Current` / `Next` 并刷新 `Generated`；不得改其他项目章节。
 - Divination 与 Drawing 保持独立；Divination 以 `Divination.cs` 为数据权威，Drawing 固定 99 签。
 - 修改静态资源后同步对应 `sw.js` 缓存清单与版本号。
