@@ -12,16 +12,22 @@
 
 - Divination 与 Drawing 的 PWA 版本已完成并部署；Divination 另有 Windows、iOS、macOS 版本。
 - 项目于 2026-07-29 完成。
+- 2026-08-24 Divination 四端六爻页新增可选的手动起卦：上卦、下卦默认留空，动爻以“初、二、三、四、五、上”直接横排多选；全空时仍随机起卦，上下卦均选后严格使用手动卦象和动爻，不再随机掷币。
+- 特殊塔罗牌名“真空秒有”已统一更正为“真空妙有”，并由 `Divination.cs` 重新生成到 PWA、iOS、macOS 数据文件。
 
 ## 验证基线
 
-- 2026-08-10 对两套 PWA 的 app/data/service worker 脚本完成 Node 语法检查；Drawing 的 ES module 也按 module 模式通过。
+- 2026-08-24 Divination PWA 的 app/data/service worker 完成 Node 语法检查，`gen_data.py --check` 确认 PWA、iOS、macOS 数据均与 `Divination.cs` 一致；Service Worker 缓存版本已更新为 `divination-v11`。
+- 2026-08-24 Divination macOS generic Debug 与 iOS generic device Debug 构建通过，均关闭代码签名。
+- 2026-08-10 Drawing PWA 的 app/data/service worker 完成 Node 语法检查，ES module 也按 module 模式通过。
 - `Drawing-PWA/data.js` 当前明确包含 99 签，末项 ID 为 99。
-- 本轮未重新构建 iOS/macOS App，也未重新执行浏览器离线安装与 GitHub Pages 发布验收。
+- Divination Windows 端本轮未在 Windows `.NET Framework csc.exe` 环境编译；四端视觉/交互、浏览器离线更新与 GitHub Pages 发布尚未人工验收。
 
 ## 限制与下一步
 
-1. 当前无待办，仅在出现明确维护需求时恢复。
+1. 用户人工验收 Windows、macOS、iOS、PWA 六爻栏布局，以及“全空随机、完整手动输入不再随机”的行为。
+2. 在 Windows `.NET Framework csc.exe` 环境编译并启动 WinForms 版本。
+3. 发布 PWA 后确认 `divination-v11` 能替换旧缓存并完成离线打开。
 
 ## Agent 与 Skill
 
