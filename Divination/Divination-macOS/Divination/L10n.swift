@@ -69,6 +69,10 @@ struct L10n {
     let helpText: String
 
     var isEn: Bool { lang == .en }
+    var upperTrigram: String { isEn ? "Upper" : "上卦" }
+    var lowerTrigram: String { isEn ? "Lower" : "下卦" }
+    var movingLines: String { isEn ? "Moving" : "动爻" }
+    var completeTrigrams: String { isEn ? "Select both the upper and lower trigrams for a manual cast." : "手动起卦请同时选择上卦和下卦。" }
 
     func histTitle(_ name: String) -> String {
         isEn ? "History - \(name)" : "历史 - \(name)"

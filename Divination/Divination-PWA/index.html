@@ -40,6 +40,16 @@ body{
 .tab.sel{ background:var(--sel); }
 .chk{ display:flex; align-items:center; gap:4px; font-size:14px; }
 .warn{ color:#d00; font-weight:bold; font-size:13px; }
+#liurow{ display:none; align-items:center; gap:6px; flex-wrap:wrap; white-space:nowrap; }
+#liurow label{ display:flex; align-items:center; gap:4px; }
+#liurow select{
+  padding:6px 8px; border:1px solid var(--border); border-radius:6px;
+  background:var(--card); color:inherit; font:inherit;
+}
+.moving-options{
+  display:flex; gap:7px; align-items:center;
+}
+.moving-options label{ cursor:pointer; }
 #inrow{ display:flex; align-items:center; gap:6px; }
 #q{ flex:1; padding:7px 9px; border:1px solid var(--border); border-radius:6px; font-size:15px; }
 #btnrow{ display:flex; gap:6px; }
@@ -95,6 +105,35 @@ body{
     <button type="button" id="langbtn" title="Switch language">EN</button>
   </div>
   <div id="subbar"></div>
+  <div id="liurow">
+    <label><span id="upper-label">上卦</span>
+      <select id="liu-upper">
+        <option value="" selected></option>
+        <option value="天">乾（天）</option><option value="泽">兑（泽）</option>
+        <option value="火">离（火）</option><option value="雷">震（雷）</option>
+        <option value="风">巽（风）</option><option value="水">坎（水）</option>
+        <option value="山">艮（山）</option><option value="地">坤（地）</option>
+      </select>
+    </label>
+    <label><span id="lower-label">下卦</span>
+      <select id="liu-lower">
+        <option value="" selected></option>
+        <option value="天">乾（天）</option><option value="泽">兑（泽）</option>
+        <option value="火">离（火）</option><option value="雷">震（雷）</option>
+        <option value="风">巽（风）</option><option value="水">坎（水）</option>
+        <option value="山">艮（山）</option><option value="地">坤（地）</option>
+      </select>
+    </label>
+    <span id="moving-label">动爻</span>
+    <div class="moving-options" id="moving-lines">
+      <label><input type="checkbox" value="0">初</label>
+      <label><input type="checkbox" value="1">二</label>
+      <label><input type="checkbox" value="2">三</label>
+      <label><input type="checkbox" value="3">四</label>
+      <label><input type="checkbox" value="4">五</label>
+      <label><input type="checkbox" value="5">上</label>
+    </div>
+  </div>
   <div id="inrow">
     <span id="input-label">输入问题：</span><input id="q" type="text">
   </div>

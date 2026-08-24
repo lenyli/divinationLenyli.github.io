@@ -451,7 +451,7 @@ public class MainForm : Form
         new string[]{"逆位遏灾除病","疾病仍将持续、旧疾顽固、灾祸警钟、注意健康"},
         new string[]{"净天昼衡","身心净化、灵魂清明、物质与精神达到理想平衡"},
         new string[]{"逆位净天昼衡","身心失衡、精神受困于内外之因"},
-        new string[]{"真空秒有","进德修业、心能转境、定业可转、逢凶化吉；无论抽到何种无解之牌，遇此牌则遇难成祥、逆风翻盘"},
+        new string[]{"真空妙有","进德修业、心能转境、定业可转、逢凶化吉；无论抽到何种无解之牌，遇此牌则遇难成祥、逆风翻盘"},
         new string[]{"守望者","坚守与坚持、坚持到最后就会有所收获"},
         new string[]{"逆位守望者","失去信念、悻然离去、前功尽弃"},
         new string[]{"幸运","完美的生活状态、好事正在发生、安逸满足、幸运将至"},
@@ -502,6 +502,7 @@ public class MainForm : Form
 
     Random rng = new Random();
     TextBox txtQ; RichTextBox txtOut; Button btnGo; Button btnCopy; CheckBox chkSpecialTarot; Label lblDateNote;
+    FlowLayoutPanel liuYaoPnl; ComboBox cmbUpperTrigram, cmbLowerTrigram; CheckBox[] movingLineChecks;
     Button[] modBtns;
     FlowLayoutPanel subPnl; Button[] subBtns;
     FlowLayoutPanel homePnl; Button[] homeBtns;
@@ -581,6 +582,30 @@ public class MainForm : Form
 
         Controls.Add(homePnl);
 
+        liuYaoPnl = new FlowLayoutPanel();
+        liuYaoPnl.SetBounds(100, 50, 548, 36);
+        liuYaoPnl.WrapContents = false;
+        liuYaoPnl.Visible = false;
+        liuYaoPnl.Controls.Add(new Label { Text = "上卦", AutoSize = true, Margin = new Padding(0, 7, 3, 0) });
+        string[] trigramNames = {"乾（天）", "兑（泽）", "离（火）", "震（雷）", "巽（风）", "坎（水）", "艮（山）", "坤（地）"};
+        cmbUpperTrigram = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 82 };
+        cmbUpperTrigram.Items.AddRange(trigramNames);
+        cmbUpperTrigram.SelectedIndex = -1;
+        liuYaoPnl.Controls.Add(cmbUpperTrigram);
+        liuYaoPnl.Controls.Add(new Label { Text = "下卦", AutoSize = true, Margin = new Padding(5, 7, 3, 0) });
+        cmbLowerTrigram = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 82 };
+        cmbLowerTrigram.Items.AddRange(trigramNames);
+        cmbLowerTrigram.SelectedIndex = -1;
+        liuYaoPnl.Controls.Add(cmbLowerTrigram);
+        liuYaoPnl.Controls.Add(new Label { Text = "动爻", AutoSize = true, Margin = new Padding(5, 7, 1, 0) });
+        movingLineChecks = new CheckBox[POS.Length];
+        for (int i = 0; i < POS.Length; i++) {
+            var c = new CheckBox { Text = POS[i], AutoSize = true, Margin = new Padding(2, 5, 0, 0) };
+            movingLineChecks[i] = c;
+            liuYaoPnl.Controls.Add(c);
+        }
+        Controls.Add(liuYaoPnl);
+
         var lbl = new Label(); lbl.Text = "输入问题："; lbl.SetBounds(12, 96, 90, 24);
         Controls.Add(lbl);
         txtQ = new TextBox(); txtQ.SetBounds(100, 92, 548, 28);
@@ -624,6 +649,7 @@ public class MainForm : Form
             modBtns[k].BackColor = (k == i) ? Color.LightSteelBlue : SystemColors.Control;
         subPnl.Visible = (i == 2);
         homePnl.Visible = (i == 0);
+        liuYaoPnl.Visible = (i == 1);
         if (i == 0) btnGo.Text = "占 卜";
         else if (i == 1) btnGo.Text = "起 卦";
         else if (i == 5) btnGo.Text = "掷骰子";
@@ -658,14 +684,36 @@ public class MainForm : Form
 
     string[] Hex(string up, string low) { return HEXAGRAMS[up + low]; }
 
-    string DivineLiuYao(List<string[]> lines)
+    string FlipLine(string line) { return line == "阳" ? "阴" : "阳"; }
+
+    void FillSelectedLiuYao(string[] h, string[] z, string[] c)
+    {
+        string[] patterns = {"阳阳阳", "阴阳阳", "阳阴阳", "阴阴阳", "阳阳阴", "阴阳阴", "阳阴阴", "阴阴阴"};
+        string up = patterns[cmbUpperTrigram.SelectedIndex];
+        string low = patterns[cmbLowerTrigram.SelectedIndex];
+        h[5] = up.Substring(0, 1); h[4] = up.Substring(1, 1); h[3] = up.Substring(2, 1);
+        h[2] = low.Substring(0, 1); h[1] = low.Substring(1, 1); h[0] = low.Substring(2, 1);
+        for (int i = 0; i < 6; i++) {
+            string baseLine = h[i];
+            bool moving = movingLineChecks[i].Checked;
+            z[i] = moving ? FlipLine(baseLine) : baseLine;
+            c[i] = FlipLine(baseLine);
+            if (moving) h[i] += "○";
+        }
+    }
+
+    string DivineLiuYao(List<string[]> lines, bool useSelection = false)
     {
         var h = new string[6]; var z = new string[6]; var c = new string[6]; // 初..上
-        for (int i = 0; i < 6; i++) {
-            int heads = 0;
-            for (int j = 0; j < 3; j++) if (rng.Next(2) == 0) heads++;
-            string zz, cc;
-            h[i] = LineOfToss(heads, out zz, out cc); z[i] = zz; c[i] = cc;
+        if (useSelection) {
+            FillSelectedLiuYao(h, z, c);
+        } else {
+            for (int i = 0; i < 6; i++) {
+                int heads = 0;
+                for (int j = 0; j < 3; j++) if (rng.Next(2) == 0) heads++;
+                string zz, cc;
+                h[i] = LineOfToss(heads, out zz, out cc); z[i] = zz; c[i] = cc;
+            }
         }
         string[] ben  = Hex(Elem(h[5],h[4],h[3]), Elem(h[2],h[1],h[0]));
         string[] bian = Hex(Elem(z[5],z[4],z[3]), Elem(z[2],z[1],z[0]));
@@ -683,7 +731,7 @@ public class MainForm : Form
         lines.Add(new string[]{"综卦", zong[0], zong[3], "【从另一个角度看这件事，或错误处理方式的后果】"});
 
         return "本卦" + ben[0]
-             + "，动爻" + string.Join("、", dong)
+             + "，动爻" + (dong.Count == 0 ? "无" : string.Join("、", dong))
              + "，世爻" + ben[1] + "，应爻" + ben[2]
              + "，变卦" + bian[0]
              + "，互卦" + hu[0]
@@ -1047,6 +1095,11 @@ public class MainForm : Form
     void OnClear(object sender, EventArgs e)
     {
         txtQ.Clear(); txtOut.Clear(); copyText = "";
+        if (curModule == 1) {
+            cmbUpperTrigram.SelectedIndex = -1;
+            cmbLowerTrigram.SelectedIndex = -1;
+            foreach (CheckBox c in movingLineChecks) c.Checked = false;
+        }
         drawnGen.Clear(); drawnMajor.Clear();
         sessGen = -1; sessMaj = -1;
         int p = PageIndex();
@@ -1109,6 +1162,14 @@ public class MainForm : Form
 
     void OnDivine(object sender, EventArgs e)
     {
+        if (curModule == 1) {
+            bool hasMoving = Array.Exists(movingLineChecks, c => c.Checked);
+            bool hasManual = cmbUpperTrigram.SelectedIndex >= 0 || cmbLowerTrigram.SelectedIndex >= 0 || hasMoving;
+            if (hasManual && (cmbUpperTrigram.SelectedIndex < 0 || cmbLowerTrigram.SelectedIndex < 0)) {
+                MessageBox.Show(this, "手动起卦请同时选择上卦和下卦。", "六爻", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+        }
         string q = txtQ.Text.Trim();
         if (q.Length == 0) q = "（未填写问题）";
         DoDivine(q);
@@ -1122,7 +1183,10 @@ public class MainForm : Form
         if (curModule == 2) { DivineTarot(q); return; }
         var lines = new List<string[]>();
         string result;
-        if (curModule == 1) result = DivineLiuYao(lines);
+        if (curModule == 1) {
+            bool useSelection = cmbUpperTrigram.SelectedIndex >= 0 && cmbLowerTrigram.SelectedIndex >= 0;
+            result = DivineLiuYao(lines, useSelection);
+        }
         else if (curModule == 3) result = DivineLenormand(lines);
         else if (curModule == 4) result = DivineRunes(lines);
         else result = DivineAstro(lines);

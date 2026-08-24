@@ -20,6 +20,10 @@ const STR = {
       ["错卦", "【事情的反面状态，即\"不是什么\"】"],
       ["综卦", "【从另一个角度看这件事，或错误处理方式的后果】"]
     ],
+    upperTrigram: "上卦",
+    lowerTrigram: "下卦",
+    movingLines: "动爻",
+    completeTrigrams: "手动起卦请同时选择上卦和下卦。",
     inputLabel: "输入问题：",
     copy: "复制结果",
     clear: "清空",
@@ -93,6 +97,10 @@ const STR = {
       ["Opposite", "【What it is not】"],
       ["Inverted", "【Another angle, or consequences of mishandling】"]
     ],
+    upperTrigram: "Upper",
+    lowerTrigram: "Lower",
+    movingLines: "Moving",
+    completeTrigrams: "Select both the upper and lower trigrams for a manual cast.",
     inputLabel: "Question:",
     copy: "Copy",
     clear: "Clear",
@@ -181,6 +189,9 @@ function toggleLang() {
 
 function applyStaticI18n() {
   const s = L();
+  $('upper-label').textContent = s.upperTrigram;
+  $('lower-label').textContent = s.lowerTrigram;
+  $('moving-label').textContent = s.movingLines;
   $('input-label').textContent = s.inputLabel;
   $('copy').textContent = s.copy;
   $('clear').textContent = s.clear;
@@ -282,13 +293,37 @@ function lineOfToss(heads) {
 }
 const elem = (a,b,c) => TRI_ELEM[(a+b+c).replace(/○/g,'')];
 const hexg = (up,low) => HEXAGRAMS[up+low];
+const TRIGRAM_LINES = {
+  天:["阳","阳","阳"], 泽:["阴","阳","阳"], 火:["阳","阴","阳"], 雷:["阴","阴","阳"],
+  风:["阳","阳","阴"], 水:["阴","阳","阴"], 山:["阳","阴","阴"], 地:["阴","阴","阴"]
+};
+const flipLine = line => line === "阳" ? "阴" : "阳";
 
-function divineLiuYao(lines) {
+function selectedLiuYaoLines() {
+  const up=TRIGRAM_LINES[$('liu-upper').value], low=TRIGRAM_LINES[$('liu-lower').value];
   const h=[],z=[],c=[];
-  for (let i=0;i<6;i++){
-    let heads=0;
-    for (let j=0;j<3;j++) if (rnd(2)===0) heads++;
-    const t=lineOfToss(heads); h.push(t[0]); z.push(t[1]); c.push(t[2]);
+  h[5]=up[0]; h[4]=up[1]; h[3]=up[2];
+  h[2]=low[0]; h[1]=low[1]; h[0]=low[2];
+  const moving = new Set(Array.from(document.querySelectorAll('#moving-lines input:checked'), el=>Number(el.value)));
+  for(let i=0;i<6;i++){
+    const base=h[i];
+    z[i]=moving.has(i) ? flipLine(base) : base;
+    c[i]=flipLine(base);
+    if(moving.has(i)) h[i]+='○';
+  }
+  return {h,z,c};
+}
+
+function divineLiuYao(lines, useSelection=false) {
+  let h=[],z=[],c=[];
+  if(useSelection){
+    ({h,z,c}=selectedLiuYaoLines());
+  }else{
+    for (let i=0;i<6;i++){
+      let heads=0;
+      for (let j=0;j<3;j++) if (rnd(2)===0) heads++;
+      const t=lineOfToss(heads); h.push(t[0]); z.push(t[1]); c.push(t[2]);
+    }
   }
   const ben  = hexg(elem(h[5],h[4],h[3]), elem(h[2],h[1],h[0]));
   const bian = hexg(elem(z[5],z[4],z[3]), elem(z[2],z[1],z[0]));
@@ -528,6 +563,7 @@ function renderTabs(){
     bar.appendChild(b);
   });
   const sub=$('subbar'); sub.innerHTML=''; sub.style.display='none';
+  $('liurow').style.display=state.curModule===1?'flex':'none';
   sub.classList.remove('en-special');
   if (state.curModule===2){
     sub.style.display='flex';
@@ -572,6 +608,15 @@ function renderTabs(){
 function renderAll(){ renderTabs(); }
 
 function divine(){
+  if(state.curModule===1){
+    const upper=$('liu-upper').value, lower=$('liu-lower').value;
+    const hasMoving=document.querySelector('#moving-lines input:checked')!==null;
+    const hasManual=upper!=='' || lower!=='' || hasMoving;
+    if(hasManual && (upper==='' || lower==='')){
+      window.alert(L().completeTrigrams);
+      return;
+    }
+  }
   let q=$('q').value.trim();
   if (!q) q=L().emptyQuestion;
   if (state.curModule===0){ state.curHomeTab===0 ? divineHome(q) : divineDate(q); }
@@ -580,7 +625,7 @@ function divine(){
   else {
     const lines=[];
     let result;
-    if (state.curModule===1) result=divineLiuYao(lines);
+    if (state.curModule===1) result=divineLiuYao(lines, $('liu-upper').value!=='' && $('liu-lower').value!=='');
     else if (state.curModule===3) result=divineLenormand(lines);
     else if (state.curModule===4) result=divineRunes(lines);
     else result=divineAstro(lines);
@@ -603,6 +648,10 @@ function divine(){
 
 function clearPage(){
   $('q').value=''; state.copyText='';
+  if(state.curModule===1){
+    $('liu-upper').value=''; $('liu-lower').value='';
+    document.querySelectorAll('#moving-lines input').forEach(el=>{ el.checked=false; });
+  }
   state.segs=[]; setOutHtml('');
   state.drawnGen=[]; state.drawnMajor=[];
   state.sessGen=-1; state.sessMaj=-1;

@@ -119,6 +119,34 @@ struct ContentView: View {
                     }
                 }
             }
+            if eng.curModule == 1 {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 5) {
+                        Text(eng.S.upperTrigram).font(.system(size: 14))
+                        Picker("", selection: $eng.liuYaoUpperTrigram) {
+                            Text("").tag("")
+                            ForEach(eng.liuYaoTrigramValues, id: \.self) { value in
+                                Text(eng.liuYaoTrigramTitle(value)).tag(value)
+                            }
+                        }
+                        .labelsHidden().pickerStyle(.menu).fixedSize()
+                        Text(eng.S.lowerTrigram).font(.system(size: 14))
+                        Picker("", selection: $eng.liuYaoLowerTrigram) {
+                            Text("").tag("")
+                            ForEach(eng.liuYaoTrigramValues, id: \.self) { value in
+                                Text(eng.liuYaoTrigramTitle(value)).tag(value)
+                            }
+                        }
+                        .labelsHidden().pickerStyle(.menu).fixedSize()
+                        Text(eng.S.movingLines).font(.system(size: 14))
+                        ForEach(POS.indices, id: \.self) { i in
+                            TabButton(title: POS[i], selected: eng.liuYaoMovingLines.contains(i), fontSize: 13) {
+                                eng.setLiuYaoMovingLine(i, selected: !eng.liuYaoMovingLines.contains(i))
+                            }
+                        }
+                    }
+                }
+            }
             HStack {
                 Text(eng.S.inputLabel).font(.system(size: 15))
                 TextField("", text: $eng.question)

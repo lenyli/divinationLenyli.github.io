@@ -21,6 +21,9 @@ final class Engine: ObservableObject {
     @Published var histories: [[String]] = Array(repeating: [], count: 7)
     @Published var lang: AppLang = AppLang.detect()
     @Published var showCopied = false
+    @Published var liuYaoUpperTrigram = ""
+    @Published var liuYaoLowerTrigram = ""
+    @Published var liuYaoMovingLines: Set<Int> = []
 
     var copyText = ""
     var drawnGen: [Int] = []
@@ -35,6 +38,17 @@ final class Engine: ObservableObject {
     var tarotTabs: [String] { S.tarotTabs }
     var homeTabs: [String] { S.homeTabs }
     var helpText: String { S.helpText }
+    let liuYaoTrigramValues = ["天", "泽", "火", "雷", "风", "水", "山", "地"]
+
+    func liuYaoTrigramTitle(_ value: String) -> String {
+        ["天": "乾（天）", "泽": "兑（泽）", "火": "离（火）", "雷": "震（雷）",
+         "风": "巽（风）", "水": "坎（水）", "山": "艮（山）", "地": "坤（地）"][value] ?? value
+    }
+
+    func setLiuYaoMovingLine(_ index: Int, selected: Bool) {
+        if selected { liuYaoMovingLines.insert(index) }
+        else { liuYaoMovingLines.remove(index) }
+    }
 
     init() { loadHistories() }
 
@@ -99,6 +113,14 @@ final class Engine: ObservableObject {
 
     // ================= 入口 =================
     func divine() {
+        if curModule == 1 {
+            let hasManual = !liuYaoUpperTrigram.isEmpty || !liuYaoLowerTrigram.isEmpty || !liuYaoMovingLines.isEmpty
+            if hasManual && (liuYaoUpperTrigram.isEmpty || liuYaoLowerTrigram.isEmpty) {
+                copyText = ""
+                output = [Seg(text: S.completeTrigrams, red: true)]
+                return
+            }
+        }
         var q = question.trimmingCharacters(in: .whitespaces)
         if q.isEmpty { q = S.emptyQuestion }
         doDivine(q)
@@ -111,7 +133,10 @@ final class Engine: ObservableObject {
         if curModule == 2 { divineTarot(q); return }
         var lines: [[String]] = []
         let result: String
-        if curModule == 1 { result = divineLiuYao(&lines) }
+        if curModule == 1 {
+            let useSelection = !liuYaoUpperTrigram.isEmpty && !liuYaoLowerTrigram.isEmpty
+            result = divineLiuYao(&lines, useSelection: useSelection)
+        }
         else if curModule == 3 { result = divineLenormand(&lines) }
         else if curModule == 4 { result = divineRunes(&lines) }
         else { result = divineAstro(&lines) }
@@ -140,6 +165,11 @@ final class Engine: ObservableObject {
     }
     func clearPage() {
         question = ""; output = []; copyText = ""
+        if curModule == 1 {
+            liuYaoUpperTrigram = ""
+            liuYaoLowerTrigram = ""
+            liuYaoMovingLines.removeAll()
+        }
         drawnGen.removeAll(); drawnMajor.removeAll()
         sessGen = -1; sessMaj = -1
         let p = pageIndex()
@@ -164,14 +194,43 @@ final class Engine: ObservableObject {
     }
     private func hexg(_ up: String, _ low: String) -> [String] { HEXAGRAMS[up + low]! }
 
-    private func divineLiuYao(_ lines: inout [[String]]) -> String {
+    private func flipLine(_ line: String) -> String { line == "阳" ? "阴" : "阳" }
+
+    private func selectedLiuYaoLines() -> (h: [String], z: [String], c: [String]) {
+        let patterns: [String: [String]] = [
+            "天": ["阳", "阳", "阳"], "泽": ["阴", "阳", "阳"],
+            "火": ["阳", "阴", "阳"], "雷": ["阴", "阴", "阳"],
+            "风": ["阳", "阳", "阴"], "水": ["阴", "阳", "阴"],
+            "山": ["阳", "阴", "阴"], "地": ["阴", "阴", "阴"]
+        ]
+        let up = patterns[liuYaoUpperTrigram]!, low = patterns[liuYaoLowerTrigram]!
         var h = [String](repeating: "", count: 6)
         var z = h, c = h
+        h[5] = up[0]; h[4] = up[1]; h[3] = up[2]
+        h[2] = low[0]; h[1] = low[1]; h[0] = low[2]
         for i in 0..<6 {
-            var heads = 0
-            for _ in 0..<3 where Int.random(in: 0..<2) == 0 { heads += 1 }
-            let t = lineOfToss(heads)
-            h[i] = t.ben; z[i] = t.zhi; c[i] = t.cuo
+            let baseLine = h[i]
+            let moving = liuYaoMovingLines.contains(i)
+            z[i] = moving ? flipLine(baseLine) : baseLine
+            c[i] = flipLine(baseLine)
+            if moving { h[i] += "○" }
+        }
+        return (h, z, c)
+    }
+
+    private func divineLiuYao(_ lines: inout [[String]], useSelection: Bool = false) -> String {
+        var h = [String](repeating: "", count: 6)
+        var z = h, c = h
+        if useSelection {
+            let selected = selectedLiuYaoLines()
+            h = selected.h; z = selected.z; c = selected.c
+        } else {
+            for i in 0..<6 {
+                var heads = 0
+                for _ in 0..<3 where Int.random(in: 0..<2) == 0 { heads += 1 }
+                let t = lineOfToss(heads)
+                h[i] = t.ben; z[i] = t.zhi; c[i] = t.cuo
+            }
         }
         let ben  = hexg(elem(h[5], h[4], h[3]), elem(h[2], h[1], h[0]))
         let bian = hexg(elem(z[5], z[4], z[3]), elem(z[2], z[1], z[0]))
