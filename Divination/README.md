@@ -2,7 +2,7 @@
 
 十四个占卜模块的多端应用。现有七个模块仍以 **`Divination.cs`（Windows WinForms，单文件 C#）作为静态数据与算法基准**，PWA / iOS / macOS 三端的数据表由它转换生成；新增七种传统术数共用 [`TraditionalAlgorithms/adapter.ts`](TraditionalAlgorithms/adapter.ts) 与离线构建产物，避免四端分别维护口诀表。
 
-在线入口：<https://lenyli.github.io/divinationLenyli.github.io/Divination-PWA/>
+正式 PWA 地址：<https://lenyli.github.io/divinationLenyli.github.io/Divination/Divination-PWA/>
 （站点级说明与另一个应用见仓库根目录 [`../README.md`](../README.md)）
 
 ## 模块
@@ -31,7 +31,7 @@
 | 端 | 位置 | 构建 / 运行 | 数据表 |
 | --- | --- | --- | --- |
 | **Windows** | `Divination.cs` + `Divination.bat` / `build.bat` | 现有模块保持单文件 WinForms；新增七种入口打开同目录离线 PWA，分发时须保留 `Divination-PWA/` | 源文件内嵌 + 共用离线算法包 |
-| **PWA** | `Divination-PWA/` | 静态托管或 `python3 -m http.server`；需 https/localhost 才能安装与离线 | `data.js` |
+| **PWA** | `Divination-PWA/` | 正式地址见上方；本地可用 `python3 -m http.server`，需 https/localhost 才能安装与离线 | `data.js` + 共用离线算法包 |
 | **iOS** | `Divination-iOS/` | Xcode 14+ / iOS 16+；SwiftUI 通过系统 JavaScriptCore 读取共用离线算法资源 | `DivinationData.swift` + 共用离线算法包 |
 | **macOS** | `Divination-macOS/` | Xcode 14+ / macOS 13+；SwiftUI 通过系统 JavaScriptCore 读取共用离线算法资源 | `DivinationData.swift` + 共用离线算法包 |
 

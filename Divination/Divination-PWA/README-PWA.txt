@@ -3,6 +3,9 @@ Divination PWA 版
 
 文件：index.html / app.js / data.js / manifest.webmanifest / sw.js / icons/
 
+正式地址
+  https://lenyli.github.io/divinationLenyli.github.io/Divination/Divination-PWA/
+
 一、部署（PWA 需要 https 或 localhost 才能安装和离线）
   · 最简单：把 Divination-PWA 文件夹传到任意静态托管
     （GitHub Pages / Cloudflare Pages / Netlify，拖文件夹上去即可）
@@ -16,8 +19,12 @@ Divination PWA 版
   安装后全屏独立窗口运行，断网可用（Service Worker 缓存全部文件）
 
 三、说明
-  · 功能与 Windows/macOS/iOS 版一致：七个模块、子标签、特殊牌开关、
-    页面状态缓存、每模块30条历史（localStorage持久化）、复制提示"已复制"
-  · 模块标签为符号（首页/☷/🔯/🎴/ᚹ/♌/🔖），自适应屏宽；深色模式自动适配
+  · 当前共十四个模块。第二排含六爻、奇门遁甲、大六壬、小六壬、
+    梅花易数、太乙神数、金口诀、择日/黄历。
+  · 新增七种传统术数全部使用本地离线算法包，不调用在线 API、MCP 或 AI 判词。
+  · 支持子标签、特殊牌开关、页面状态缓存、每模块30条历史
+    （localStorage 持久化）及复制提示“已复制”。不同设备的历史不会自动同步。
+  · 标签自适应屏宽，第二排可横向滚动；深色模式自动适配。
   · 数据表 data.js 由 Divination.cs 自动转换；六爻算法已用固定掷币序列
     对照 Excel 缓存结果验证一致
+  · 新增传统术数的口径、来源和限制见上一级 ALGORITHM_SOURCES.md。

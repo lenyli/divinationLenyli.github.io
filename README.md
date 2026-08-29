@@ -28,7 +28,7 @@ Zhanbu/
   - [**Divination**](Divination/)：十四模块综合占卜；原有模块以 `Divination.cs` 为静态事实源，新增奇门、大六壬、小六壬、梅花、太乙、金口诀、择日共用版本化离线算法包；
   - [**Drawing**](Drawing/)：梵天神策摇签（《灌顶梵天神策经》卷第十，固定 99 签、每签 8 句五言 + 白话译文）。
 - **正式入口**：
-  - Divination PWA：`Divination/Divination-PWA/index.html`；
+  - Divination PWA：<https://lenyli.github.io/divinationLenyli.github.io/Divination/Divination-PWA/>（源码入口 `Divination/Divination-PWA/index.html`）；
   - Drawing PWA：`Drawing/Drawing-PWA/index.html`。
 - **数据事实源**：`Divination/Divination.cs`（原有模块静态词条）、`Divination/TraditionalAlgorithms/adapter.ts`（新增术数统一结果适配）、`Drawing/Drawing-PWA/data.js`（99 签文事实）。
 
@@ -120,7 +120,7 @@ Zhanbu/
 
 ## 在线入口
 
-- Divination：<https://lenyli.github.io/divinationLenyli.github.io/Divination-PWA/>
+- Divination：<https://lenyli.github.io/divinationLenyli.github.io/Divination/Divination-PWA/>
 - Drawing：<https://lenyli.github.io/divinationLenyli.github.io/Drawing-PWA/>
 
 ## 安装到手机
