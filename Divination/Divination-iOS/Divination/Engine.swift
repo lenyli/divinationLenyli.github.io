@@ -18,19 +18,27 @@ final class Engine: ObservableObject {
     @Published var curTab = 0      // 塔罗：0通用 1YESNO 2大牌
     @Published var curHomeTab = 0  // 首页：0综合 1日期
     @Published var includeSpecial = false
-    @Published var histories: [[String]] = Array(repeating: [], count: 7)
+    @Published var histories: [[String]] = Array(repeating: [], count: 14)
     @Published var lang: AppLang = AppLang.detect()
     @Published var showCopied = false
     @Published var liuYaoUpperTrigram = ""
     @Published var liuYaoLowerTrigram = ""
     @Published var liuYaoMovingLines: Set<Int> = []
+    @Published var traditionalDate = Date()
+    @Published var traditionalMethod = "time"
+    @Published var traditionalNumber = 1
+    @Published var traditionalBranch = "子"
+    @Published var traditionalScope = "year"
+    @Published var almanacTopic = "marriage"
+    @Published var almanacStartDate = Date()
+    @Published var almanacEndDate = Calendar.current.date(byAdding: .day, value: 30, to: Date()) ?? Date()
 
     var copyText = ""
     var drawnGen: [Int] = []
     var drawnMajor: [Int] = []
     var sessGen = -1, sessMaj = -1
-    var pageSegs: [[Seg]?] = Array(repeating: nil, count: 10)
-    var pageCopy: [String?] = Array(repeating: nil, count: 10)
+    var pageSegs: [[Seg]?] = Array(repeating: nil, count: 17)
+    var pageCopy: [String?] = Array(repeating: nil, count: 17)
     let SPECIAL_TAROT_START = 156
 
     var S: L10n { L10n.of(lang) }
@@ -39,6 +47,7 @@ final class Engine: ObservableObject {
     var homeTabs: [String] { S.homeTabs }
     var helpText: String { S.helpText }
     let liuYaoTrigramValues = ["天", "泽", "火", "雷", "风", "水", "山", "地"]
+    let traditionalMethods = ["qimen", "liuren", "xiaoliuren", "meihua", "taiyi", "jinkoujue", "almanac"]
 
     func liuYaoTrigramTitle(_ value: String) -> String {
         ["天": "乾（天）", "泽": "兑（泽）", "火": "离（火）", "雷": "震（雷）",
@@ -63,6 +72,7 @@ final class Engine: ObservableObject {
         case 1: return S.goLiuYao
         case 5: return S.goDice
         case 6: return S.goQian
+        case 7...13: return S.isEn ? "Calculate" : "排 盘"
         default: return S.goDraw
         }
     }
@@ -87,7 +97,8 @@ final class Engine: ObservableObject {
         if curModule == 0 { return curHomeTab }
         if curModule == 1 { return 2 }
         if curModule == 2 { return 3 + curTab }
-        return 6 + (curModule - 3)
+        if curModule <= 6 { return 6 + (curModule - 3) }
+        return 10 + (curModule - 7)
     }
     func saveState() {
         let p = pageIndex()
@@ -99,7 +110,11 @@ final class Engine: ObservableObject {
         if let s = pageSegs[p] { output = s; copyText = pageCopy[p] ?? "" }
         else { output = []; copyText = "" }
     }
-    func switchModule(_ i: Int) { saveState(); curModule = i; restoreState() }
+    func switchModule(_ i: Int) {
+        saveState(); curModule = i
+        if i == 10 && !["time", "number"].contains(traditionalMethod) { traditionalMethod = "time" }
+        restoreState()
+    }
     func switchTab(_ t: Int) { saveState(); curTab = t; restoreState() }
     func switchHomeTab(_ t: Int) { saveState(); curHomeTab = t; restoreState() }
 
@@ -131,6 +146,7 @@ final class Engine: ObservableObject {
         if curModule == 0 { if curHomeTab == 0 { divineHome(q) } else { divineDate(q) }; return }
         if curModule == 6 { divineQian(q); return }
         if curModule == 2 { divineTarot(q); return }
+        if curModule >= 7 { divineTraditional(q); return }
         var lines: [[String]] = []
         let result: String
         if curModule == 1 {
@@ -150,6 +166,39 @@ final class Engine: ObservableObject {
             ap("：" + ln[2] + "。")
             if !ln[3].isEmpty { ap(ln[3], italic: true) }
             if i < lines.count - 1 { ap("\n") }
+        }
+    }
+
+    private func divineTraditional(_ q: String) {
+        let method = traditionalMethods[curModule - 7]
+        var options: [String: Any] = [:]
+        var date = traditionalDate
+        if method == "meihua" {
+            options = ["method": traditionalMethod, "number": traditionalNumber]
+        } else if method == "taiyi" {
+            options = ["scope": traditionalScope]
+        } else if method == "jinkoujue" {
+            options = ["method": traditionalMethod, "branch": traditionalBranch, "number": traditionalNumber]
+        } else if method == "almanac" {
+            let formatter = DateFormatter()
+            formatter.locale = Locale(identifier: "en_US_POSIX")
+            formatter.dateFormat = "yyyy-MM-dd"
+            options = ["topic": almanacTopic,
+                       "startDate": formatter.string(from: almanacStartDate),
+                       "endDate": formatter.string(from: almanacEndDate)]
+            date = almanacStartDate
+        }
+        do {
+            let result = try TraditionalAlgorithmEngine.shared.calculate(method: method, date: date, options: options)
+            copyText = q + "\n\n" + result.display
+                + "\n\n算法版本：" + result.methodVersion
+                + "\n来源：" + result.engine
+                + "\n限制：" + result.limitations.joined(separator: "；")
+            output = [Seg(text: copyText)]
+            addHistory()
+        } catch {
+            copyText = ""
+            output = [Seg(text: error.localizedDescription, red: true)]
         }
     }
 

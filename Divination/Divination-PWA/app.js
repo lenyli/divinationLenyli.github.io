@@ -6,8 +6,9 @@ const SPECIAL_TAROT_START = 156;
 
 const STR = {
   zh: {
-    mods: ["首页","六爻","塔罗","雷诺曼","卢恩符文","占星骰子","玄天上帝感应灵签"],
+    mods: ["首页","六爻","塔罗","雷诺曼","卢恩符文","占星骰子","玄天上帝感应灵签","奇门遁甲","大六壬","小六壬","梅花易数","太乙神数","金口诀","择日/黄历"],
     modTabs: ["首页","六爻","塔罗","雷诺曼","卢恩符文","占星骰子","灵签"],
+    newMethodTabs: ["奇门遁甲","大六壬","小六壬","梅花易数","太乙神数","金口诀","择日/黄历"],
     tarotTabs: ["通用","YES OR NO","大牌"],
     homeTabs: ["综合占卜","日期预测"],
     qianLabels: ["圣意","谋望","家宅","婚姻","失物","官事","行人","占病","解曰"],
@@ -70,6 +71,20 @@ const STR = {
     tarotOrder: "塔罗抽牌顺序",
     astroDice: "占星骰子",
     noWithinYear: "一年内无",
+    calculate: "排 盘",
+    dateTime: "起课时间",
+    castMethod: "起卦方式",
+    timeMethod: "时间",
+    numberMethod: "数字",
+    numberValue: "数字",
+    scope: "计式",
+    diFenMethod: "地分方式",
+    branchMethod: "指定地分",
+    branch: "地支",
+    topic: "事项",
+    startDate: "开始日期",
+    endDate: "结束日期",
+    algorithmUnavailable: "本地算法包未加载，请刷新后重试。",
     langBtn: "EN",
     langTitle: "切换为 English",
     helpText: "1. 首页-综合占卜：一次生成塔罗三张牌、雷诺曼三张、卢恩三枚、占星骰子、六爻。灵签只在历史记录中追加签头，界面结果和复制结果不包含灵签。\n\n"
@@ -83,8 +98,9 @@ const STR = {
     }
   },
   en: {
-    mods: ["Home","I Ching","Tarot","Lenormand","Runes","Astro Dice","Fortune Slip"],
+    mods: ["Home","I Ching","Tarot","Lenormand","Runes","Astro Dice","Fortune Slip","Qimen","Da Liu Ren","Xiao Liu Ren","Meihua Yishu","Taiyi","Jin Kou Jue","Date Selection"],
     modTabs: ["Home","I Ching","Tarot","Lenormand","Runes","Astro Dice","Slip"],
+    newMethodTabs: ["Qimen","Da Liu Ren","Xiao Liu Ren","Meihua Yishu","Taiyi","Jin Kou Jue","Date Selection"],
     tarotTabs: ["General","YES OR NO","Major"],
     homeTabs: ["Combined","Date forecast"],
     qianLabels: ["Oracle","Ambition","Home","Marriage","Lost item","Legal","Traveler","Illness","Summary"],
@@ -147,6 +163,20 @@ const STR = {
     tarotOrder: "Tarot draw order",
     astroDice: "Astro dice",
     noWithinYear: "None within a year",
+    calculate: "Calculate",
+    dateTime: "Cast time",
+    castMethod: "Method",
+    timeMethod: "Time",
+    numberMethod: "Number",
+    numberValue: "Number",
+    scope: "Scope",
+    diFenMethod: "Earth-branch method",
+    branchMethod: "Select branch",
+    branch: "Branch",
+    topic: "Topic",
+    startDate: "Start",
+    endDate: "End",
+    algorithmUnavailable: "The local algorithm bundle is unavailable. Refresh and try again.",
     langBtn: "中文",
     langTitle: "Switch to 中文",
     helpText: "1. Home - Combined: draws 3 Tarot, 3 Lenormand, 3 Runes, astro dice, and I Ching in one go. The fortune slip is appended to history only; on-screen and copied results exclude the slip body.\n\n"
@@ -173,6 +203,7 @@ function initLang() {
 
 let lang = initLang();
 const L = () => STR[lang];
+const TRADITIONAL_METHODS = ['qimen','liuren','xiaoliuren','meihua','taiyi','jinkoujue','almanac'];
 
 function setLang(next) {
   if (next !== 'zh' && next !== 'en') return;
@@ -214,9 +245,9 @@ const state = {
   copyText: "",
   drawnGen: [], drawnMajor: [],
   sessGen: -1, sessMaj: -1,
-  histories: [[],[],[],[],[],[],[]],
-  pageHtml: new Array(10).fill(null),
-  pageCopy: new Array(10).fill(null),
+  histories: Array.from({length:14},()=>[]),
+  pageHtml: new Array(17).fill(null),
+  pageCopy: new Array(17).fill(null),
   segs: []
 };
 
@@ -266,7 +297,8 @@ function pageIndex() {
   if (state.curModule === 0) return state.curHomeTab;
   if (state.curModule === 1) return 2;
   if (state.curModule === 2) return 3 + state.curTab;
-  return 6 + (state.curModule - 3);
+  if (state.curModule <= 6) return 6 + (state.curModule - 3);
+  return 10 + (state.curModule - 7);
 }
 function saveState() {
   const p = pageIndex();
@@ -536,7 +568,10 @@ function saveHistories(){
 function loadHistories(){
   try {
     const d = JSON.parse(localStorage.getItem('divination_history'));
-    if (Array.isArray(d) && d.length===7) state.histories = d.map(h=>h.slice(-30));
+    if (Array.isArray(d) && (d.length===7 || d.length===14)) {
+      const migrated = Array.from({length:14},(_,i)=>Array.isArray(d[i])?d[i].slice(-30):[]);
+      state.histories = migrated;
+    }
   } catch(e){}
 }
 
@@ -548,6 +583,7 @@ function goText(){
   switch(state.curModule){
     case 0: return s.goHome; case 1: return s.goLiuYao;
     case 5: return s.goDice; case 6: return s.goQian;
+    case 7: case 8: case 9: case 10: case 11: case 12: case 13: return s.calculate;
     default: return s.goDraw;
   }
 }
@@ -555,15 +591,29 @@ function goText(){
 function renderTabs(){
   const s = L();
   const bar=$('modbar'); bar.innerHTML='';
-  s.modTabs.forEach((t,i)=>{
+  [0,2,3,4,5,6].forEach(i=>{
     const b=document.createElement('button');
     b.className='tab'+(state.curModule===i?' sel':'');
-    b.textContent=t; b.title=s.mods[i];
+    b.textContent=s.modTabs[i]; b.title=s.mods[i];
     b.onclick=()=>{ saveState(); state.curModule=i; restoreState(); renderAll(); };
     bar.appendChild(b);
   });
+  const methodBar=$('methodbar'); methodBar.innerHTML='';
+  const liuYao=document.createElement('button');
+  liuYao.className='tab'+(state.curModule===1?' sel':'');
+  liuYao.textContent=s.modTabs[1]; liuYao.title=s.mods[1];
+  liuYao.onclick=()=>{ saveState(); state.curModule=1; restoreState(); renderAll(); };
+  methodBar.appendChild(liuYao);
+  s.newMethodTabs.forEach((t,i)=>{
+    const b=document.createElement('button');
+    const moduleIndex=7+i;
+    b.className='tab'+(state.curModule===moduleIndex?' sel':''); b.textContent=t; b.title=t;
+    b.onclick=()=>{ saveState(); state.curModule=moduleIndex; restoreState(); renderAll(); };
+    methodBar.appendChild(b);
+  });
   const sub=$('subbar'); sub.innerHTML=''; sub.style.display='none';
   $('liurow').style.display=state.curModule===1?'flex':'none';
+  renderTraditionalInputs();
   sub.classList.remove('en-special');
   if (state.curModule===2){
     sub.style.display='flex';
@@ -607,6 +657,67 @@ function renderTabs(){
 
 function renderAll(){ renderTabs(); }
 
+function localDateTimeValue(date=new Date()){
+  const p=n=>String(n).padStart(2,'0');
+  return `${date.getFullYear()}-${p(date.getMonth()+1)}-${p(date.getDate())}T${p(date.getHours())}:${p(date.getMinutes())}`;
+}
+
+function localDateValue(date=new Date()){
+  const p=n=>String(n).padStart(2,'0');
+  return `${date.getFullYear()}-${p(date.getMonth()+1)}-${p(date.getDate())}`;
+}
+
+function option(value,label){ return `<option value="${value}">${label}</option>`; }
+
+function renderTraditionalInputs(){
+  const row=$('traditionalrow');
+  if(state.curModule<7){ row.style.display='none'; row.innerHTML=''; return; }
+  const s=L(), savedTime=row.dataset.time||localDateTimeValue();
+  row.style.display='flex';
+  row.innerHTML=`<label>${s.dateTime}<input id="traditional-time" type="datetime-local" value="${savedTime}"></label>`;
+  const method=TRADITIONAL_METHODS[state.curModule-7];
+  if(method==='meihua'){
+    row.insertAdjacentHTML('beforeend',`<label>${s.castMethod}<select id="traditional-method">${option('time',s.timeMethod)}${option('number',s.numberMethod)}</select></label><label id="traditional-number-wrap" style="display:none">${s.numberValue}<input id="traditional-number" type="number" min="1" step="1" value="1"></label>`);
+    $('traditional-method').onchange=()=>{ $('traditional-number-wrap').style.display=$('traditional-method').value==='number'?'flex':'none'; };
+  }else if(method==='taiyi'){
+    row.insertAdjacentHTML('beforeend',`<label>${s.scope}<select id="traditional-scope">${option('year','年计')}${option('month','月计')}${option('day','日计')}${option('hour','时计')}</select></label>`);
+  }else if(method==='jinkoujue'){
+    row.insertAdjacentHTML('beforeend',`<label>${s.diFenMethod}<select id="traditional-method">${option('time',s.timeMethod)}${option('branch',s.branchMethod)}${option('number',s.numberMethod)}</select></label><label id="traditional-branch-wrap" style="display:none">${s.branch}<select id="traditional-branch">${'子丑寅卯辰巳午未申酉戌亥'.split('').map(x=>option(x,x)).join('')}</select></label><label id="traditional-number-wrap" style="display:none">${s.numberValue}<input id="traditional-number" type="number" min="1" step="1" value="1"></label>`);
+    $('traditional-method').onchange=()=>{
+      $('traditional-branch-wrap').style.display=$('traditional-method').value==='branch'?'flex':'none';
+      $('traditional-number-wrap').style.display=$('traditional-method').value==='number'?'flex':'none';
+    };
+  }else if(method==='almanac'){
+    const start=localDateValue(), endDate=new Date(); endDate.setDate(endDate.getDate()+30); const end=localDateValue(endDate);
+    const topics=[['marriage','婚嫁'],['move','搬迁'],['opening','开业'],['contract','签约'],['travel','出行'],['medical','求医'],['study','求学'],['burial','安葬'],['renovation','动土'],['custom','通用']];
+    row.innerHTML=`<label>${s.topic}<select id="traditional-topic">${topics.map(x=>option(x[0],x[1])).join('')}</select></label><label>${s.startDate}<input id="traditional-start" type="date" value="${start}"></label><label>${s.endDate}<input id="traditional-end" type="date" value="${end}"></label>`;
+  }
+  const timeInput=$('traditional-time');
+  if(timeInput) timeInput.onchange=()=>{ row.dataset.time=timeInput.value; };
+}
+
+function traditionalOptions(method){
+  if(method==='meihua') return {method:$('traditional-method').value,number:Number($('traditional-number').value)};
+  if(method==='taiyi') return {scope:$('traditional-scope').value};
+  if(method==='jinkoujue') return {method:$('traditional-method').value,branch:$('traditional-branch').value,number:Number($('traditional-number').value)};
+  if(method==='almanac') return {topic:$('traditional-topic').value,startDate:$('traditional-start').value,endDate:$('traditional-end').value};
+  return {};
+}
+
+function divineTraditional(q){
+  if(typeof ZhanbuAlgorithms==='undefined' || typeof ZhanbuAlgorithms.calculate!=='function'){
+    window.alert(L().algorithmUnavailable); return false;
+  }
+  const method=TRADITIONAL_METHODS[state.curModule-7];
+  const timeInput=$('traditional-time');
+  const timestamp=timeInput ? new Date(timeInput.value).getTime() : new Date(`${$('traditional-start').value}T12:00`).getTime();
+  const response=JSON.parse(ZhanbuAlgorithms.calculate(method,timestamp,JSON.stringify(traditionalOptions(method))));
+  if(!response.ok){ window.alert(response.error); return false; }
+  state.copyText=`${q}\n\n${response.result.display}\n\n算法版本：${response.result.methodVersion}\n来源：${response.result.provenance.engine}\n限制：${response.result.limitations.join('；')}`;
+  state.segs=[]; seg(state.copyText); flushOut(); addHistory();
+  return true;
+}
+
 function divine(){
   if(state.curModule===1){
     const upper=$('liu-upper').value, lower=$('liu-lower').value;
@@ -622,6 +733,7 @@ function divine(){
   if (state.curModule===0){ state.curHomeTab===0 ? divineHome(q) : divineDate(q); }
   else if (state.curModule===6) divineQian(q);
   else if (state.curModule===2) divineTarot(q);
+  else if (state.curModule>=7){ if(!divineTraditional(q)) return; }
   else {
     const lines=[];
     let result;
@@ -694,6 +806,9 @@ function renderHistoryBody(mod){
 
 // ================= 初始化 =================
 window.addEventListener('DOMContentLoaded', ()=>{
+  const requestedMethod = new URLSearchParams(window.location.search).get('method');
+  const requestedIndex = TRADITIONAL_METHODS.indexOf(requestedMethod);
+  if (requestedIndex >= 0) state.curModule = 7 + requestedIndex;
   document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
   loadHistories();
   applyStaticI18n();

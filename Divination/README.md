@@ -1,6 +1,6 @@
 # Divination — 综合占卜工具
 
-七个占卜模块的多端应用。**`Divination.cs`（Windows WinForms，单文件 C#）是唯一数据源与算法基准**，PWA / iOS / macOS 三端的数据表都由它转换生成。
+十四个占卜模块的多端应用。现有七个模块仍以 **`Divination.cs`（Windows WinForms，单文件 C#）作为静态数据与算法基准**，PWA / iOS / macOS 三端的数据表由它转换生成；新增七种传统术数共用 [`TraditionalAlgorithms/adapter.ts`](TraditionalAlgorithms/adapter.ts) 与离线构建产物，避免四端分别维护口诀表。
 
 在线入口：<https://lenyli.github.io/divinationLenyli.github.io/Divination-PWA/>
 （站点级说明与另一个应用见仓库根目录 [`../README.md`](../README.md)）
@@ -16,6 +16,13 @@
 | 卢恩符文 | `RUNES` | 抽 3 枚不重复 |
 | 占星骰子 | `PLANETS`、`SIGNS`、`HOUSES` | 行星 + 星座 + 宫位 |
 | 玄天上帝感应灵签 | `QIAN` | 49 签，每签 12 个字段 |
+| 奇门遁甲 | `traditional-algorithms.js` | 时家、转盘、拆补法；输出九宫盘和值符值使 |
+| 大六壬 | `traditional-algorithms.js` | 月将加时、四课三传与取传规则 |
+| 小六壬 | `traditional-algorithms.js` | 农历月日时三步排宫 |
+| 梅花易数 | `traditional-algorithms.js` | 时间 / 数字起卦，输出主互变与体用 |
+| 太乙神数 | `traditional-algorithms.js` | 年/月/日/时四计七十二局基础盘 |
+| 金口诀 | `traditional-algorithms.js` | 时间 / 指定地分 / 数字起课 |
+| 择日/黄历 | `traditional-algorithms.js` | 按事项与日期范围给出透明候选依据 |
 
 各端共有：子标签、页面状态缓存、每模块 30 条历史记录、结果一键复制（格式为「问题：占卜结果」，便于粘给 AI 解读）。
 
@@ -23,16 +30,18 @@
 
 | 端 | 位置 | 构建 / 运行 | 数据表 |
 | --- | --- | --- | --- |
-| **Windows** | `Divination.cs` + `Divination.bat` / `build.bat` | 双击 `Divination.bat` 编译并启动；或 `build.bat` 只编译出 exe（约 30KB，无依赖） | 源文件内嵌 |
+| **Windows** | `Divination.cs` + `Divination.bat` / `build.bat` | 现有模块保持单文件 WinForms；新增七种入口打开同目录离线 PWA，分发时须保留 `Divination-PWA/` | 源文件内嵌 + 共用离线算法包 |
 | **PWA** | `Divination-PWA/` | 静态托管或 `python3 -m http.server`；需 https/localhost 才能安装与离线 | `data.js` |
-| **iOS** | `Divination-iOS/` | Xcode 14+ / iOS 16+，需选 Team 签名；免费账号签名有效期 7 天 | `DivinationData.swift` |
-| **macOS** | `Divination-macOS/` | Xcode 14+ / macOS 13+，SwiftUI 实现 | `DivinationData.swift` |
+| **iOS** | `Divination-iOS/` | Xcode 14+ / iOS 16+；SwiftUI 通过系统 JavaScriptCore 读取共用离线算法资源 | `DivinationData.swift` + 共用离线算法包 |
+| **macOS** | `Divination-macOS/` | Xcode 14+ / macOS 13+；SwiftUI 通过系统 JavaScriptCore 读取共用离线算法资源 | `DivinationData.swift` + 共用离线算法包 |
 
 三端数据表**不要手改**，一律由 [`gen_data.py`](gen_data.py) 从 `Divination.cs` 生成，见下方「数据同步」。
 
 历史记录：Windows/macOS 存 `~/Library/Application Support/Divination/history.dat`（同格式），iOS 存 App 沙盒同名路径，PWA 存 `localStorage`。
 
 各端另有更细的说明：`Divination-PWA/README-PWA.txt`、`Divination-iOS/README-iOS.txt`、`Divination-macOS/README-macOS.txt`。
+
+新增传统术数的采用口径、来源、限制、构建边界和第三方许可见 [`ALGORITHM_SOURCES.md`](ALGORITHM_SOURCES.md) 与 [`TraditionalAlgorithms/`](TraditionalAlgorithms/)。固定结果摘要在 `TraditionalAlgorithms/golden.json`，可运行 `node TraditionalAlgorithms/verify.js` 校验。
 
 ## 数据同步
 

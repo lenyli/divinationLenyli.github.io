@@ -44,42 +44,35 @@ struct ContentView: View {
     @State private var showHelp = false
     @State private var showSpecialWarn = false
 
+    private var newMethodTabs: [String] {
+        eng.lang == .zh
+            ? ["奇门遁甲", "大六壬", "小六壬", "梅花易数", "太乙神数", "金口诀", "择日/黄历"]
+            : ["Qimen", "Da Liu Ren", "Xiao Liu Ren", "Meihua Yishu", "Taiyi", "Jin Kou Jue", "Date Selection"]
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Group {
-                if eng.lang == .en {
-                    // English: wrap after Lenormand (index 3) before Runes
-                    HStack(alignment: .top, spacing: 4) {
-                        VStack(spacing: 4) {
-                            HStack(spacing: 4) {
-                                ForEach(0..<4, id: \.self) { i in
-                                    TabButton(title: eng.S.modTabs[i], selected: eng.curModule == i, expand: true, fontSize: 14) {
-                                        eng.switchModule(i)
-                                    }
-                                }
-                            }
-                            HStack(spacing: 4) {
-                                ForEach(4..<eng.S.modTabs.count, id: \.self) { i in
-                                    TabButton(title: eng.S.modTabs[i], selected: eng.curModule == i, expand: true, fontSize: 14) {
-                                        eng.switchModule(i)
-                                    }
-                                }
-                            }
+            HStack(alignment: .top, spacing: 4) {
+                HStack(spacing: 4) {
+                    ForEach([0, 2, 3, 4, 5, 6], id: \.self) { i in
+                        TabButton(title: eng.S.modTabs[i], selected: eng.curModule == i, expand: true, fontSize: 14) {
+                            eng.switchModule(i)
                         }
-                        Button(eng.S.langBtn) { eng.toggleLang() }
-                            .buttonStyle(.bordered)
-                            .fixedSize()
                     }
-                } else {
-                    HStack(spacing: 4) {
-                        ForEach(0..<eng.S.modTabs.count, id: \.self) { i in
-                            TabButton(title: eng.S.modTabs[i], selected: eng.curModule == i, expand: true, fontSize: 15) {
-                                eng.switchModule(i)
-                            }
+                }
+                Button(eng.S.langBtn) { eng.toggleLang() }
+                    .buttonStyle(.bordered)
+                    .fixedSize()
+            }
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 4) {
+                    TabButton(title: eng.S.modTabs[1], selected: eng.curModule == 1, fontSize: 14) {
+                        eng.switchModule(1)
+                    }
+                    ForEach(Array(newMethodTabs.enumerated()), id: \.offset) { i, title in
+                        TabButton(title: title, selected: eng.curModule == 7 + i, fontSize: 14) {
+                            eng.switchModule(7 + i)
                         }
-                        Button(eng.S.langBtn) { eng.toggleLang() }
-                            .buttonStyle(.bordered)
-                            .fixedSize()
                     }
                 }
             }
@@ -147,6 +140,9 @@ struct ContentView: View {
                     }
                 }
             }
+            if eng.curModule >= 7 {
+                traditionalInputRow
+            }
             HStack {
                 Text(eng.S.inputLabel).font(.system(size: 15))
                 TextField("", text: $eng.question)
@@ -188,6 +184,67 @@ struct ContentView: View {
             Button(eng.S.ok, role: .cancel) {}
         } message: {
             Text(eng.S.specialWarnText)
+        }
+    }
+
+    @ViewBuilder private var traditionalInputRow: some View {
+        let isEn = eng.lang == .en
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                if eng.curModule != 13 {
+                    Text(isEn ? "Cast time" : "起课时间").font(.system(size: 14))
+                    DatePicker("", selection: $eng.traditionalDate)
+                        .labelsHidden().datePickerStyle(.compact)
+                }
+                if eng.curModule == 10 {
+                    Text(isEn ? "Method" : "起卦方式")
+                    Picker("", selection: $eng.traditionalMethod) {
+                        Text(isEn ? "Time" : "时间").tag("time")
+                        Text(isEn ? "Number" : "数字").tag("number")
+                    }.labelsHidden().pickerStyle(.menu)
+                    if eng.traditionalMethod == "number" {
+                        Text(isEn ? "Number" : "数字")
+                        TextField("", value: $eng.traditionalNumber, format: .number)
+                            .textFieldStyle(.roundedBorder).frame(width: 90)
+                    }
+                } else if eng.curModule == 11 {
+                    Text(isEn ? "Scope" : "计式")
+                    Picker("", selection: $eng.traditionalScope) {
+                        Text("年计").tag("year"); Text("月计").tag("month")
+                        Text("日计").tag("day"); Text("时计").tag("hour")
+                    }.labelsHidden().pickerStyle(.menu)
+                } else if eng.curModule == 12 {
+                    Text(isEn ? "Earth branch" : "地分方式")
+                    Picker("", selection: $eng.traditionalMethod) {
+                        Text(isEn ? "Time" : "时间").tag("time")
+                        Text(isEn ? "Branch" : "指定地分").tag("branch")
+                        Text(isEn ? "Number" : "数字").tag("number")
+                    }.labelsHidden().pickerStyle(.menu)
+                    if eng.traditionalMethod == "branch" {
+                        Picker("", selection: $eng.traditionalBranch) {
+                            ForEach("子丑寅卯辰巳午未申酉戌亥".map(String.init), id: \.self) { Text($0).tag($0) }
+                        }.labelsHidden().pickerStyle(.menu)
+                    } else if eng.traditionalMethod == "number" {
+                        TextField("", value: $eng.traditionalNumber, format: .number)
+                            .textFieldStyle(.roundedBorder).frame(width: 90)
+                    }
+                } else if eng.curModule == 13 {
+                    Text(isEn ? "Topic" : "事项")
+                    Picker("", selection: $eng.almanacTopic) {
+                        Text("婚嫁").tag("marriage"); Text("搬迁").tag("move")
+                        Text("开业").tag("opening"); Text("签约").tag("contract")
+                        Text("出行").tag("travel"); Text("求医").tag("medical")
+                        Text("求学").tag("study"); Text("安葬").tag("burial")
+                        Text("动土").tag("renovation"); Text("通用").tag("custom")
+                    }.labelsHidden().pickerStyle(.menu)
+                    Text(isEn ? "Start" : "开始")
+                    DatePicker("", selection: $eng.almanacStartDate, displayedComponents: .date)
+                        .labelsHidden().datePickerStyle(.compact)
+                    Text(isEn ? "End" : "结束")
+                    DatePicker("", selection: $eng.almanacEndDate, displayedComponents: .date)
+                        .labelsHidden().datePickerStyle(.compact)
+                }
+            }
         }
     }
 }

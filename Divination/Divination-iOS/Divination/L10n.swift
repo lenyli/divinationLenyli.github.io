@@ -97,7 +97,7 @@ struct L10n {
 
     static let zh = L10n(
         lang: .zh,
-        mods: ["首页", "六爻", "塔罗", "雷诺曼", "卢恩符文", "占星骰子", "玄天上帝感应灵签"],
+        mods: ["首页", "六爻", "塔罗", "雷诺曼", "卢恩符文", "占星骰子", "玄天上帝感应灵签", "奇门遁甲", "大六壬", "小六壬", "梅花易数", "太乙神数", "金口诀", "择日/黄历"],
         modTabs: ["首页", "六爻", "塔罗", "雷诺曼", "卢恩", "占星", "灵签"],
         tarotTabs: ["通用", "YES OR NO", "大牌"],
         homeTabs: ["综合占卜", "日期预测"],
@@ -169,7 +169,7 @@ struct L10n {
 
     static let en = L10n(
         lang: .en,
-        mods: ["Home", "I Ching", "Tarot", "Lenormand", "Runes", "Astro Dice", "Fortune Slip"],
+        mods: ["Home", "I Ching", "Tarot", "Lenormand", "Runes", "Astro Dice", "Fortune Slip", "Qimen", "Da Liu Ren", "Xiao Liu Ren", "Meihua Yishu", "Taiyi", "Jin Kou Jue", "Date Selection"],
         modTabs: ["Home", "I Ching", "Tarot", "Lenormand", "Runes", "Astro Dice", "Slip"],
         tarotTabs: ["General", "YES OR NO", "Major"],
         homeTabs: ["Combined", "Date forecast"],

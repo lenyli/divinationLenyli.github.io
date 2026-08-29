@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.Diagnostics;
 using System.Text;
 using System.Windows.Forms;
 
@@ -524,14 +525,15 @@ public class MainForm : Form
         LoadHistories();
         FormClosing += delegate(object s, FormClosingEventArgs e) { SaveHistories(); };
         Font = new Font("Microsoft YaHei", 10.5f);
-        ClientSize = new Size(660, 510);
+        ClientSize = new Size(660, 550);
         StartPosition = FormStartPosition.CenterScreen;
 
         var pnl = new FlowLayoutPanel();
-        pnl.SetBounds(12, 10, 636, 40);
+        pnl.SetBounds(12, 10, 636, 36);
         string[] mods = {"首页","六爻","塔罗","雷诺曼","卢恩符文","占星骰子","玄天上帝感应灵签"};
         modBtns = new Button[mods.Length];
-        for (int i = 0; i < mods.Length; i++) {
+        int[] firstRowModules = {0, 2, 3, 4, 5, 6};
+        foreach (int i in firstRowModules) {
             var b = new Button(); b.Text = mods[i]; b.AutoSize = true;
             b.Enabled = true;
             b.Tag = i;
@@ -541,8 +543,24 @@ public class MainForm : Form
         }
         Controls.Add(pnl);
 
+        var methodPnl = new FlowLayoutPanel();
+        methodPnl.SetBounds(12, 46, 636, 36);
+        methodPnl.WrapContents = false;
+        var liuYaoButton = new Button(); liuYaoButton.Text = mods[1]; liuYaoButton.AutoSize = true;
+        liuYaoButton.Enabled = true; liuYaoButton.Tag = 1; liuYaoButton.Click += OnModule;
+        modBtns[1] = liuYaoButton;
+        methodPnl.Controls.Add(liuYaoButton);
+        string[] newMethods = {"奇门遁甲", "大六壬", "小六壬", "梅花易数", "太乙神数", "金口诀", "择日/黄历"};
+        string[] newMethodIds = {"qimen", "liuren", "xiaoliuren", "meihua", "taiyi", "jinkoujue", "almanac"};
+        for (int i = 0; i < newMethods.Length; i++) {
+            var b = new Button(); b.Text = newMethods[i]; b.AutoSize = true; b.Enabled = true;
+            b.Tag = newMethodIds[i]; b.Click += OnTraditionalMethod;
+            methodPnl.Controls.Add(b);
+        }
+        Controls.Add(methodPnl);
+
         subPnl = new FlowLayoutPanel();
-        subPnl.SetBounds(12, 50, 636, 36);
+        subPnl.SetBounds(12, 90, 636, 36);
         string[] tabs = {"通用","YES OR NO","大牌"};
         subBtns = new Button[tabs.Length];
         for (int i = 0; i < tabs.Length; i++) {
@@ -561,7 +579,7 @@ public class MainForm : Form
         Controls.Add(subPnl);
 
         homePnl = new FlowLayoutPanel();
-        homePnl.SetBounds(12, 50, 636, 36);
+        homePnl.SetBounds(12, 90, 636, 36);
         string[] htabs = {"综合占卜","日期预测"};
         homeBtns = new Button[htabs.Length];
         for (int i = 0; i < htabs.Length; i++) {
@@ -583,7 +601,7 @@ public class MainForm : Form
         Controls.Add(homePnl);
 
         liuYaoPnl = new FlowLayoutPanel();
-        liuYaoPnl.SetBounds(100, 50, 548, 36);
+        liuYaoPnl.SetBounds(100, 90, 548, 36);
         liuYaoPnl.WrapContents = false;
         liuYaoPnl.Visible = false;
         liuYaoPnl.Controls.Add(new Label { Text = "上卦", AutoSize = true, Margin = new Padding(0, 7, 3, 0) });
@@ -606,32 +624,32 @@ public class MainForm : Form
         }
         Controls.Add(liuYaoPnl);
 
-        var lbl = new Label(); lbl.Text = "输入问题："; lbl.SetBounds(12, 96, 90, 24);
+        var lbl = new Label(); lbl.Text = "输入问题："; lbl.SetBounds(12, 136, 90, 24);
         Controls.Add(lbl);
-        txtQ = new TextBox(); txtQ.SetBounds(100, 92, 548, 28);
+        txtQ = new TextBox(); txtQ.SetBounds(100, 132, 548, 28);
         txtQ.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
         Controls.Add(txtQ);
 
-        btnGo = new Button(); btnGo.SetBounds(100, 130, 100, 34);
+        btnGo = new Button(); btnGo.SetBounds(100, 170, 100, 34);
         btnGo.Click += OnDivine;
         Controls.Add(btnGo);
-        btnCopy = new Button(); btnCopy.Text = "复制结果"; btnCopy.SetBounds(212, 130, 100, 34);
+        btnCopy = new Button(); btnCopy.Text = "复制结果"; btnCopy.SetBounds(212, 170, 100, 34);
         btnCopy.Click += OnCopy;
         Controls.Add(btnCopy);
-        var btnClear = new Button(); btnClear.Text = "清 空"; btnClear.SetBounds(324, 130, 100, 34);
+        var btnClear = new Button(); btnClear.Text = "清 空"; btnClear.SetBounds(324, 170, 100, 34);
         btnClear.Click += OnClear;
         Controls.Add(btnClear);
-        var btnHist = new Button(); btnHist.Text = "历史记录"; btnHist.SetBounds(436, 130, 100, 34);
+        var btnHist = new Button(); btnHist.Text = "历史记录"; btnHist.SetBounds(436, 170, 100, 34);
         btnHist.Click += OnHistory;
         Controls.Add(btnHist);
-        var btnHelp = new Button(); btnHelp.Text = "使用说明"; btnHelp.SetBounds(548, 130, 100, 34);
+        var btnHelp = new Button(); btnHelp.Text = "使用说明"; btnHelp.SetBounds(548, 170, 100, 34);
         btnHelp.Click += OnHelp;
         Controls.Add(btnHelp);
 
         txtOut = new RichTextBox();
         txtOut.ReadOnly = true; txtOut.ScrollBars = RichTextBoxScrollBars.Vertical;
         txtOut.BackColor = SystemColors.Window;
-        txtOut.SetBounds(12, 178, 636, 316);
+        txtOut.SetBounds(12, 218, 636, 316);
         txtOut.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
         Controls.Add(txtOut);
 
@@ -641,6 +659,22 @@ public class MainForm : Form
     }
 
     void OnModule(object sender, EventArgs e) { SaveState(); SelectModule((int)((Button)sender).Tag); }
+
+    void OnTraditionalMethod(object sender, EventArgs e)
+    {
+        string pwa = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Divination-PWA", "index.html");
+        if (!File.Exists(pwa)) {
+            MessageBox.Show(this, "未找到 Divination-PWA\\index.html。请保留 Divination.exe 与 Divination-PWA 文件夹的相对位置。",
+                "本地算法资源缺失", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+        string url = new Uri(pwa).AbsoluteUri + "?method=" + Uri.EscapeDataString((string)((Button)sender).Tag);
+        try {
+            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+        } catch (Exception ex) {
+            MessageBox.Show(this, "无法打开本地算法页面：" + ex.Message, "启动失败", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
 
     void SelectModule(int i)
     {

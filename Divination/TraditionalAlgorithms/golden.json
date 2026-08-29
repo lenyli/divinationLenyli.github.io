@@ -1,0 +1,23 @@
+[
+  {"method":"qimen","input":"2024-02-04T16:27:00+08:00","options":{},"displaySha256":"41c811c078001a416cf2b978999f0a0f006147fd5465a36640a780e9c5d31cb7"},
+  {"method":"liuren","input":"2024-02-04T16:27:00+08:00","options":{},"displaySha256":"3f8c7b23a7628e5ee4a059496052af7095b4c6f87335595b2a486b0c21b8d5da"},
+  {"method":"xiaoliuren","input":"2024-02-04T16:27:00+08:00","options":{},"displaySha256":"5ac38fcbd894ee1aaaf58ec2e6ece01502dd5746871d065fba5e9bb93bde6f8e"},
+  {"method":"meihua","input":"2024-02-04T16:27:00+08:00","options":{},"displaySha256":"c28ba81a39e1f1b90178f34aefdd3d0dd23a266be90d862645eab01dfb3bb070"},
+  {"method":"taiyi","input":"2024-02-04T16:27:00+08:00","options":{},"displaySha256":"ba9387a514d15c65e381d0ae7928675245b2b9f544d01ecac779c01a12e90048"},
+  {"method":"jinkoujue","input":"2024-02-04T16:27:00+08:00","options":{},"displaySha256":"37052757f0000c0dedf9847b325b8c0516163a3ffd6f7001df0971d054e4fe17"},
+  {"method":"almanac","input":"2024-02-04T16:27:00+08:00","options":{"topic":"travel","startDate":"2024-02-04","endDate":"2024-02-13"},"displaySha256":"5636d9e211f2c869659078f1f9edee851a89d4d37b2f490cc05e2b3b664df789"},
+  {"method":"qimen","input":"2025-06-21T10:42:00+08:00","options":{},"displaySha256":"73bd15e3561cf09d3363f8c7a3d9fedbff86e533611a7722d41b7407cf82a3e7"},
+  {"method":"liuren","input":"2025-06-21T10:42:00+08:00","options":{},"displaySha256":"206c69f4703c20d2b3e1082203d97889a97b09b18d8fc27ed0261fb7b8636483"},
+  {"method":"xiaoliuren","input":"2025-06-21T10:42:00+08:00","options":{},"displaySha256":"38fa923d3e35a21da742422d54e1579d955e0101498cb19272ddd3fd880c1245"},
+  {"method":"meihua","input":"2025-06-21T10:42:00+08:00","options":{},"displaySha256":"84004422cf137a7bd5fa04aa23175942c20cdf362b35e879fb9b34b0fa8d88b7"},
+  {"method":"taiyi","input":"2025-06-21T10:42:00+08:00","options":{},"displaySha256":"5259b7ad271f7db0ab7f7b0748edefd2d7d7c130ae84714f596030b0dacffc09"},
+  {"method":"jinkoujue","input":"2025-06-21T10:42:00+08:00","options":{},"displaySha256":"bac50574858c8db6c76145a01541858e20b94f40b7d9a11947ac73dbf9721f31"},
+  {"method":"almanac","input":"2025-06-21T10:42:00+08:00","options":{"topic":"travel","startDate":"2025-06-21","endDate":"2025-06-30"},"displaySha256":"6efbdfea07a482411d5ca30f4a8168fa637f6612b229def295b03528e5179873"},
+  {"method":"qimen","input":"2026-12-22T00:30:00+08:00","options":{},"displaySha256":"007ae22868f077373613badff49a9227e736002262449d832c437f24c5f8fb98"},
+  {"method":"liuren","input":"2026-12-22T00:30:00+08:00","options":{},"displaySha256":"cc7b0bd28da09a87430a511f19156b05d7f224c2a1f3b50ddf775d242acb1c65"},
+  {"method":"xiaoliuren","input":"2026-12-22T00:30:00+08:00","options":{},"displaySha256":"2d3a284e0b387fbbdd1114bda309bac0563a9fcb7d03d68f2f8b3502c17178c5"},
+  {"method":"meihua","input":"2026-12-22T00:30:00+08:00","options":{},"displaySha256":"daa2db2f744b81fed7d5f71935ae1b926987e93771f4be8f4d2b47a66a16a5d0"},
+  {"method":"taiyi","input":"2026-12-22T00:30:00+08:00","options":{},"displaySha256":"885eb3d981824eb4e55302b4f2911a264bad33d15c2b8741a9ef3aef1e68f143"},
+  {"method":"jinkoujue","input":"2026-12-22T00:30:00+08:00","options":{},"displaySha256":"ed73ae69768527cefc1ebcaceba40d8d7172f99e20889ad370a0e9d021f280b0"},
+  {"method":"almanac","input":"2026-12-22T00:30:00+08:00","options":{"topic":"travel","startDate":"2026-12-22","endDate":"2026-12-31"},"displaySha256":"0ab06f01057a52d32b902ea39537c461de034684cd9aa91e15f9105399a1f62a"}
+]

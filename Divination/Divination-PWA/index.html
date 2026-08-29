@@ -22,13 +22,21 @@ body{
   padding:10px; padding-top:calc(10px + env(safe-area-inset-top));
   max-width:760px; margin:0 auto;
 }
-#topbar{ display:flex; gap:6px; align-items:center; }
-#modbar{ display:flex; gap:4px; flex:1; min-width:0; }
+#navgrid{ display:grid; grid-template-columns:minmax(0,1fr) auto; column-gap:6px; row-gap:8px; }
+#topbar{ display:contents; }
+#modbar,#methodbar{ display:flex; gap:4px; min-width:0; }
+#methodbar{
+  overflow-x:auto; scrollbar-width:none;
+}
+#methodbar::-webkit-scrollbar{ display:none; }
 #langbtn{
   flex:0 0 auto; padding:7px 10px; font-size:13px; border:1px solid var(--border);
   background:var(--card); border-radius:6px; cursor:pointer; white-space:nowrap;
 }
-#modbar .tab{ flex:1 1 0; min-width:0; padding:7px 2px; font-size:clamp(11px,2.9vw,15px); text-align:center; }
+#modbar .tab,#methodbar .tab{ min-width:0; padding:7px 2px; font-size:clamp(11px,2.9vw,15px); text-align:center; }
+#modbar .tab{ flex:1 1 0; }
+#methodbar .tab{ flex:0 0 calc((100% - 20px)/6); }
+.tab:disabled{ opacity:.55; cursor:not-allowed; }
 #subbar{ display:none; gap:6px; align-items:center; flex-wrap:wrap; }
 #subbar.en-special{ flex-direction:column; align-items:flex-start; }
 #subrow{ display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
@@ -50,6 +58,13 @@ body{
   display:flex; gap:7px; align-items:center;
 }
 .moving-options label{ cursor:pointer; }
+#traditionalrow{ display:none; align-items:center; gap:6px; flex-wrap:wrap; }
+#traditionalrow label{ display:flex; align-items:center; gap:4px; font-size:14px; }
+#traditionalrow input,#traditionalrow select{
+  padding:6px 8px; border:1px solid var(--border); border-radius:6px;
+  background:var(--card); color:inherit; font:inherit; min-width:0;
+}
+#traditionalrow input[type="number"]{ width:110px; }
 #inrow{ display:flex; align-items:center; gap:6px; }
 #q{ flex:1; padding:7px 9px; border:1px solid var(--border); border-radius:6px; font-size:15px; }
 #btnrow{ display:flex; gap:6px; }
@@ -100,9 +115,12 @@ body{
 </style>
 </head>
 <body>
-  <div id="topbar">
-    <div id="modbar"></div>
-    <button type="button" id="langbtn" title="Switch language">EN</button>
+  <div id="navgrid">
+    <div id="topbar">
+      <div id="modbar"></div>
+      <button type="button" id="langbtn" title="Switch language">EN</button>
+    </div>
+    <div id="methodbar"></div>
   </div>
   <div id="subbar"></div>
   <div id="liurow">
@@ -134,6 +152,7 @@ body{
       <label><input type="checkbox" value="5">上</label>
     </div>
   </div>
+  <div id="traditionalrow"></div>
   <div id="inrow">
     <span id="input-label">输入问题：</span><input id="q" type="text">
   </div>
@@ -182,6 +201,7 @@ body{
 
 <script src="data.js"></script>
 <script src="qian-en.js"></script>
+<script src="traditional-algorithms.js"></script>
 <script src="app.js"></script>
 <script>
   if ('serviceWorker' in navigator) {

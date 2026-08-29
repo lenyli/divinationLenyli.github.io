@@ -1,0 +1,10 @@
+{
+  "private": true,
+  "scripts": {
+    "build": "esbuild adapter.ts --bundle --format=iife --global-name=ZhanbuAlgorithms --platform=browser --target=es2020 --minify --outfile=../Divination-PWA/traditional-algorithms.js"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.1",
+    "mingyu-core": "0.1.32"
+  }
+}

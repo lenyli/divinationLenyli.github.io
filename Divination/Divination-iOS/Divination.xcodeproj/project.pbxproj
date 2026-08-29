@@ -13,6 +13,8 @@
 		AA00000000000000000000B4 /* DivinationData.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000000000000000000F4 /* DivinationData.swift */; };
 		AA00000000000000000000B5 /* L10n.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000000000000000000F5 /* L10n.swift */; };
 		AA00000000000000000000B6 /* QianEnData.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000000000000000000F6 /* QianEnData.swift */; };
+		AA00000000000000000000B8 /* TraditionalAlgorithmEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000000000000000000F8 /* TraditionalAlgorithmEngine.swift */; };
+		AA00000000000000000000B9 /* traditional-algorithms.js in Resources */ = {isa = PBXBuildFile; fileRef = AA00000000000000000000F9 /* traditional-algorithms.js */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -22,6 +24,8 @@
 		AA00000000000000000000F4 /* DivinationData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DivinationData.swift; sourceTree = "<group>"; };
 		AA00000000000000000000F5 /* L10n.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = L10n.swift; sourceTree = "<group>"; };
 		AA00000000000000000000F6 /* QianEnData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QianEnData.swift; sourceTree = "<group>"; };
+		AA00000000000000000000F8 /* TraditionalAlgorithmEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TraditionalAlgorithmEngine.swift; sourceTree = "<group>"; };
+		AA00000000000000000000F9 /* traditional-algorithms.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = ../../Divination-PWA/traditional-algorithms.js; sourceTree = "<group>"; };
 		AA00000000000000000000FA /* Divination.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Divination.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -53,6 +57,8 @@
 				AA00000000000000000000F4 /* DivinationData.swift */,
 				AA00000000000000000000F5 /* L10n.swift */,
 				AA00000000000000000000F6 /* QianEnData.swift */,
+				AA00000000000000000000F8 /* TraditionalAlgorithmEngine.swift */,
+				AA00000000000000000000F9 /* traditional-algorithms.js */,
 			);
 			path = Divination;
 			sourceTree = "<group>";
@@ -123,6 +129,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AA00000000000000000000B9 /* traditional-algorithms.js in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -139,6 +146,7 @@
 				AA00000000000000000000B4 /* DivinationData.swift in Sources */,
 				AA00000000000000000000B5 /* L10n.swift in Sources */,
 				AA00000000000000000000B6 /* QianEnData.swift in Sources */,
+				AA00000000000000000000B8 /* TraditionalAlgorithmEngine.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
