@@ -27,7 +27,16 @@ function dateText(date: Date): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
-function envelope(method: string, timestamp: number, input: Options, facts: unknown, display: string, limitations: string[] = []) {
+function envelope(
+  method: string,
+  timestamp: number,
+  input: Options,
+  facts: unknown,
+  display: string,
+  limitations: string[] = [],
+  summary = '',
+  timingSummary = '',
+) {
   return {
     method,
     methodVersion: METHOD_VERSION,
@@ -40,6 +49,8 @@ function envelope(method: string, timestamp: number, input: Options, facts: unkn
       wrapper: 'Zhanbu traditional algorithms adapter v1',
     },
     limitations,
+    summary,
+    timingSummary,
     display,
   };
 }
@@ -71,8 +82,11 @@ function formatQimen(date: Date) {
     voidBranches: result.voidBranches,
     horseStar: result.horseStar,
     patternTags: result.patternTags,
+    yingQi: result.yingQi,
     palaces: result.jiuGongGe,
-  }, display, ['首版固定为时家、转盘、拆补法；盘面事实不等同于事项断语。']);
+  }, display, ['首版固定为时家、转盘、拆补法；盘面事实不等同于事项断语。'],
+  `${result.isYangDun ? '阳遁' : '阴遁'}${result.juShu}局，值符${result.zhiFu}，值使${result.zhiShi}${result.patternTags.length ? `；${result.patternTags.slice(0, 3).join('、')}` : ''}`,
+  result.yingQi?.description ?? '当前盘只给出相对节奏，没有唯一日期。');
 }
 
 function formatLiuren(date: Date) {
@@ -102,7 +116,10 @@ function formatLiuren(date: Date) {
     fourLessons: result.fourLessons,
     threeTransmissions: result.threeTransmissions,
     guaTi: result.guaTi,
-  }, display, ['输出为结构化课盘与取传事实；神煞、课体仍应结合所问事项人工辨用。']);
+    timingEvidence: result.timingEvidence,
+  }, display, ['输出为结构化课盘与取传事实；神煞、课体仍应结合所问事项人工辨用。'],
+  `月将${result.monthLeader}，${result.transmissionRule}；三传${result.threeTransmissions.map((item) => item.branch).join('→')}${result.guaTi.length ? `；${result.guaTi.slice(0, 3).join('、')}` : ''}`,
+  result.timingEvidence?.slice(0, 3).join('；') ?? '当前课只给出先后与触发条件，没有唯一日期。');
 }
 
 function formatXiaoliuren(date: Date) {
@@ -128,7 +145,8 @@ function formatXiaoliuren(date: Date) {
     ganzhi: result.ganzhi,
     calculation: result.calculation,
     sequence: result.sequence,
-  }, display, ['按东八区民用日零点换日；闰月沿用同名月序。']);
+  }, display, ['按东八区民用日零点换日；闰月沿用同名月序。'],
+  `月宫${result.sequence.month.name}、日宫${result.sequence.day.name}、时宫${result.sequence.hour.name}；主宫${result.primary.name}`);
 }
 
 function formatMeihua(date: Date, options: Options) {
@@ -164,7 +182,9 @@ function formatMeihua(date: Date, options: Options) {
     yongGua: result.yongGua,
     analysis: result.analysis,
     calculation: result.calculation,
-  }, display, ['时间起卦与数字起卦为不同输入口径；结果保留所用方法和复算字段。']);
+  }, display, ['时间起卦与数字起卦为不同输入口径；结果保留所用方法和复算字段。'],
+  `主卦${result.originalName}，第${result.movingYao.position}爻动，变${result.changedName}；${result.analysis.tiYongRelation}`,
+  result.analysis.yingQi?.slice(0, 4).join('；') ?? '当前卦没有形成明确应期线索。');
 }
 
 function formatJinkoujue(date: Date, options: Options) {
@@ -202,7 +222,8 @@ function formatJinkoujue(date: Date, options: Options) {
     yinYangUse: result.yinYangUse,
     movements: result.movements,
     calculation: result.calculation,
-  }, display, ['随机起课未接入；首版提供时间、指定地分和数字三种可复算输入。']);
+  }, display, ['随机起课未接入；首版提供时间、指定地分和数字三种可复算输入。'],
+  `地分${result.diFenBranch}，${result.yinYangUse.pattern}用${result.yinYangUse.usePosition}${result.movements.length ? `；动象${result.movements.slice(0, 2).map((item) => item.name).join('、')}` : ''}`);
 }
 
 function formatTaiyi(date: Date, options: Options) {
@@ -238,7 +259,8 @@ function formatTaiyi(date: Date, options: Options) {
     setCount: result.setCount,
     judgments: result.judgments,
     model: result.model,
-  }, display, ['年计按积年起局；月、日、时计采用现代历法定位复现通行四计。']);
+  }, display, ['年计按积年起局；月、日、时计采用现代历法定位复现通行四计。'],
+  `${result.yinYang}${result.bureau}局，太乙${result.taiyiPosition}，文昌${result.wenChangPosition}，始击${result.shiJiPosition}；主算${result.lordCount}、客算${result.guestCount}`);
 }
 
 function formatAlmanac(date: Date, options: Options) {
@@ -268,7 +290,9 @@ function formatAlmanac(date: Date, options: Options) {
     endDate: result.endDate,
     days: shownDays,
     totalDays: result.days.length,
-  }, display, ['未提供参与人生辰时，不计算与参与人的刑冲破害；候选是透明规则筛选，不替代现实条件判断。']);
+  }, display, ['未提供参与人生辰时，不计算与参与人的刑冲破害；候选是透明规则筛选，不替代现实条件判断。'],
+  `${result.topicLabel}候选：${shownDays.slice(0, 3).map((day) => day.date).join('、')}`,
+  `${result.topicLabel}候选：${shownDays.slice(0, 3).map((day) => day.date).join('、')}`);
 }
 
 export function calculate(method: string, timestamp: number, optionsJson = '{}'): string {

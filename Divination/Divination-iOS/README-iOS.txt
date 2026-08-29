@@ -10,6 +10,9 @@ Divination iOS 版（Xcode 工程）
 
 二、说明
   · 功能与 Windows/macOS 版一致；模块行和按钮行在手机上可左右滑动
+  · 综合占卜合并六种传统术数短摘要；日期预测增加奇门/六壬/梅花应期，
+    并可填写事项、开始和结束日期生成黄历候选
+  · 单项结果不显示算法版本等开发信息；应用图标为黑衣小魔法师原图
   · 数据表 DivinationData.swift 与 macOS 版相同（由 Divination.cs 自动转换）
   · 历史记录存于 App 沙盒 Application Support/Divination/history.dat，保存30条
   · 使用说明含第5条"复制结果可直接粘贴到AI解读"（与你更新的cs一致）

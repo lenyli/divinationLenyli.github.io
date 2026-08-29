@@ -16,7 +16,13 @@ if not exist "Divination.cs" (
   exit /b 1
 )
 
-"%CSC%" /nologo /target:winexe /out:Divination.exe "Divination.cs"
+if not exist "Divination.ico" (
+  echo [ERROR] Divination.ico not found
+  pause
+  exit /b 1
+)
+
+"%CSC%" /nologo /target:winexe /win32icon:"Divination.ico" /out:Divination.exe "Divination.cs"
 if errorlevel 1 (
   echo BUILD FAILED
   pause

@@ -9,7 +9,7 @@
 
 | 模块 | 数据表（PWA `data.js`） | 说明 |
 | --- | --- | --- |
-| 首页 | `DATE12` | 综合占卜 / 日期预测（12 条） |
+| 首页 | `DATE12` + `traditional-algorithms.js` | 综合占卜合并六种传统术数短摘要；日期预测合并塔罗/占星、奇门/六壬/梅花应期和黄历候选 |
 | 六爻 | `TRI_ELEM`、`HEXAGRAMS`、`POS` | 64 卦，算法复刻自 `抽牌.xlsm`，已用固定掷币序列对照 Excel 验证一致 |
 | 塔罗 | `TAROT`、`YESNO` | 通用 / YES OR NO / 大牌，含特殊牌开关 |
 | 雷诺曼 | `LENORMAND` | 43 张，抽 3 张不重复 |
@@ -26,11 +26,13 @@
 
 各端共有：子标签、页面状态缓存、每模块 30 条历史记录、结果一键复制（格式为「问题：占卜结果」，便于粘给 AI 解读）。
 
+首页“综合占卜”会把奇门、大六壬、小六壬、梅花、太乙和金口诀压缩为同一版合参结果；择日/黄历因必须先指定事项和日期范围，不混入随机综合结果。首页“日期预测”只采用有应期依据的奇门、大六壬、梅花，再按页面填写的事项和日期范围附上黄历候选；太乙、金口诀、小六壬不强行换算为具体日期。单项结果只显示盘面和结论，不显示算法版本、来源、限制等开发信息。
+
 ## 各端
 
 | 端 | 位置 | 构建 / 运行 | 数据表 |
 | --- | --- | --- | --- |
-| **Windows** | `Divination.cs` + `Divination.bat` / `build.bat` | 现有模块保持单文件 WinForms；新增七种入口打开同目录离线 PWA，分发时须保留 `Divination-PWA/` | 源文件内嵌 + 共用离线算法包 |
+| **Windows** | `Divination.cs` + `Divination.ico` + `Divination.bat` / `build.bat` | 现有模块保持单文件 WinForms；构建时嵌入统一应用图标；新增七种入口打开同目录离线 PWA，分发时须保留 `Divination-PWA/` | 源文件内嵌 + 共用离线算法包 |
 | **PWA** | `Divination-PWA/` | 正式地址见上方；本地可用 `python3 -m http.server`，需 https/localhost 才能安装与离线 | `data.js` + 共用离线算法包 |
 | **iOS** | `Divination-iOS/` | Xcode 14+ / iOS 16+；SwiftUI 通过系统 JavaScriptCore 读取共用离线算法资源 | `DivinationData.swift` + 共用离线算法包 |
 | **macOS** | `Divination-macOS/` | Xcode 14+ / macOS 13+；SwiftUI 通过系统 JavaScriptCore 读取共用离线算法资源 | `DivinationData.swift` + 共用离线算法包 |

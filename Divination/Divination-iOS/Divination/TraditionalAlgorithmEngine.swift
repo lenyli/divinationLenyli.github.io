@@ -3,9 +3,8 @@ import JavaScriptCore
 
 struct TraditionalCalculation {
     let display: String
-    let methodVersion: String
-    let engine: String
-    let limitations: [String]
+    let summary: String
+    let timingSummary: String
 }
 
 enum TraditionalAlgorithmError: LocalizedError {
@@ -60,17 +59,13 @@ final class TraditionalAlgorithmEngine {
             throw TraditionalAlgorithmError.javascript(root["error"] as? String ?? "算法计算失败。")
         }
         guard let result = root["result"] as? [String: Any],
-              let display = result["display"] as? String,
-              let methodVersion = result["methodVersion"] as? String,
-              let provenance = result["provenance"] as? [String: Any],
-              let engine = provenance["engine"] as? String else {
+              let display = result["display"] as? String else {
             throw TraditionalAlgorithmError.invalidResponse
         }
         return TraditionalCalculation(
             display: display,
-            methodVersion: methodVersion,
-            engine: engine,
-            limitations: result["limitations"] as? [String] ?? []
+            summary: result["summary"] as? String ?? "",
+            timingSummary: result["timingSummary"] as? String ?? ""
         )
     }
 }

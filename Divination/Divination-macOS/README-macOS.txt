@@ -10,6 +10,9 @@ Divination macOS 版（Xcode 工程）
 二、说明
   · 功能与 Windows 版完全一致：首页(综合占卜/日期预测)、六爻、塔罗(通用/YES OR NO/大牌+特殊牌开关)、
     雷诺曼、卢恩符文、占星骰子、玄天上帝感应灵签，历史记录30条持久保存、页面状态缓存
+  · 综合占卜合并六种传统术数短摘要；日期预测增加奇门/六壬/梅花应期，
+    并可填写事项、开始和结束日期生成黄历候选
+  · 单项结果不显示算法版本等开发信息；应用图标为黑衣小魔法师原图
   · 数据表由 Divination.cs 自动转换（DivinationData.swift），未手工改动
   · 历史文件位置：~/Library/Application Support/Divination/history.dat（与Windows版同格式）
   · 界面为 SwiftUI 实现，粗体/斜体/红色/字号规则与 Windows 版一致

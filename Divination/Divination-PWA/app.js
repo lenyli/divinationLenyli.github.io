@@ -510,6 +510,21 @@ function divineHome(q) {
   const qs = qTable[rnd(qTable.length)];
   const qianHead = qs[0]+"　"+qs[1]+"　"+qs[2];
   state.copyText = q+"："+tarot+len+runes+astro+liuyao;
+  const traditionalLines = [
+    ['qimen','奇门遁甲',{}],
+    ['liuren','大六壬',{}],
+    ['xiaoliuren','小六壬',{}],
+    ['meihua','梅花易数',{method:'time'}],
+    ['taiyi','太乙神数',{scope:'day'}],
+    ['jinkoujue','金口诀',{method:'time'}],
+  ].flatMap(([method,label,options])=>{
+    const response=calculateTraditional(method,Date.now(),options);
+    return response.ok && response.result.summary ? [`${label}：${response.result.summary}`] : [];
+  });
+  if(traditionalLines.length){
+    state.copyText += "\n\n―― 传统术数合参 ――\n"+traditionalLines.join("\n")
+      +"\n择日／黄历：需要事项和日期范围，请在对应页面单独计算。";
+  }
   addHistoryText(state.copyText+"\n"+qianHead);
   state.segs=[];
   seg(state.copyText+"\n");
@@ -544,6 +559,18 @@ function divineDate(q) {
   }
   const p2=PLANETS[rnd(12)], sg2=SIGNS[rnd(12)], h2=HOUSES[rnd(12)];
   state.copyText = q+"\n"+s.tarotPred+"："+tarotResult+"\n\n"+s.astroPred+"：\n"+s.baseDuration+"："+p2[2]+"\n"+s.unit+"："+sg2[2]+"\n"+s.adjustNum+"："+h2[2];
+  const timingLines=[];
+  [['qimen','奇门应期',{}],['liuren','六壬应期',{}],['meihua','梅花应期',{method:'time'}]].forEach(([method,label,options])=>{
+    const response=calculateTraditional(method,Date.now(),options);
+    if(response.ok && response.result.timingSummary) timingLines.push(`${label}：${response.result.timingSummary}`);
+  });
+  const start=$('traditional-start')?.value||localDateValue();
+  const fallbackEnd=new Date(); fallbackEnd.setDate(fallbackEnd.getDate()+30);
+  const end=$('traditional-end')?.value||localDateValue(fallbackEnd);
+  const topic=$('traditional-topic')?.value||'custom';
+  const almanac=calculateTraditional('almanac',new Date(`${start}T12:00`).getTime(),{topic,startDate:start,endDate:end});
+  if(almanac.ok && almanac.result.timingSummary) timingLines.push(`择日参考：${almanac.result.timingSummary}`);
+  if(timingLines.length) state.copyText += "\n\n―― 应期与择日参考 ――\n"+timingLines.join("\n");
   addHistory();
   state.segs=[];
   seg(state.copyText+"\n\n"+s.briefNote+"\n");
@@ -671,11 +698,12 @@ function option(value,label){ return `<option value="${value}">${label}</option>
 
 function renderTraditionalInputs(){
   const row=$('traditionalrow');
-  if(state.curModule<7){ row.style.display='none'; row.innerHTML=''; return; }
+  const isHomeDate=state.curModule===0 && state.curHomeTab===1;
+  if(state.curModule<7 && !isHomeDate){ row.style.display='none'; row.innerHTML=''; return; }
   const s=L(), savedTime=row.dataset.time||localDateTimeValue();
   row.style.display='flex';
   row.innerHTML=`<label>${s.dateTime}<input id="traditional-time" type="datetime-local" value="${savedTime}"></label>`;
-  const method=TRADITIONAL_METHODS[state.curModule-7];
+  const method=isHomeDate?'almanac':TRADITIONAL_METHODS[state.curModule-7];
   if(method==='meihua'){
     row.insertAdjacentHTML('beforeend',`<label>${s.castMethod}<select id="traditional-method">${option('time',s.timeMethod)}${option('number',s.numberMethod)}</select></label><label id="traditional-number-wrap" style="display:none">${s.numberValue}<input id="traditional-number" type="number" min="1" step="1" value="1"></label>`);
     $('traditional-method').onchange=()=>{ $('traditional-number-wrap').style.display=$('traditional-method').value==='number'?'flex':'none'; };
@@ -704,16 +732,24 @@ function traditionalOptions(method){
   return {};
 }
 
-function divineTraditional(q){
+function calculateTraditional(method,timestamp,options={}){
   if(typeof ZhanbuAlgorithms==='undefined' || typeof ZhanbuAlgorithms.calculate!=='function'){
-    window.alert(L().algorithmUnavailable); return false;
+    return {ok:false,error:L().algorithmUnavailable};
   }
+  try {
+    return JSON.parse(ZhanbuAlgorithms.calculate(method,timestamp,JSON.stringify(options)));
+  } catch(error) {
+    return {ok:false,error:String(error)};
+  }
+}
+
+function divineTraditional(q){
   const method=TRADITIONAL_METHODS[state.curModule-7];
   const timeInput=$('traditional-time');
   const timestamp=timeInput ? new Date(timeInput.value).getTime() : new Date(`${$('traditional-start').value}T12:00`).getTime();
-  const response=JSON.parse(ZhanbuAlgorithms.calculate(method,timestamp,JSON.stringify(traditionalOptions(method))));
+  const response=calculateTraditional(method,timestamp,traditionalOptions(method));
   if(!response.ok){ window.alert(response.error); return false; }
-  state.copyText=`${q}\n\n${response.result.display}\n\n算法版本：${response.result.methodVersion}\n来源：${response.result.provenance.engine}\n限制：${response.result.limitations.join('；')}`;
+  state.copyText=`${q}\n\n${response.result.display}`;
   state.segs=[]; seg(state.copyText); flushOut(); addHistory();
   return true;
 }

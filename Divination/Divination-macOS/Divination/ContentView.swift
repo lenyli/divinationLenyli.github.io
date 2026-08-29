@@ -110,7 +110,7 @@ struct ContentView: View {
                     }
                 }
             }
-            if eng.curModule >= 7 {
+            if eng.curModule >= 7 || (eng.curModule == 0 && eng.curHomeTab == 1) {
                 traditionalInputRow
             }
             HStack {
@@ -155,9 +155,10 @@ struct ContentView: View {
 
     @ViewBuilder private var traditionalInputRow: some View {
         let isEn = eng.lang == .en
+        let isAlmanac = eng.curModule == 13 || (eng.curModule == 0 && eng.curHomeTab == 1)
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                if eng.curModule != 13 {
+                if !isAlmanac {
                     Text(isEn ? "Cast time" : "起课时间")
                     DatePicker("", selection: $eng.traditionalDate)
                         .labelsHidden().datePickerStyle(.field)
@@ -192,7 +193,7 @@ struct ContentView: View {
                     } else if eng.traditionalMethod == "number" {
                         TextField("", value: $eng.traditionalNumber, format: .number).frame(width: 80)
                     }
-                } else if eng.curModule == 13 {
+                } else if isAlmanac {
                     Text(isEn ? "Topic" : "事项")
                     Picker("", selection: $eng.almanacTopic) {
                         Text("婚嫁").tag("marriage"); Text("搬迁").tag("move")

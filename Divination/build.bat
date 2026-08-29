@@ -7,7 +7,7 @@ if not exist "%CSC%" (
   pause
   exit /b 1
 )
-"%CSC%" /nologo /target:winexe /out:Divination.exe "%~dp0Divination.cs"
+"%CSC%" /nologo /target:winexe /win32icon:"%~dp0Divination.ico" /out:Divination.exe "%~dp0Divination.cs"
 if errorlevel 1 (
   echo BUILD FAILED
   pause

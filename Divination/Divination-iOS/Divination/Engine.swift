@@ -191,9 +191,6 @@ final class Engine: ObservableObject {
         do {
             let result = try TraditionalAlgorithmEngine.shared.calculate(method: method, date: date, options: options)
             copyText = q + "\n\n" + result.display
-                + "\n\n算法版本：" + result.methodVersion
-                + "\n来源：" + result.engine
-                + "\n限制：" + result.limitations.joined(separator: "；")
             output = [Seg(text: copyText)]
             addHistory()
         } catch {
@@ -448,6 +445,25 @@ final class Engine: ObservableObject {
         let qs = pickQian()
         let qianHead = qs[0] + "　" + qs[1] + "　" + qs[2]
         copyText = q + "：" + tarot + len + runes + astro + liuyao
+        let castDate = Date()
+        let traditionalSpecs: [(String, String, [String: Any])] = [
+            ("qimen", "奇门遁甲", [:]),
+            ("liuren", "大六壬", [:]),
+            ("xiaoliuren", "小六壬", [:]),
+            ("meihua", "梅花易数", ["method": "time"]),
+            ("taiyi", "太乙神数", ["scope": "day"]),
+            ("jinkoujue", "金口诀", ["method": "time"]),
+        ]
+        let traditionalLines = traditionalSpecs.compactMap { method, label, options -> String? in
+            guard let result = try? TraditionalAlgorithmEngine.shared.calculate(method: method, date: castDate, options: options),
+                  !result.summary.isEmpty else { return nil }
+            return label + "：" + result.summary
+        }
+        if !traditionalLines.isEmpty {
+            copyText += "\n\n―― 传统术数合参 ――\n"
+                + traditionalLines.joined(separator: "\n")
+                + "\n择日／黄历：需要事项和日期范围，请在对应页面单独计算。"
+        }
         addHistoryText(copyText + "\n" + qianHead)
         output = []
         ap(copyText)
@@ -491,6 +507,32 @@ final class Engine: ObservableObject {
             + S.baseDuration + "：" + p2[2] + "\n"
             + S.unit + "：" + s2[2] + "\n"
             + S.adjustNum + "：" + h2[2]
+        let castDate = Date()
+        let timingSpecs: [(String, String, [String: Any])] = [
+            ("qimen", "奇门应期", [:]),
+            ("liuren", "六壬应期", [:]),
+            ("meihua", "梅花应期", ["method": "time"]),
+        ]
+        var timingLines = timingSpecs.compactMap { method, label, options -> String? in
+            guard let result = try? TraditionalAlgorithmEngine.shared.calculate(method: method, date: castDate, options: options),
+                  !result.timingSummary.isEmpty else { return nil }
+            return label + "：" + result.timingSummary
+        }
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd"
+        let almanacOptions: [String: Any] = [
+            "topic": almanacTopic,
+            "startDate": formatter.string(from: almanacStartDate),
+            "endDate": formatter.string(from: almanacEndDate),
+        ]
+        if let result = try? TraditionalAlgorithmEngine.shared.calculate(method: "almanac", date: almanacStartDate, options: almanacOptions),
+           !result.timingSummary.isEmpty {
+            timingLines.append("择日参考：" + result.timingSummary)
+        }
+        if !timingLines.isEmpty {
+            copyText += "\n\n―― 应期与择日参考 ――\n" + timingLines.joined(separator: "\n")
+        }
         addHistory()
         output = []
         ap(copyText + "\n\n" + S.briefNote + "\n")
