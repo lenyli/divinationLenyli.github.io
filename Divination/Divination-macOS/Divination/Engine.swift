@@ -88,6 +88,19 @@ final class Engine: ObservableObject {
         return label + description + "\n" + text
     }
 
+    private func copyHeader(_ q: String) -> String {
+        var lines = [(S.isEn ? "Question: " : "问题：") + q]
+        let description = focusDescription
+        if focusEnabled, !description.isEmpty {
+            lines.append((S.isEn ? "Question type / gender: " : "所测何事／性别：") + description)
+        }
+        return lines.joined(separator: "\n")
+    }
+
+    private func copyBlock(_ q: String, title: String, body: String) -> String {
+        copyHeader(q) + "\n\n【" + title + "】\n" + body
+    }
+
     func liuYaoTrigramTitle(_ value: String) -> String {
         ["天": "乾（天）", "泽": "兑（泽）", "火": "离（火）", "雷": "震（雷）",
          "风": "巽（风）", "水": "坎（水）", "山": "艮（山）", "地": "坤（地）"][value] ?? value
@@ -203,7 +216,7 @@ final class Engine: ObservableObject {
         else if curModule == 3 { result = divineLenormand(&lines) }
         else if curModule == 4 { result = divineRunes(&lines) }
         else { result = divineAstro(&lines) }
-        copyText = withFocusContext(q + "：" + result)
+        copyText = copyBlock(q, title: S.mods[curModule], body: result)
         output = []
         addHistory()
         ap(copyText + "\n\n" + S.briefNote + "\n")
@@ -240,7 +253,7 @@ final class Engine: ObservableObject {
         }
         do {
             let result = try TraditionalAlgorithmEngine.shared.calculate(method: method, date: date, options: options)
-            copyText = withFocusContext(q) + "\n\n" + result.display
+            copyText = copyHeader(q) + "\n\n" + result.display
             output = [Seg(text: copyText)]
             addHistory()
         } catch {
@@ -473,7 +486,7 @@ final class Engine: ObservableObject {
         let s = pickQian()
         let head = s[0] + "\u{3000}" + s[1] + "\u{3000}" + s[2]
         let labels = S.qianLabels
-        var sb = withFocusContext(q + "：" + head)
+        var sb = copyBlock(q, title: S.mods[6], body: head)
         for i in 0..<labels.count { sb += "\n" + labels[i] + "：" + s[i + 3] }
         copyText = sb
         addHistory()
@@ -509,7 +522,7 @@ final class Engine: ObservableObject {
         }
         if gen { drawnGen = drawn } else { drawnMajor = drawn }
         let names = drawn.map { TAROT[$0][0] }
-        copyText = withFocusContext(q + "：" + names.joined(separator: "、") + "；")
+        copyText = copyBlock(q, title: S.mods[2] + "·" + S.tarotTabs[curTab], body: names.joined(separator: "、"))
         let entry = timeStamp() + "  " + copyText
         let idx = gen ? sessGen : sessMaj
         if idx >= 0 && idx < histories[2].count { histories[2][idx] = entry }
@@ -539,7 +552,7 @@ final class Engine: ObservableObject {
 
     private func tarotYesNo(_ q: String) {
         let y = YESNO.randomElement()!
-        copyText = withFocusContext(q + "：" + y[0] + "，" + y[1] + "：" + y[2] + "（" + y[3] + "）")
+        copyText = copyBlock(q, title: S.mods[2] + "·" + S.tarotTabs[curTab], body: y[0] + "，" + y[1] + "：" + y[2] + "（" + y[3] + "）")
         addHistory()
         output = []
         ap(copyText + "\n\n")
@@ -583,19 +596,19 @@ final class Engine: ObservableObject {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "zh_CN")
         formatter.dateFormat = "yyyy-MM-dd HH:mm"
-        var sections = ["【综合占卜数据】", "问题：" + q]
+        var sections = ["【综合占卜】", "问题：" + q]
         if !focusDescription.isEmpty {
             sections.append((S.isEn ? "Question type / gender: " : "所测何事／性别：") + focusDescription)
         }
         sections += [
             "起卦时间：" + formatter.string(from: castDate), "",
-            "【卡牌与卦象】", "塔罗：" + tarot, "雷诺曼：" + len,
-            "卢恩符文：" + runes, "占星骰子：" + astro, "六爻：" + liuyao,
+            "【卡牌与卦象】", "塔罗牌：" + tarot, "雷诺曼牌：" + len,
+            "卢恩符文：" + runes, "占星骰子：" + astro, "六爻纳甲：" + liuyao,
         ]
         if !traditionalLines.isEmpty {
-            sections += ["", "【传统术数合参】"] + traditionalLines
+            sections += ["", "【传统术数】"] + traditionalLines
         }
-        sections += ["", "【请 AI 综合解读】", "请先提炼多套体系的共同指向，再说明相互矛盾或证据不足之处；区分盘面事实与推断，不要补造未提供的信息。"]
+        sections += ["", "解读要求：综合各体系的共同指向与矛盾，只依据以上数据。"]
         copyText = sections.joined(separator: "\n")
         addHistoryText(copyText + "\n" + qianHead)
         output = []
@@ -634,9 +647,10 @@ final class Engine: ObservableObject {
         let p2 = PLANETS.randomElement()!
         let s2 = SIGNS.randomElement()!
         let h2 = HOUSES.randomElement()!
-        copyText = q + "\n"
+        copyText = "【" + S.mods[13].replacingOccurrences(of: "/", with: "") + "】\n"
+            + (S.isEn ? "Question: " : "问题：") + q + "\n\n"
             + S.tarotPred + "：" + (tarotResult ?? "") + "\n\n"
-            + S.astroPred + "：\n"
+            + S.astroPred + "\n"
             + S.baseDuration + "：" + p2[2] + "\n"
             + S.unit + "：" + s2[2] + "\n"
             + S.adjustNum + "：" + h2[2]
@@ -661,10 +675,10 @@ final class Engine: ObservableObject {
         ]
         let almanacResult = try? TraditionalAlgorithmEngine.shared.calculate(method: "almanac", date: almanacStartDate, options: almanacOptions)
         if !timingLines.isEmpty {
-            copyText += "\n\n―― 应期参考 ――\n" + timingLines.joined(separator: "\n")
+            copyText += "\n\n【应期参考】\n" + timingLines.joined(separator: "\n")
         }
         if let almanacResult, !almanacResult.display.isEmpty {
-            copyText += "\n\n―― 择日／黄历 ――\n" + almanacResult.display
+            copyText += "\n\n" + almanacResult.display
         }
         addHistory()
         output = []

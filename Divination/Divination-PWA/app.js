@@ -6,9 +6,9 @@ const SPECIAL_TAROT_START = 156;
 
 const STR = {
   zh: {
-    mods: ["首页","六爻","塔罗","雷诺曼","卢恩符文","占星骰子","玄天上帝感应灵签","奇门遁甲","大六壬","小六壬","梅花易数","太乙神数","金口诀","择日/黄历"],
-    modTabs: ["首页","六爻","塔罗","雷诺曼","卢恩符文","占星骰子","灵签"],
-    mobileTabs: ["首页","六爻","塔罗","雷诺曼","卢恩符文","占星骰子","灵签","奇门遁甲","大六壬","小六壬","梅花","太乙","金口诀","择日/黄历"],
+    mods: ["首页","六爻纳甲","塔罗","雷诺曼","卢恩符文","占星骰子","玄天上帝感应灵签","奇门遁甲","大六壬","小六壬","梅花易数","太乙神数","金口诀","择日/黄历"],
+    modTabs: ["首页","六爻纳甲","塔罗牌","雷诺曼牌","卢恩符文","占星骰子","玄天灵签"],
+    mobileTabs: ["首页","六爻纳甲","塔罗牌","雷诺曼牌","卢恩符文","占星骰子","玄天灵签","奇门遁甲","大六壬","小六壬","梅花易数","太乙神数","金口诀","择日黄历"],
     newMethodTabs: ["奇门遁甲","大六壬","小六壬","梅花易数","太乙神数","金口诀","择日/黄历"],
     tarotTabs: ["通用","YES OR NO","大牌"],
     homeTabs: ["综合占卜"],
@@ -89,7 +89,7 @@ const STR = {
     algorithmUnavailable: "本地算法包未加载，请刷新后重试。",
     langBtn: "EN",
     langTitle: "切换为 English",
-    helpText: "1. 首页-综合占卜：一次生成塔罗三张牌、雷诺曼三张、卢恩三枚、占星骰子、六爻。灵签只在历史记录中追加签头，界面结果和复制结果不包含灵签。\n\n"
+    helpText: "1. 首页-综合占卜：一次生成塔罗三张牌、雷诺曼三张、卢恩三枚、占星骰子、六爻纳甲。灵签只在历史记录中追加签头，界面结果和复制结果不包含灵签。\n\n"
       + "2. 择日／黄历：除黄历候选外，同时给出塔罗日期、占星时长及奇门／六壬／梅花应期参考。\n\n"
       + "3. 塔罗-通用：默认不包含特殊牌；勾选“包含特殊牌”后，通用塔罗与首页综合占卜的塔罗部分都会纳入特殊牌。YES OR NO 与大牌不受此选项影响。若无特殊牌义解读包，建议给 AI 的解读不要使用特殊牌。\n\n"
       + "4. 历史记录会保存30条，下次打开程序仍可查看。\n\n"
@@ -482,7 +482,7 @@ function divineQian(q) {
   const s = table[rnd(table.length)];
   const labels = L().qianLabels;
   const head = s[0]+"　"+s[1]+"　"+s[2];
-  let sb = withFocusContext(q+"："+head);
+  let sb = copyBlock(q,L().mods[6],head);
   labels.forEach((lb,i)=>{ sb += "\n"+lb+"："+s[i+3]; });
   state.copyText = sb;
   addHistory();
@@ -524,7 +524,7 @@ function tarotDraw(q, gen, lo, hi) {
     drawn.push(i);
   }
   const names = drawn.map(i=>TAROT[i][0]);
-  state.copyText = withFocusContext(q+"："+names.join("、")+"；");
+  state.copyText = copyBlock(q,`${L().mods[2]}·${L().tarotTabs[state.curTab]}`,names.join("、"));
   const h = state.histories[2];
   const entry = timeStamp()+"  "+state.copyText;
   const idx = gen ? state.sessGen : state.sessMaj;
@@ -553,7 +553,7 @@ function tarotDraw(q, gen, lo, hi) {
 
 function tarotYesNo(q) {
   const y = YESNO[rnd(YESNO.length)];
-  state.copyText = withFocusContext(q+"："+y[0]+"，"+y[1]+"："+y[2]+"（"+y[3]+"）");
+  state.copyText = copyBlock(q,`${L().mods[2]}·${L().tarotTabs[state.curTab]}`,y[0]+"，"+y[1]+"："+y[2]+"（"+y[3]+"）");
   addHistory();
   state.segs=[];
   seg(state.copyText+"\n\n");
@@ -592,21 +592,21 @@ function divineHome(q) {
     const response=calculateTraditional(method,castTime.getTime(),methodOptions);
     return response.ok && response.result.summary ? [`${label}：${response.result.summary}`] : [];
   });
-  const sections=['【综合占卜数据】',`问题：${q}`];
+  const sections=['【综合占卜】',`问题：${q}`];
   const focusText=focusDescription();
   if(focusText) sections.push(`${lang==='en'?'Question type / gender':'所测何事／性别'}：${focusText}`);
   sections.push(
     `起卦时间：${localDateTimeValue(castTime).replace('T',' ')}`,
     '',
     '【卡牌与卦象】',
-    `塔罗：${tarot}`,
-    `雷诺曼：${len}`,
+    `塔罗牌：${tarot}`,
+    `雷诺曼牌：${len}`,
     `卢恩符文：${runes}`,
     `占星骰子：${astro}`,
-    `六爻：${liuyao}`
+    `六爻纳甲：${liuyao}`
   );
-  if(traditionalLines.length) sections.push('', '【传统术数合参】', ...traditionalLines);
-  sections.push('', '【请 AI 综合解读】', '请先提炼多套体系的共同指向，再说明相互矛盾或证据不足之处；区分盘面事实与推断，不要补造未提供的信息。');
+  if(traditionalLines.length) sections.push('', '【传统术数】', ...traditionalLines);
+  sections.push('', '解读要求：综合各体系的共同指向与矛盾，只依据以上数据。');
   state.copyText=sections.join('\n');
   addHistoryText(state.copyText+"\n"+qianHead);
   state.segs=[];
@@ -641,7 +641,7 @@ function divineDate(q) {
     if (tarotResult===null) tarotResult=season+"季";
   }
   const p2=PLANETS[rnd(12)], sg2=SIGNS[rnd(12)], h2=HOUSES[rnd(12)];
-  state.copyText = q+"\n"+s.tarotPred+"："+tarotResult+"\n\n"+s.astroPred+"：\n"+s.baseDuration+"："+p2[2]+"\n"+s.unit+"："+sg2[2]+"\n"+s.adjustNum+"："+h2[2];
+  state.copyText = `【${s.mods[13].replace('/','')}】\n${lang==='en'?'Question':'问题'}：${q}\n\n${s.tarotPred}：${tarotResult}\n\n${s.astroPred}\n${s.baseDuration}：${p2[2]}\n${s.unit}：${sg2[2]}\n${s.adjustNum}：${h2[2]}`;
   const timingLines=[];
   [['qimen','奇门应期',{}],['liuren','六壬应期',{}],['meihua','梅花应期',{method:'time'}]].forEach(([method,label,options])=>{
     const response=calculateTraditional(method,Date.now(),options);
@@ -652,8 +652,8 @@ function divineDate(q) {
   const end=$('traditional-end')?.value||localDateValue(fallbackEnd);
   const topic=$('traditional-topic')?.value||'custom';
   const almanac=calculateTraditional('almanac',new Date(`${start}T12:00`).getTime(),{topic,startDate:start,endDate:end});
-  if(timingLines.length) state.copyText += "\n\n―― 应期参考 ――\n"+timingLines.join("\n");
-  if(almanac.ok && almanac.result.display) state.copyText += "\n\n―― 择日／黄历 ――\n"+almanac.result.display;
+  if(timingLines.length) state.copyText += "\n\n【应期参考】\n"+timingLines.join("\n");
+  if(almanac.ok && almanac.result.display) state.copyText += "\n\n"+almanac.result.display;
   addHistory();
   state.segs=[];
   seg(state.copyText+"\n\n"+s.briefNote+"\n");
@@ -802,6 +802,17 @@ function withFocusContext(text){
   return `${lang==='en'?'Question type / gender':'所测何事／性别'}：${description}\n${text}`;
 }
 
+function copyHeader(q){
+  const lines=[`${lang==='en'?'Question':'问题'}：${q}`];
+  const description=focusDescription();
+  if(focusEnabled() && description) lines.push(`${lang==='en'?'Question type / gender':'所测何事／性别'}：${description}`);
+  return lines.join('\n');
+}
+
+function copyBlock(q,title,body){
+  return `${copyHeader(q)}\n\n【${title}】\n${body}`;
+}
+
 function focusOptions(){
   if(!focusEnabled() || !state.questionCategory) return {};
   if(['loveSingle','lovePartner','marriage'].includes(state.questionCategory) && !state.gender) return {};
@@ -891,7 +902,7 @@ function divineTraditional(q){
   const timestamp=timeInput ? new Date(timeInput.value).getTime() : new Date(`${$('traditional-start').value}T12:00`).getTime();
   const response=calculateTraditional(method,timestamp,traditionalOptions(method));
   if(!response.ok){ window.alert(response.error); return false; }
-  state.copyText=`${withFocusContext(q)}\n\n${response.result.display}`;
+  state.copyText=`${copyHeader(q)}\n\n${response.result.display}`;
   state.segs=[]; seg(state.copyText); flushOut(); addHistory();
   return true;
 }
@@ -924,7 +935,7 @@ function divine(){
     else if (state.curModule===3) result=divineLenormand(lines);
     else if (state.curModule===4) result=divineRunes(lines);
     else result=divineAstro(lines);
-    state.copyText=withFocusContext(q+"："+result);
+    state.copyText=copyBlock(q,L().mods[state.curModule],result);
     state.segs=[];
     addHistory();
     const s = L();

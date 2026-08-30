@@ -518,7 +518,6 @@ function formatAlmanac(date: Date, options: Options) {
   const display = [
     `【择日／黄历｜${result.topicLabel}】`,
     `范围：${result.startDate} 至 ${result.endDate}｜共比较 ${result.days.length} 天`,
-    '候选按规则状态、事项匹配与日期排列；以下显示前 12 项：',
     '',
     candidates,
   ].join('\n');

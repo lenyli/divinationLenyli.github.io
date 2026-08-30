@@ -544,6 +544,7 @@ public class MainForm : Form
     string copyText = "";
     static readonly string HistoryPath = Path.Combine(Application.UserAppDataPath, "history.dat");
     const int SPECIAL_TAROT_START = 156;
+    static readonly string[] MODULE_NAMES = {"首页","六爻纳甲","塔罗","雷诺曼","卢恩符文","占星骰子","玄天上帝感应灵签"};
 
     public MainForm()
     {
@@ -557,7 +558,7 @@ public class MainForm : Form
 
         var pnl = new FlowLayoutPanel();
         pnl.SetBounds(12, 10, 636, 36);
-        string[] mods = {"首页","六爻","塔罗","雷诺曼","卢恩符文","占星骰子","玄天上帝感应灵签"};
+        string[] mods = MODULE_NAMES;
         modBtns = new Button[mods.Length];
         int[] firstRowModules = {0, 2, 3, 4, 5, 6};
         foreach (int i in firstRowModules) {
@@ -961,7 +962,7 @@ public class MainForm : Form
         string[] labels = {"圣意","谋望","家宅","婚姻","失物","官事","行人","占病","解曰"};
         string nl = Environment.NewLine;
         var sb = new System.Text.StringBuilder();
-        sb.Append(WithFocusContext(q + "：" + head));
+        sb.Append(CopyBlock(q, MODULE_NAMES[6], head));
         for (int i = 0; i < labels.Length; i++) sb.Append(nl + labels[i] + "：" + s[i + 3]);
         copyText = sb.ToString();
         AddHistory();
@@ -1033,7 +1034,7 @@ public class MainForm : Form
         }
         var names = new List<string>();
         foreach (int i in drawn) names.Add(TAROT[i][0]);
-        copyText = WithFocusContext(q + "：" + string.Join("、", names) + "；");
+        copyText = CopyBlock(q, "塔罗·" + new[]{"通用","YES OR NO","大牌"}[curTab], string.Join("、", names));
         var h = histories[2];
         bool isGen = (lo == 0);
         int idx = isGen ? sessGen : sessMaj;
@@ -1064,7 +1065,7 @@ public class MainForm : Form
     void TarotYesNo(string q)
     {
         string[] y = YESNO[rng.Next(YESNO.Length)]; // {判定, 牌, 短语, 解释}
-        copyText = WithFocusContext(q + "：" + y[0] + "，" + y[1] + "：" + y[2] + "（" + y[3] + "）");
+        copyText = CopyBlock(q, "塔罗·YES OR NO", y[0] + "，" + y[1] + "：" + y[2] + "（" + y[3] + "）");
         AddHistory();
         string nl = Environment.NewLine;
         txtOut.Clear();
@@ -1106,6 +1107,19 @@ public class MainForm : Form
         return description == "" ? text : "所测何事／性别：" + description + Environment.NewLine + text;
     }
 
+    string CopyHeader(string q)
+    {
+        string text = "问题：" + q;
+        string description = FocusDescription();
+        if (description != "") text += Environment.NewLine + "所测何事／性别：" + description;
+        return text;
+    }
+
+    string CopyBlock(string q, string title, string body)
+    {
+        return CopyHeader(q) + Environment.NewLine + Environment.NewLine + "【" + title + "】" + Environment.NewLine + body;
+    }
+
     void DivineHome(string q)
     {
         var dummy = new List<string[]>();
@@ -1126,7 +1140,7 @@ public class MainForm : Form
         string qianHead = qs[0] + "　" + qs[1] + "　" + qs[2];
         string nl = Environment.NewLine;
         var sections = new List<string> {
-            "【综合占卜数据】",
+            "【综合占卜】",
             "问题：" + q
         };
         string focusDescription = FocusDescription();
@@ -1135,14 +1149,13 @@ public class MainForm : Form
             "起卦时间：" + DateTime.Now.ToString("yyyy-MM-dd HH:mm"),
             "",
             "【卡牌与卦象】",
-            "塔罗：" + tarot,
-            "雷诺曼：" + len,
+            "塔罗牌：" + tarot,
+            "雷诺曼牌：" + len,
             "卢恩符文：" + runes,
             "占星骰子：" + astro,
-            "六爻：" + liuyao,
+            "六爻纳甲：" + liuyao,
             "",
-            "【请 AI 综合解读】",
-            "请先提炼多套体系的共同指向，再说明相互矛盾或证据不足之处；区分盘面事实与推断，不要补造未提供的信息。"
+            "解读要求：综合各体系的共同指向与矛盾，只依据以上数据。"
         });
         copyText = string.Join(nl, sections); // 复制不含灵签
         AddHistoryText(copyText + nl + qianHead); // 历史仅追加灵签签头
@@ -1187,9 +1200,10 @@ public class MainForm : Form
         string[] p2 = PLANETS[rng.Next(PLANETS.Length)];
         string[] s2 = SIGNS[rng.Next(SIGNS.Length)];
         string[] h2 = HOUSES[rng.Next(HOUSES.Length)];
-        copyText = q + nl
+        copyText = "【择日黄历】" + nl
+                 + "问题：" + q + nl + nl
                  + "塔罗预测：" + tarotResult + nl + nl
-                 + "占星预测：" + nl
+                 + "占星预测" + nl
                  + "基础时长：" + p2[2] + nl
                  + "计量单位：" + s2[2] + nl
                  + "调整数字：" + h2[2];
@@ -1239,7 +1253,7 @@ public class MainForm : Form
     {
         string nl = Environment.NewLine;
         string msg = "使用说明" + nl + nl
-            + "1. 首页-综合占卜：一次生成塔罗三张牌、雷诺曼三张、卢恩三枚、占星骰子、六爻，界面结果末尾附灵签内容。复制结果不含灵签，历史记录仅追加灵签签头。" + nl + nl
+            + "1. 首页-综合占卜：一次生成塔罗三张牌、雷诺曼三张、卢恩三枚、占星骰子、六爻纳甲，界面结果末尾附灵签内容。复制结果不含灵签，历史记录仅追加灵签签头。" + nl + nl
             + "2. 择日／黄历：除黄历候选外，同时给出塔罗日期、占星时长及奇门／六壬／梅花应期参考。" + nl + nl
             + "3. 塔罗-通用：默认不包含特殊牌；勾选“包含特殊牌”后，通用塔罗与首页综合占卜的塔罗部分都会纳入特殊牌。YES OR NO 与大牌不受此选项影响。" + nl + nl
             + "4. 历史记录会保存30条，下次打开程序仍可查看。"+ nl + nl
@@ -1391,7 +1405,7 @@ public class MainForm : Form
         else if (curModule == 3) result = DivineLenormand(lines);
         else if (curModule == 4) result = DivineRunes(lines);
         else result = DivineAstro(lines);
-        copyText = WithFocusContext(q + "：" + result);
+        copyText = CopyBlock(q, MODULE_NAMES[curModule], result);
         string nl = Environment.NewLine;
         txtOut.Clear();
         AddHistory();
