@@ -1,5 +1,5 @@
 // 离线缓存
-const CACHE = 'divination-v15';
+const CACHE = 'divination-v17';
 const ASSETS = [
   './',
   './index.html',

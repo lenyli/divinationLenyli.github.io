@@ -21,6 +21,7 @@
 ## Trade-offs & Limitations
 
 - 盘面输出保留事实、来源、算法版本与限制，不生成 AI 自动断语。
+- 用神／类神层只做固定查表与盘面定位：六爻按八宫五行和纳甲地支配六亲并查本宫首卦伏神；大六壬补齐十二天将后定位类神；小六壬抽取主宫口诀对应分句；梅花保持简化体用；太乙映射主客算语义；金口诀按日干五行配置四位六亲。事项定位随结构化结果输出，不调用 AI 二次判断。
 - 奇门首版固定时家转盘拆补；飞盘、置闰、日家/月家/年家未开放为 UI 选项。
 - 金口诀未开放随机起课，避免不可复算的随机结果。
 - 择日未输入参与人生辰时，不计算个人刑冲破害，并在结果中明确提示。
@@ -39,4 +40,3 @@
 - Mingyu 太乙源码：<https://github.com/Brhiza/mingyu/tree/main/packages/core/src/taiyi>
 - Taibu 大六壬计算：<https://github.com/hhszzzz/taibu/blob/master/packages/core/src/domains/daliuren/calculate.ts>
 - Kintaiyi 固定核对版本：<https://github.com/kentang2017/kintaiyi/tree/9842d8f35e895ea6f09e9787edf6da5c16fab91b>
-

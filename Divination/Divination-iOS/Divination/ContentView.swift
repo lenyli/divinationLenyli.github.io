@@ -140,6 +140,7 @@ struct ContentView: View {
                     }
                 }
             }
+            if eng.focusEnabled { focusInputRow }
             if eng.curModule >= 7 || (eng.curModule == 0 && eng.curHomeTab == 1) {
                 traditionalInputRow
             }
@@ -184,6 +185,32 @@ struct ContentView: View {
             Button(eng.S.ok, role: .cancel) {}
         } message: {
             Text(eng.S.specialWarnText)
+        }
+    }
+
+    private var focusInputRow: some View {
+        let isEn = eng.lang == .en
+        return ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                Text(isEn ? "Question type" : "所测何事")
+                Picker("", selection: $eng.questionCategory) {
+                    ForEach(eng.questionCategories, id: \.self) { Text(eng.questionCategoryTitle($0)).tag($0) }
+                }.labelsHidden().pickerStyle(.menu)
+                if ["loveSingle", "lovePartner", "marriage"].contains(eng.questionCategory) {
+                    Text(isEn ? "Gender" : "性别")
+                    Picker("", selection: $eng.questionGender) {
+                        Text(isEn ? "Male" : "男").tag("male")
+                        Text(isEn ? "Female" : "女").tag("female")
+                    }.labelsHidden().pickerStyle(.menu)
+                }
+                if eng.questionCategory == "search" {
+                    Text(isEn ? "Target" : "寻找对象")
+                    Picker("", selection: $eng.searchTarget) {
+                        Text(isEn ? "Elder" : "长辈").tag("elder"); Text(isEn ? "Peer" : "平辈").tag("peer")
+                        Text(isEn ? "Junior" : "晚辈").tag("junior"); Text(isEn ? "Property" : "财物").tag("property")
+                    }.labelsHidden().pickerStyle(.menu)
+                }
+            }
         }
     }
 

@@ -29,6 +29,9 @@ final class Engine: ObservableObject {
     @Published var traditionalNumber = 1
     @Published var traditionalBranch = "子"
     @Published var traditionalScope = "year"
+    @Published var questionCategory = "loveSingle"
+    @Published var questionGender = "male"
+    @Published var searchTarget = "elder"
     @Published var almanacTopic = "marriage"
     @Published var almanacStartDate = Date()
     @Published var almanacEndDate = Calendar.current.date(byAdding: .day, value: 30, to: Date()) ?? Date()
@@ -48,6 +51,31 @@ final class Engine: ObservableObject {
     var helpText: String { S.helpText }
     let liuYaoTrigramValues = ["天", "泽", "火", "雷", "风", "水", "山", "地"]
     let traditionalMethods = ["qimen", "liuren", "xiaoliuren", "meihua", "taiyi", "jinkoujue", "almanac"]
+    let questionCategories = ["loveSingle", "lovePartner", "marriage", "wealth", "career", "litigation", "health", "study", "travel", "search"]
+
+    func questionCategoryTitle(_ value: String) -> String {
+        let zh = ["loveSingle": "婚恋·未婚", "lovePartner": "婚恋·已有对象", "marriage": "婚姻·已婚", "wealth": "财运", "career": "事业", "litigation": "官司诉讼", "health": "健康疾病", "study": "考试／学业", "travel": "出行／远行", "search": "寻人寻物"]
+        let en = ["loveSingle": "Love · single", "lovePartner": "Love · partnered", "marriage": "Marriage", "wealth": "Wealth", "career": "Career", "litigation": "Litigation", "health": "Health", "study": "Study / exam", "travel": "Travel", "search": "Find person / item"]
+        return (lang == .en ? en : zh)[value] ?? value
+    }
+
+    var focusEnabled: Bool { (curModule == 0 && curHomeTab == 0) || curModule == 1 || [8, 9, 10, 11, 12].contains(curModule) }
+
+    private var focusDescription: String {
+        var details: [String] = []
+        if ["loveSingle", "lovePartner", "marriage"].contains(questionCategory) { details.append(questionGender == "male" ? "男测" : "女测") }
+        if questionCategory == "search" { details.append("寻" + ["elder":"长辈", "peer":"平辈", "junior":"晚辈", "property":"财物"][searchTarget]!) }
+        let title = questionCategoryTitle(questionCategory)
+        return title + (details.isEmpty ? "" : "（" + details.joined(separator: "·") + "）")
+    }
+
+    private func focusOptions() -> [String: Any] {
+        guard focusEnabled else { return [:] }
+        var options: [String: Any] = ["questionCategory": questionCategory]
+        if ["loveSingle", "lovePartner", "marriage"].contains(questionCategory) { options["gender"] = questionGender }
+        if questionCategory == "search" { options["searchTarget"] = searchTarget }
+        return options
+    }
 
     func liuYaoTrigramTitle(_ value: String) -> String {
         ["天": "乾（天）", "泽": "兑（泽）", "火": "离（火）", "雷": "震（雷）",
@@ -188,6 +216,9 @@ final class Engine: ObservableObject {
                        "endDate": formatter.string(from: almanacEndDate)]
             date = almanacStartDate
         }
+        if method != "qimen" && method != "almanac" {
+            options.merge(focusOptions()) { current, _ in current }
+        }
         do {
             let result = try TraditionalAlgorithmEngine.shared.calculate(method: method, date: date, options: options)
             copyText = q + "\n\n" + result.display
@@ -242,6 +273,72 @@ final class Engine: ObservableObject {
 
     private func flipLine(_ line: String) -> String { line == "阳" ? "阴" : "阳" }
 
+    private func liuYaoSixRelation(_ selfElement: String, _ otherElement: String) -> String {
+        let cycle = ["木", "火", "土", "金", "水"]
+        if selfElement == otherElement { return "兄弟" }
+        let a = cycle.firstIndex(of: selfElement)!, b = cycle.firstIndex(of: otherElement)!
+        if (a + 1) % 5 == b { return "子孙" }
+        if (b + 1) % 5 == a { return "父母" }
+        if (a + 2) % 5 == b { return "妻财" }
+        return "官鬼"
+    }
+
+    private func liuYaoElementRelation(_ from: String, _ to: String) -> String {
+        let cycle = ["木", "火", "土", "金", "水"]
+        if from == to { return "比和" }
+        let a = cycle.firstIndex(of: from)!, b = cycle.firstIndex(of: to)!
+        if (a + 1) % 5 == b { return from + "生" + to }
+        if (a + 2) % 5 == b { return from + "克" + to }
+        if (b + 1) % 5 == a { return to + "生" + from }
+        return to + "克" + from
+    }
+
+    private func liuYaoFocusSummary(ben: [String], upper: String, lower: String) -> String {
+        guard curModule == 1 || (curModule == 0 && curHomeTab == 0) else { return "" }
+        let categories = ["loveSingle": "婚恋·未婚", "lovePartner": "婚恋·已有对象", "marriage": "婚姻·已婚", "wealth": "财运", "career": "事业", "litigation": "官司诉讼", "health": "健康疾病", "study": "考试／学业", "travel": "出行／远行", "search": "寻人寻物"]
+        let category = categories[questionCategory] ?? questionCategory
+        if questionCategory == "travel" { return "事项定位\(category)，用神六亲世爻本身，用神爻位\(ben[1])爻，是否伏神否；" }
+        let palaces: [String: [String]] = [
+            "乾": ["乾为天","天风姤","天山遁","天地否","风地观","山地剥","火地晋","火天大有"],
+            "兑": ["兑为泽","泽水困","泽地萃","泽山咸","水山蹇","地山谦","雷山小过","雷泽归妹"],
+            "离": ["离为火","火山旅","火风鼎","火水未济","山水蒙","风水涣","天水讼","天火同人"],
+            "震": ["震为雷","雷地豫","雷水解","雷风恒","地风升","水风井","泽风大过","泽雷随"],
+            "巽": ["巽为风","风天小畜","风火家人","风雷益","天雷无妄","火雷噬嗑","山雷颐","山风蛊"],
+            "坎": ["坎为水","水泽节","水雷屯","水火既济","泽火革","雷火丰","地火明夷","地水师"],
+            "艮": ["艮为山","山火贲","山天大畜","山泽损","火泽睽","天泽履","风泽中孚","风山渐"],
+            "坤": ["坤为地","地雷复","地泽临","地天泰","雷天大壮","泽天夬","水天需","水地比"]
+        ]
+        guard let palace = palaces.first(where: { $0.value.contains(ben[0]) })?.key else { return "" }
+        let palaceInfo = ["乾": ("金","天"), "兑": ("金","泽"), "离": ("火","火"), "震": ("木","雷"), "巽": ("木","风"), "坎": ("水","水"), "艮": ("土","山"), "坤": ("土","地")]
+        let najia: [String: [[String]]] = [
+            "天": [["子","寅","辰"],["午","申","戌"]], "泽": [["巳","卯","丑"],["亥","酉","未"]],
+            "火": [["卯","丑","亥"],["酉","未","巳"]], "雷": [["子","寅","辰"],["午","申","戌"]],
+            "风": [["丑","亥","酉"],["未","巳","卯"]], "水": [["寅","辰","午"],["申","戌","子"]],
+            "山": [["辰","午","申"],["戌","子","寅"]], "地": [["未","巳","卯"],["丑","亥","酉"]]
+        ]
+        let branchElements = ["子":"水","丑":"土","寅":"木","卯":"木","辰":"土","巳":"火","午":"火","未":"土","申":"金","酉":"金","戌":"土","亥":"水"]
+        let (palaceElement, pureTrigram) = palaceInfo[palace]!
+        let branches = najia[lower]![0] + najia[upper]![1]
+        let requested: String = {
+            if ["loveSingle", "lovePartner", "marriage"].contains(questionCategory) { return questionGender == "male" ? "妻财" : "官鬼" }
+            if questionCategory == "wealth" { return "妻财" }
+            if ["career", "litigation", "health"].contains(questionCategory) { return "官鬼" }
+            if questionCategory == "study" { return "父母" }
+            return ["elder":"父母", "peer":"兄弟", "junior":"子孙", "property":"妻财"][searchTarget]!
+        }()
+        let positions = branches.indices.filter { liuYaoSixRelation(palaceElement, branchElements[branches[$0]]!) == requested }.map { POS[$0] + "爻" }
+        if !positions.isEmpty { return "事项定位\(category)，用神六亲\(requested)，用神爻位\(positions.joined(separator: "、"))，是否伏神否；" }
+        let hiddenBranches = najia[pureTrigram]![0] + najia[pureTrigram]![1]
+        let details = hiddenBranches.indices.compactMap { index -> String? in
+            let hiddenElement = branchElements[hiddenBranches[index]]!
+            guard liuYaoSixRelation(palaceElement, hiddenElement) == requested else { return nil }
+            let flyingElement = branchElements[branches[index]]!, relation = liuYaoElementRelation(flyingElement, hiddenElement)
+            let note = relation == flyingElement + "生" + hiddenElement ? "出现有助" : relation == flyingElement + "克" + hiddenElement ? "出现受制" : "需结合旺衰"
+            return "\(POS[index])爻伏神\(hiddenBranches[index])\(requested)，飞神\(branches[index])\(liuYaoSixRelation(palaceElement, flyingElement))，\(relation)（\(note)）"
+        }
+        return "事项定位\(category)，用神六亲\(requested)，用神爻位伏藏，是否伏神是，伏神信息\(details.joined(separator: "；"))；"
+    }
+
     private func selectedLiuYaoLines() -> (h: [String], z: [String], c: [String]) {
         let patterns: [String: [String]] = [
             "天": ["阳", "阳", "阳"], "泽": ["阴", "阳", "阳"],
@@ -278,7 +375,8 @@ final class Engine: ObservableObject {
                 h[i] = t.ben; z[i] = t.zhi; c[i] = t.cuo
             }
         }
-        let ben  = hexg(elem(h[5], h[4], h[3]), elem(h[2], h[1], h[0]))
+        let upper = elem(h[5], h[4], h[3]), lower = elem(h[2], h[1], h[0])
+        let ben  = hexg(upper, lower)
         let bian = hexg(elem(z[5], z[4], z[3]), elem(z[2], z[1], z[0]))
         let hu   = hexg(elem(h[4], h[3], h[2]), elem(h[3], h[2], h[1]))
         let cuog = hexg(elem(c[5], c[4], c[3]), elem(c[2], c[1], c[0]))
@@ -291,7 +389,7 @@ final class Engine: ObservableObject {
         lines.append([rows[2][0], hu[0],   hu[3],   rows[2][1]])
         lines.append([rows[3][0], cuog[0], cuog[3], rows[3][1]])
         lines.append([rows[4][0], zong[0], zong[3], rows[4][1]])
-        return S.liuYaoSummary(ben: ben, dong: dong, bian: bian, hu: hu, cuo: cuog, zong: zong)
+        return S.liuYaoSummary(ben: ben, dong: dong, bian: bian, hu: hu, cuo: cuog, zong: zong) + liuYaoFocusSummary(ben: ben, upper: upper, lower: lower)
     }
 
     // ================= 占星骰子 =================
@@ -445,7 +543,6 @@ final class Engine: ObservableObject {
         let liuyao = divineLiuYao(&dummy)
         let qs = pickQian()
         let qianHead = qs[0] + "　" + qs[1] + "　" + qs[2]
-        copyText = q + "：" + tarot + len + runes + astro + liuyao
         let castDate = Date()
         let traditionalSpecs: [(String, String, [String: Any])] = [
             ("qimen", "奇门遁甲", [:]),
@@ -456,15 +553,26 @@ final class Engine: ObservableObject {
             ("jinkoujue", "金口诀", ["method": "time"]),
         ]
         let traditionalLines = traditionalSpecs.compactMap { method, label, options -> String? in
-            guard let result = try? TraditionalAlgorithmEngine.shared.calculate(method: method, date: castDate, options: options),
+            var methodOptions = options
+            if method != "qimen" { methodOptions.merge(focusOptions()) { current, _ in current } }
+            guard let result = try? TraditionalAlgorithmEngine.shared.calculate(method: method, date: castDate, options: methodOptions),
                   !result.summary.isEmpty else { return nil }
             return label + "：" + result.summary
         }
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "zh_CN")
+        formatter.dateFormat = "yyyy-MM-dd HH:mm"
+        var sections = [
+            "【综合占卜数据】", "问题：" + q, "所测何事：" + focusDescription,
+            "起卦时间：" + formatter.string(from: castDate), "",
+            "【卡牌与卦象】", "塔罗：" + tarot, "雷诺曼：" + len,
+            "卢恩符文：" + runes, "占星骰子：" + astro, "六爻：" + liuyao,
+        ]
         if !traditionalLines.isEmpty {
-            copyText += "\n\n―― 传统术数合参 ――\n"
-                + traditionalLines.joined(separator: "\n")
-                + "\n择日／黄历：需要事项和日期范围，请在对应页面单独计算。"
+            sections += ["", "【传统术数合参】"] + traditionalLines
         }
+        sections += ["", "【请 AI 综合解读】", "请先提炼多套体系的共同指向，再说明相互矛盾或证据不足之处；区分盘面事实与推断，不要补造未提供的信息。"]
+        copyText = sections.joined(separator: "\n")
         addHistoryText(copyText + "\n" + qianHead)
         output = []
         ap(copyText)

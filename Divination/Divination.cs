@@ -81,6 +81,33 @@ public class MainForm : Form
             {"风风", new string[]{"巽为风","上","三","顺从、渗透、风、谦逊、入"}},
     };
     static readonly string[] POS = {"初","二","三","四","五","上"};
+    static readonly string[] FOCUS_CATEGORIES = {"婚恋·未婚","婚恋·已有对象","婚姻·已婚","财运","事业","官司诉讼","健康疾病","考试／学业","出行／远行","寻人寻物"};
+    static readonly string[] FOCUS_KEYS = {"loveSingle","lovePartner","marriage","wealth","career","litigation","health","study","travel","search"};
+    static readonly string[] ELEMENT_CYCLE = {"木","火","土","金","水"};
+    static readonly Dictionary<string,string> BRANCH_ELEMENTS = new Dictionary<string,string> {
+        {"子","水"},{"丑","土"},{"寅","木"},{"卯","木"},{"辰","土"},{"巳","火"},
+        {"午","火"},{"未","土"},{"申","金"},{"酉","金"},{"戌","土"},{"亥","水"}
+    };
+    static readonly Dictionary<string,string[][]> NAJIA = new Dictionary<string,string[][]> {
+        {"天",new[]{new[]{"子","寅","辰"},new[]{"午","申","戌"}}}, {"泽",new[]{new[]{"巳","卯","丑"},new[]{"亥","酉","未"}}},
+        {"火",new[]{new[]{"卯","丑","亥"},new[]{"酉","未","巳"}}}, {"雷",new[]{new[]{"子","寅","辰"},new[]{"午","申","戌"}}},
+        {"风",new[]{new[]{"丑","亥","酉"},new[]{"未","巳","卯"}}}, {"水",new[]{new[]{"寅","辰","午"},new[]{"申","戌","子"}}},
+        {"山",new[]{new[]{"辰","午","申"},new[]{"戌","子","寅"}}}, {"地",new[]{new[]{"未","巳","卯"},new[]{"丑","亥","酉"}}}
+    };
+    static readonly Dictionary<string,string[]> PALACE_HEXAGRAMS = new Dictionary<string,string[]> {
+        {"乾",new[]{"乾为天","天风姤","天山遁","天地否","风地观","山地剥","火地晋","火天大有"}},
+        {"兑",new[]{"兑为泽","泽水困","泽地萃","泽山咸","水山蹇","地山谦","雷山小过","雷泽归妹"}},
+        {"离",new[]{"离为火","火山旅","火风鼎","火水未济","山水蒙","风水涣","天水讼","天火同人"}},
+        {"震",new[]{"震为雷","雷地豫","雷水解","雷风恒","地风升","水风井","泽风大过","泽雷随"}},
+        {"巽",new[]{"巽为风","风天小畜","风火家人","风雷益","天雷无妄","火雷噬嗑","山雷颐","山风蛊"}},
+        {"坎",new[]{"坎为水","水泽节","水雷屯","水火既济","泽火革","雷火丰","地火明夷","地水师"}},
+        {"艮",new[]{"艮为山","山火贲","山天大畜","山泽损","火泽睽","天泽履","风泽中孚","风山渐"}},
+        {"坤",new[]{"坤为地","地雷复","地泽临","地天泰","雷天大壮","泽天夬","水天需","水地比"}}
+    };
+    static readonly Dictionary<string,string[]> PALACE_INFO = new Dictionary<string,string[]> {
+        {"乾",new[]{"金","天"}},{"兑",new[]{"金","泽"}},{"离",new[]{"火","火"}},{"震",new[]{"木","雷"}},
+        {"巽",new[]{"木","风"}},{"坎",new[]{"水","水"}},{"艮",new[]{"土","山"}},{"坤",new[]{"土","地"}}
+    };
     static readonly string[][] PLANETS = {
         new string[]{"月亮  ☽","情绪、需求、习惯、母亲、滋养","几小时-3天"},
         new string[]{"水星  ☿","思维、沟通、学习、交通、商业","偏快，数天-两周"},
@@ -503,7 +530,7 @@ public class MainForm : Form
 
     Random rng = new Random();
     TextBox txtQ; RichTextBox txtOut; Button btnGo; Button btnCopy; CheckBox chkSpecialTarot; Label lblDateNote;
-    FlowLayoutPanel liuYaoPnl; ComboBox cmbUpperTrigram, cmbLowerTrigram; CheckBox[] movingLineChecks;
+    FlowLayoutPanel liuYaoPnl, liuYaoFocusPnl; ComboBox cmbUpperTrigram, cmbLowerTrigram, cmbQuestionCategory, cmbGender, cmbSearchTarget; CheckBox[] movingLineChecks;
     Button[] modBtns;
     FlowLayoutPanel subPnl; Button[] subBtns;
     FlowLayoutPanel homePnl; Button[] homeBtns;
@@ -624,32 +651,50 @@ public class MainForm : Form
         }
         Controls.Add(liuYaoPnl);
 
-        var lbl = new Label(); lbl.Text = "输入问题："; lbl.SetBounds(12, 136, 90, 24);
+        liuYaoFocusPnl = new FlowLayoutPanel();
+        liuYaoFocusPnl.SetBounds(100, 128, 548, 36);
+        liuYaoFocusPnl.WrapContents = false;
+        liuYaoFocusPnl.Visible = false;
+        liuYaoFocusPnl.Controls.Add(new Label { Text = "所测何事", AutoSize = true, Margin = new Padding(0, 7, 3, 0) });
+        cmbQuestionCategory = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 126 };
+        cmbQuestionCategory.Items.AddRange(FOCUS_CATEGORIES); cmbQuestionCategory.SelectedIndex = 0;
+        liuYaoFocusPnl.Controls.Add(cmbQuestionCategory);
+        liuYaoFocusPnl.Controls.Add(new Label { Text = "性别", AutoSize = true, Margin = new Padding(6, 7, 3, 0) });
+        cmbGender = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 58 };
+        cmbGender.Items.AddRange(new string[]{"男","女"}); cmbGender.SelectedIndex = 0;
+        liuYaoFocusPnl.Controls.Add(cmbGender);
+        liuYaoFocusPnl.Controls.Add(new Label { Text = "寻找对象", AutoSize = true, Margin = new Padding(6, 7, 3, 0) });
+        cmbSearchTarget = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 74 };
+        cmbSearchTarget.Items.AddRange(new string[]{"长辈","平辈","晚辈","财物"}); cmbSearchTarget.SelectedIndex = 0;
+        liuYaoFocusPnl.Controls.Add(cmbSearchTarget);
+        Controls.Add(liuYaoFocusPnl);
+
+        var lbl = new Label(); lbl.Text = "输入问题："; lbl.SetBounds(12, 174, 90, 24);
         Controls.Add(lbl);
-        txtQ = new TextBox(); txtQ.SetBounds(100, 132, 548, 28);
+        txtQ = new TextBox(); txtQ.SetBounds(100, 170, 548, 28);
         txtQ.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
         Controls.Add(txtQ);
 
-        btnGo = new Button(); btnGo.SetBounds(100, 170, 100, 34);
+        btnGo = new Button(); btnGo.SetBounds(100, 208, 100, 34);
         btnGo.Click += OnDivine;
         Controls.Add(btnGo);
-        btnCopy = new Button(); btnCopy.Text = "复制结果"; btnCopy.SetBounds(212, 170, 100, 34);
+        btnCopy = new Button(); btnCopy.Text = "复制结果"; btnCopy.SetBounds(212, 208, 100, 34);
         btnCopy.Click += OnCopy;
         Controls.Add(btnCopy);
-        var btnClear = new Button(); btnClear.Text = "清 空"; btnClear.SetBounds(324, 170, 100, 34);
+        var btnClear = new Button(); btnClear.Text = "清 空"; btnClear.SetBounds(324, 208, 100, 34);
         btnClear.Click += OnClear;
         Controls.Add(btnClear);
-        var btnHist = new Button(); btnHist.Text = "历史记录"; btnHist.SetBounds(436, 170, 100, 34);
+        var btnHist = new Button(); btnHist.Text = "历史记录"; btnHist.SetBounds(436, 208, 100, 34);
         btnHist.Click += OnHistory;
         Controls.Add(btnHist);
-        var btnHelp = new Button(); btnHelp.Text = "使用说明"; btnHelp.SetBounds(548, 170, 100, 34);
+        var btnHelp = new Button(); btnHelp.Text = "使用说明"; btnHelp.SetBounds(548, 208, 100, 34);
         btnHelp.Click += OnHelp;
         Controls.Add(btnHelp);
 
         txtOut = new RichTextBox();
         txtOut.ReadOnly = true; txtOut.ScrollBars = RichTextBoxScrollBars.Vertical;
         txtOut.BackColor = SystemColors.Window;
-        txtOut.SetBounds(12, 218, 636, 316);
+        txtOut.SetBounds(12, 256, 636, 278);
         txtOut.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
         Controls.Add(txtOut);
 
@@ -684,6 +729,7 @@ public class MainForm : Form
         subPnl.Visible = (i == 2);
         homePnl.Visible = (i == 0);
         liuYaoPnl.Visible = (i == 1);
+        liuYaoFocusPnl.Visible = (i == 1) || (i == 0 && curHomeTab == 0);
         if (i == 0) btnGo.Text = "占 卜";
         else if (i == 1) btnGo.Text = "起 卦";
         else if (i == 5) btnGo.Text = "掷骰子";
@@ -720,6 +766,78 @@ public class MainForm : Form
 
     string FlipLine(string line) { return line == "阳" ? "阴" : "阳"; }
 
+    string SixRelation(string selfElement, string otherElement)
+    {
+        if (selfElement == otherElement) return "兄弟";
+        int self = Array.IndexOf(ELEMENT_CYCLE, selfElement), other = Array.IndexOf(ELEMENT_CYCLE, otherElement);
+        if ((self + 1) % 5 == other) return "子孙";
+        if ((other + 1) % 5 == self) return "父母";
+        if ((self + 2) % 5 == other) return "妻财";
+        return "官鬼";
+    }
+
+    string ElementRelation(string fromElement, string toElement)
+    {
+        if (fromElement == toElement) return "比和";
+        int from = Array.IndexOf(ELEMENT_CYCLE, fromElement), to = Array.IndexOf(ELEMENT_CYCLE, toElement);
+        if ((from + 1) % 5 == to) return fromElement + "生" + toElement;
+        if ((from + 2) % 5 == to) return fromElement + "克" + toElement;
+        if ((to + 1) % 5 == from) return toElement + "生" + fromElement;
+        return toElement + "克" + fromElement;
+    }
+
+    string PalaceForHexagram(string name)
+    {
+        foreach (var item in PALACE_HEXAGRAMS)
+            if (Array.IndexOf(item.Value, name) >= 0) return item.Key;
+        return "";
+    }
+
+    string RequestedLiuYaoRelation()
+    {
+        string key = FOCUS_KEYS[cmbQuestionCategory.SelectedIndex];
+        if (key == "loveSingle" || key == "lovePartner" || key == "marriage") return cmbGender.SelectedIndex == 0 ? "妻财" : "官鬼";
+        if (key == "wealth") return "妻财";
+        if (key == "career" || key == "litigation" || key == "health") return "官鬼";
+        if (key == "study") return "父母";
+        if (key == "search") return new[]{"父母","兄弟","子孙","妻财"}[cmbSearchTarget.SelectedIndex];
+        return "";
+    }
+
+    string LiuYaoFocusSummary(string[] ben, string upper, string lower)
+    {
+        if (curModule != 1 && !(curModule == 0 && curHomeTab == 0)) return "";
+        string category = FOCUS_CATEGORIES[cmbQuestionCategory.SelectedIndex];
+        string key = FOCUS_KEYS[cmbQuestionCategory.SelectedIndex];
+        if (key == "travel") return "事项定位" + category + "，用神六亲世爻本身，用神爻位" + ben[1] + "爻，是否伏神否；";
+        string palace = PalaceForHexagram(ben[0]);
+        if (palace == "") return "";
+        string palaceElement = PALACE_INFO[palace][0];
+        string[] branches = new string[6];
+        Array.Copy(NAJIA[lower][0], 0, branches, 0, 3);
+        Array.Copy(NAJIA[upper][1], 0, branches, 3, 3);
+        string requested = RequestedLiuYaoRelation();
+        var positions = new List<string>();
+        for (int i = 0; i < 6; i++)
+            if (SixRelation(palaceElement, BRANCH_ELEMENTS[branches[i]]) == requested) positions.Add(POS[i] + "爻");
+        if (positions.Count > 0)
+            return "事项定位" + category + "，用神六亲" + requested + "，用神爻位" + string.Join("、", positions) + "，是否伏神否；";
+        string pureTrigram = PALACE_INFO[palace][1];
+        string[] hiddenBranches = new string[6];
+        Array.Copy(NAJIA[pureTrigram][0], 0, hiddenBranches, 0, 3);
+        Array.Copy(NAJIA[pureTrigram][1], 0, hiddenBranches, 3, 3);
+        var details = new List<string>();
+        for (int i = 0; i < 6; i++) {
+            string hiddenElement = BRANCH_ELEMENTS[hiddenBranches[i]];
+            if (SixRelation(palaceElement, hiddenElement) != requested) continue;
+            string flyingElement = BRANCH_ELEMENTS[branches[i]];
+            string relation = ElementRelation(flyingElement, hiddenElement);
+            string note = relation == flyingElement + "生" + hiddenElement ? "出现有助" : relation == flyingElement + "克" + hiddenElement ? "出现受制" : "需结合旺衰";
+            details.Add(POS[i] + "爻伏神" + hiddenBranches[i] + requested + "，飞神" + branches[i] + SixRelation(palaceElement, flyingElement) + "，" + relation + "（" + note + "）");
+        }
+        return "事项定位" + category + "，用神六亲" + requested + "，用神爻位伏藏，是否伏神是，伏神信息" + string.Join("；", details) + "；";
+    }
+
     void FillSelectedLiuYao(string[] h, string[] z, string[] c)
     {
         string[] patterns = {"阳阳阳", "阴阳阳", "阳阴阳", "阴阴阳", "阳阳阴", "阴阳阴", "阳阴阴", "阴阴阴"};
@@ -749,7 +867,8 @@ public class MainForm : Form
                 h[i] = LineOfToss(heads, out zz, out cc); z[i] = zz; c[i] = cc;
             }
         }
-        string[] ben  = Hex(Elem(h[5],h[4],h[3]), Elem(h[2],h[1],h[0]));
+        string upper = Elem(h[5],h[4],h[3]), lower = Elem(h[2],h[1],h[0]);
+        string[] ben  = Hex(upper, lower);
         string[] bian = Hex(Elem(z[5],z[4],z[3]), Elem(z[2],z[1],z[0]));
         string[] hu   = Hex(Elem(h[4],h[3],h[2]), Elem(h[3],h[2],h[1]));
         string[] cuog = Hex(Elem(c[5],c[4],c[3]), Elem(c[2],c[1],c[0]));
@@ -770,7 +889,8 @@ public class MainForm : Form
              + "，变卦" + bian[0]
              + "，互卦" + hu[0]
              + "，错卦" + cuog[0]
-             + "，综卦" + zong[0] + "；";
+             + "，综卦" + zong[0] + "；"
+             + LiuYaoFocusSummary(ben, upper, lower);
     }
 
     // ================= 占星骰子 =================
@@ -962,7 +1082,17 @@ public class MainForm : Form
         for (int k = 0; k < homeBtns.Length; k++)
             homeBtns[k].BackColor = (k == t) ? Color.LightSteelBlue : SystemColors.Control;
         UpdateDateNoteVisibility();
+        if (liuYaoFocusPnl != null) liuYaoFocusPnl.Visible = (curModule == 0 && t == 0) || curModule == 1;
         RestoreState();
+    }
+
+    string FocusDescription()
+    {
+        string key = FOCUS_KEYS[cmbQuestionCategory.SelectedIndex];
+        string detail = "";
+        if (key == "loveSingle" || key == "lovePartner" || key == "marriage") detail = cmbGender.SelectedIndex == 0 ? "男测" : "女测";
+        else if (key == "search") detail = "寻" + new[]{"长辈","平辈","晚辈","财物"}[cmbSearchTarget.SelectedIndex];
+        return FOCUS_CATEGORIES[cmbQuestionCategory.SelectedIndex] + (detail == "" ? "" : "（" + detail + "）");
     }
 
     void DivineHome(string q)
@@ -983,8 +1113,24 @@ public class MainForm : Form
         string liuyao = DivineLiuYao(dummy);
         string[] qs = QIAN[rng.Next(QIAN.Length)];
         string qianHead = qs[0] + "　" + qs[1] + "　" + qs[2];
-        copyText = q + "：" + tarot + len + runes + astro + liuyao; // 复制不含灵签
         string nl = Environment.NewLine;
+        var sections = new List<string> {
+            "【综合占卜数据】",
+            "问题：" + q,
+            "所测何事：" + FocusDescription(),
+            "起卦时间：" + DateTime.Now.ToString("yyyy-MM-dd HH:mm"),
+            "",
+            "【卡牌与卦象】",
+            "塔罗：" + tarot,
+            "雷诺曼：" + len,
+            "卢恩符文：" + runes,
+            "占星骰子：" + astro,
+            "六爻：" + liuyao,
+            "",
+            "【请 AI 综合解读】",
+            "请先提炼多套体系的共同指向，再说明相互矛盾或证据不足之处；区分盘面事实与推断，不要补造未提供的信息。"
+        };
+        copyText = string.Join(nl, sections); // 复制不含灵签
         AddHistoryText(copyText + nl + qianHead); // 历史仅追加灵签签头
         txtOut.Clear();
         Append(copyText, FontStyle.Regular);

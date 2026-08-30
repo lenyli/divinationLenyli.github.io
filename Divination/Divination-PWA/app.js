@@ -242,6 +242,7 @@ function applyStaticI18n() {
 const state = {
   curModule: 0, curTab: 0, curHomeTab: 0,
   includeSpecial: false,
+  questionCategory: 'loveSingle', gender: 'male', searchTarget: 'elder',
   copyText: "",
   drawnGen: [], drawnMajor: [],
   sessGen: -1, sessMaj: -1,
@@ -330,6 +331,68 @@ const TRIGRAM_LINES = {
   风:["阳","阳","阴"], 水:["阴","阳","阴"], 山:["阳","阴","阴"], 地:["阴","阴","阴"]
 };
 const flipLine = line => line === "阳" ? "阴" : "阳";
+const LIUYAO_ELEMENTS=['木','火','土','金','水'];
+const LIUYAO_BRANCH_ELEMENTS={子:'水',丑:'土',寅:'木',卯:'木',辰:'土',巳:'火',午:'火',未:'土',申:'金',酉:'金',戌:'土',亥:'水'};
+const LIUYAO_NAJIA={
+  天:{lower:['子','寅','辰'],upper:['午','申','戌']},泽:{lower:['巳','卯','丑'],upper:['亥','酉','未']},
+  火:{lower:['卯','丑','亥'],upper:['酉','未','巳']},雷:{lower:['子','寅','辰'],upper:['午','申','戌']},
+  风:{lower:['丑','亥','酉'],upper:['未','巳','卯']},水:{lower:['寅','辰','午'],upper:['申','戌','子']},
+  山:{lower:['辰','午','申'],upper:['戌','子','寅']},地:{lower:['未','巳','卯'],upper:['丑','亥','酉']}
+};
+const LIUYAO_PALACES={
+  乾:['乾为天','天风姤','天山遁','天地否','风地观','山地剥','火地晋','火天大有'],
+  兑:['兑为泽','泽水困','泽地萃','泽山咸','水山蹇','地山谦','雷山小过','雷泽归妹'],
+  离:['离为火','火山旅','火风鼎','火水未济','山水蒙','风水涣','天水讼','天火同人'],
+  震:['震为雷','雷地豫','雷水解','雷风恒','地风升','水风井','泽风大过','泽雷随'],
+  巽:['巽为风','风天小畜','风火家人','风雷益','天雷无妄','火雷噬嗑','山雷颐','山风蛊'],
+  坎:['坎为水','水泽节','水雷屯','水火既济','泽火革','雷火丰','地火明夷','地水师'],
+  艮:['艮为山','山火贲','山天大畜','山泽损','火泽睽','天泽履','风泽中孚','风山渐'],
+  坤:['坤为地','地雷复','地泽临','地天泰','雷天大壮','泽天夬','水天需','水地比']
+};
+const LIUYAO_PALACE_INFO={乾:['金','天'],兑:['金','泽'],离:['火','火'],震:['木','雷'],巽:['木','风'],坎:['水','水'],艮:['土','山'],坤:['土','地']};
+
+function liuYaoSixRelation(self,other){
+  if(self===other) return '兄弟';
+  const a=LIUYAO_ELEMENTS.indexOf(self), b=LIUYAO_ELEMENTS.indexOf(other);
+  if((a+1)%5===b) return '子孙';
+  if((b+1)%5===a) return '父母';
+  if((a+2)%5===b) return '妻财';
+  return '官鬼';
+}
+function liuYaoElementRelation(from,to){
+  if(from===to) return '比和';
+  const a=LIUYAO_ELEMENTS.indexOf(from), b=LIUYAO_ELEMENTS.indexOf(to);
+  if((a+1)%5===b) return `${from}生${to}`;
+  if((a+2)%5===b) return `${from}克${to}`;
+  if((b+1)%5===a) return `${to}生${from}`;
+  return `${to}克${from}`;
+}
+function liuYaoRequestedRelation(){
+  const c=state.questionCategory;
+  if(['loveSingle','lovePartner','marriage'].includes(c)) return state.gender==='male'?'妻财':'官鬼';
+  return {wealth:'妻财',career:'官鬼',litigation:'官鬼',health:'官鬼',study:'父母',search:{elder:'父母',peer:'兄弟',junior:'子孙',property:'妻财'}[state.searchTarget]}[c];
+}
+function liuYaoFocusSummary(ben,upper,lower){
+  if(state.curModule!==1 && !(state.curModule===0 && state.curHomeTab===0)) return '';
+  const palace=Object.keys(LIUYAO_PALACES).find(key=>LIUYAO_PALACES[key].includes(ben[0]));
+  if(!palace) return '';
+  const [palaceElement,pureTrigram]=LIUYAO_PALACE_INFO[palace];
+  const branches=[...LIUYAO_NAJIA[lower].lower,...LIUYAO_NAJIA[upper].upper];
+  const lines=branches.map((branch,index)=>({index,branch,element:LIUYAO_BRANCH_ELEMENTS[branch],relation:liuYaoSixRelation(palaceElement,LIUYAO_BRANCH_ELEMENTS[branch])}));
+  const category={loveSingle:'婚恋·未婚',lovePartner:'婚恋·已有对象',marriage:'婚姻·已婚',wealth:'财运',career:'事业',litigation:'官司诉讼',health:'健康疾病',study:'考试／学业',travel:'出行／远行',search:'寻人寻物'}[state.questionCategory];
+  if(state.questionCategory==='travel') return `事项定位${category}，用神六亲世爻本身，用神爻位${ben[1]}爻，是否伏神否；`;
+  const requested=liuYaoRequestedRelation();
+  const positions=lines.filter(x=>x.relation===requested).map(x=>POS[x.index]+'爻');
+  if(positions.length) return `事项定位${category}，用神六亲${requested}，用神爻位${positions.join('、')}，是否伏神否；`;
+  const hiddenBranches=[...LIUYAO_NAJIA[pureTrigram].lower,...LIUYAO_NAJIA[pureTrigram].upper];
+  const hidden=hiddenBranches.map((branch,index)=>({index,branch,element:LIUYAO_BRANCH_ELEMENTS[branch],relation:liuYaoSixRelation(palaceElement,LIUYAO_BRANCH_ELEMENTS[branch])})).filter(x=>x.relation===requested);
+  const details=hidden.map(item=>{
+    const flying=lines[item.index], relation=liuYaoElementRelation(flying.element,item.element);
+    const note=relation===`${flying.element}生${item.element}`?'出现有助':relation===`${flying.element}克${item.element}`?'出现受制':'需结合旺衰';
+    return `${POS[item.index]}爻伏神${item.branch}${requested}，飞神${flying.branch}${flying.relation}，${relation}（${note}）`;
+  });
+  return `事项定位${category}，用神六亲${requested}，用神爻位伏藏，是否伏神是，伏神信息${details.join('；')}；`;
+}
 
 function selectedLiuYaoLines() {
   const up=TRIGRAM_LINES[$('liu-upper').value], low=TRIGRAM_LINES[$('liu-lower').value];
@@ -371,7 +434,8 @@ function divineLiuYao(lines, useSelection=false) {
   lines.push([rows[3][0], cuog[0], cuog[3], rows[3][1]]);
   lines.push([rows[4][0], zong[0], zong[3], rows[4][1]]);
   const s = L();
-  return s.liuYaoSummary(ben, dong, 1, 2, bian, hu, cuog, zong);
+  const upper=elem(h[5],h[4],h[3]), lower=elem(h[2],h[1],h[0]);
+  return s.liuYaoSummary(ben, dong, 1, 2, bian, hu, cuog, zong)+liuYaoFocusSummary(ben,upper,lower);
 }
 
 // ================= 占星骰子 =================
@@ -509,7 +573,8 @@ function divineHome(q) {
   const qTable = qianTable();
   const qs = qTable[rnd(qTable.length)];
   const qianHead = qs[0]+"　"+qs[1]+"　"+qs[2];
-  state.copyText = q+"："+tarot+len+runes+astro+liuyao;
+  const castTime=new Date();
+  const focus=focusOptions();
   const traditionalLines = [
     ['qimen','奇门遁甲',{}],
     ['liuren','大六壬',{}],
@@ -518,13 +583,26 @@ function divineHome(q) {
     ['taiyi','太乙神数',{scope:'day'}],
     ['jinkoujue','金口诀',{method:'time'}],
   ].flatMap(([method,label,options])=>{
-    const response=calculateTraditional(method,Date.now(),options);
+    const methodOptions=method==='qimen'?options:{...options,...focus};
+    const response=calculateTraditional(method,castTime.getTime(),methodOptions);
     return response.ok && response.result.summary ? [`${label}：${response.result.summary}`] : [];
   });
-  if(traditionalLines.length){
-    state.copyText += "\n\n―― 传统术数合参 ――\n"+traditionalLines.join("\n")
-      +"\n择日／黄历：需要事项和日期范围，请在对应页面单独计算。";
-  }
+  const sections=[
+    '【综合占卜数据】',
+    `问题：${q}`,
+    `所测何事：${focusDescription()}`,
+    `起卦时间：${localDateTimeValue(castTime).replace('T',' ')}`,
+    '',
+    '【卡牌与卦象】',
+    `塔罗：${tarot}`,
+    `雷诺曼：${len}`,
+    `卢恩符文：${runes}`,
+    `占星骰子：${astro}`,
+    `六爻：${liuyao}`,
+  ];
+  if(traditionalLines.length) sections.push('', '【传统术数合参】', ...traditionalLines);
+  sections.push('', '【请 AI 综合解读】', '请先提炼多套体系的共同指向，再说明相互矛盾或证据不足之处；区分盘面事实与推断，不要补造未提供的信息。');
+  state.copyText=sections.join('\n');
   addHistoryText(state.copyText+"\n"+qianHead);
   state.segs=[];
   seg(state.copyText+"\n");
@@ -640,6 +718,7 @@ function renderTabs(){
   });
   const sub=$('subbar'); sub.innerHTML=''; sub.style.display='none';
   $('liurow').style.display=state.curModule===1?'flex':'none';
+  renderFocusInputs();
   renderTraditionalInputs();
   sub.classList.remove('en-special');
   if (state.curModule===2){
@@ -696,6 +775,52 @@ function localDateValue(date=new Date()){
 
 function option(value,label){ return `<option value="${value}">${label}</option>`; }
 
+function focusEnabled(){
+  return (state.curModule===0 && state.curHomeTab===0) || state.curModule===1 || [8,9,10,11,12].includes(state.curModule);
+}
+
+function focusDescription(){
+  const category={loveSingle:'婚恋·未婚',lovePartner:'婚恋·已有对象',marriage:'婚姻·已婚',wealth:'财运',career:'事业',litigation:'官司诉讼',health:'健康疾病',study:'考试／学业',travel:'出行／远行',search:'寻人寻物'}[state.questionCategory];
+  const details=[];
+  if(['loveSingle','lovePartner','marriage'].includes(state.questionCategory)) details.push(state.gender==='male'?'男测':'女测');
+  if(state.questionCategory==='search') details.push('寻'+{elder:'长辈',peer:'平辈',junior:'晚辈',property:'财物'}[state.searchTarget]);
+  return category+(details.length?`（${details.join('·')}）`:'');
+}
+
+function focusOptions(){
+  if(!focusEnabled()) return {};
+  return {
+    questionCategory:state.questionCategory,
+    ...(['loveSingle','lovePartner','marriage'].includes(state.questionCategory)?{gender:state.gender}:{}),
+    ...(state.questionCategory==='search'?{searchTarget:state.searchTarget}:{})
+  };
+}
+
+function renderFocusInputs(){
+  const row=$('focusrow');
+  if(!focusEnabled()){ row.style.display='none'; row.innerHTML=''; return; }
+  const en=lang==='en';
+  const categories=[
+    ['loveSingle',en?'Love · single':'婚恋·未婚'],['lovePartner',en?'Love · partnered':'婚恋·已有对象'],
+    ['marriage',en?'Marriage':'婚姻·已婚'],['wealth',en?'Wealth':'财运'],['career',en?'Career':'事业'],
+    ['litigation',en?'Litigation':'官司诉讼'],['health',en?'Health':'健康疾病'],['study',en?'Study / exam':'考试／学业'],
+    ['travel',en?'Travel':'出行／远行'],['search',en?'Find person / item':'寻人寻物']
+  ];
+  row.style.display='flex';
+  row.innerHTML=`<label>${en?'Question type':'所测何事'}<select id="focus-category">${categories.map(x=>option(x[0],x[1])).join('')}</select></label><label id="focus-gender-wrap">${en?'Gender':'性别'}<select id="focus-gender">${option('male',en?'Male':'男')}${option('female',en?'Female':'女')}</select></label><label id="focus-target-wrap">${en?'Target':'寻找对象'}<select id="focus-target">${option('elder',en?'Elder':'长辈')}${option('peer',en?'Peer':'平辈')}${option('junior',en?'Junior':'晚辈')}${option('property',en?'Property':'财物')}</select></label>`;
+  $('focus-category').value=state.questionCategory;
+  $('focus-gender').value=state.gender;
+  $('focus-target').value=state.searchTarget;
+  const refresh=()=>{
+    $('focus-gender-wrap').style.display=['loveSingle','lovePartner','marriage'].includes(state.questionCategory)?'flex':'none';
+    $('focus-target-wrap').style.display=state.questionCategory==='search'?'flex':'none';
+  };
+  $('focus-category').onchange=()=>{ state.questionCategory=$('focus-category').value; refresh(); };
+  $('focus-gender').onchange=()=>{ state.gender=$('focus-gender').value; };
+  $('focus-target').onchange=()=>{ state.searchTarget=$('focus-target').value; };
+  refresh();
+}
+
 function renderTraditionalInputs(){
   const row=$('traditionalrow');
   const isHomeDate=state.curModule===0 && state.curHomeTab===1;
@@ -725,11 +850,12 @@ function renderTraditionalInputs(){
 }
 
 function traditionalOptions(method){
-  if(method==='meihua') return {method:$('traditional-method').value,number:Number($('traditional-number').value)};
-  if(method==='taiyi') return {scope:$('traditional-scope').value};
-  if(method==='jinkoujue') return {method:$('traditional-method').value,branch:$('traditional-branch').value,number:Number($('traditional-number').value)};
+  const focus=focusOptions();
+  if(method==='meihua') return {method:$('traditional-method').value,number:Number($('traditional-number').value),...focus};
+  if(method==='taiyi') return {scope:$('traditional-scope').value,...focus};
+  if(method==='jinkoujue') return {method:$('traditional-method').value,branch:$('traditional-branch').value,number:Number($('traditional-number').value),...focus};
   if(method==='almanac') return {topic:$('traditional-topic').value,startDate:$('traditional-start').value,endDate:$('traditional-end').value};
-  return {};
+  return focus;
 }
 
 function calculateTraditional(method,timestamp,options={}){
