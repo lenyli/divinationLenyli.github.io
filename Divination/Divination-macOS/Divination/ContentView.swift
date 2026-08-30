@@ -74,16 +74,6 @@ struct ContentView: View {
                         }
                 }
             }
-            if eng.curModule == 0 {
-                HStack(spacing: 6) {
-                    ForEach(0..<eng.homeTabs.count, id: \.self) { i in
-                        TabButton(title: eng.homeTabs[i], selected: eng.curHomeTab == i) { eng.switchHomeTab(i) }
-                    }
-                    if eng.curHomeTab == 1 {
-                        Text(eng.S.dateWarn).bold().foregroundColor(.red)
-                    }
-                }
-            }
             if eng.curModule == 1 {
                 HStack(spacing: 6) {
                     Text(eng.S.upperTrigram)
@@ -111,7 +101,7 @@ struct ContentView: View {
                 }
             }
             if eng.focusEnabled { focusInputRow }
-            if eng.curModule >= 7 || (eng.curModule == 0 && eng.curHomeTab == 1) {
+            if eng.curModule >= 7 {
                 traditionalInputRow
             }
             HStack {
@@ -162,13 +152,12 @@ struct ContentView: View {
                 Picker("", selection: $eng.questionCategory) {
                     ForEach(eng.questionCategories, id: \.self) { Text(eng.questionCategoryTitle($0)).tag($0) }
                 }.labelsHidden().pickerStyle(.menu)
-                if ["loveSingle", "lovePartner", "marriage"].contains(eng.questionCategory) {
-                    Text(isEn ? "Gender" : "性别")
-                    Picker("", selection: $eng.questionGender) {
-                        Text(isEn ? "Male" : "男").tag("male")
-                        Text(isEn ? "Female" : "女").tag("female")
-                    }.labelsHidden().pickerStyle(.menu)
-                }
+                Text(isEn ? "Gender" : "性别")
+                Picker("", selection: $eng.questionGender) {
+                    Text(isEn ? "None" : "不选").tag("")
+                    Text(isEn ? "Male" : "男").tag("male")
+                    Text(isEn ? "Female" : "女").tag("female")
+                }.labelsHidden().pickerStyle(.menu)
                 if eng.questionCategory == "search" {
                     Text(isEn ? "Target" : "寻找对象")
                     Picker("", selection: $eng.searchTarget) {
@@ -182,7 +171,7 @@ struct ContentView: View {
 
     @ViewBuilder private var traditionalInputRow: some View {
         let isEn = eng.lang == .en
-        let isAlmanac = eng.curModule == 13 || (eng.curModule == 0 && eng.curHomeTab == 1)
+        let isAlmanac = eng.curModule == 13
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
                 if !isAlmanac {

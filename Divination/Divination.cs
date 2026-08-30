@@ -81,8 +81,8 @@ public class MainForm : Form
             {"风风", new string[]{"巽为风","上","三","顺从、渗透、风、谦逊、入"}},
     };
     static readonly string[] POS = {"初","二","三","四","五","上"};
-    static readonly string[] FOCUS_CATEGORIES = {"婚恋·未婚","婚恋·已有对象","婚姻·已婚","财运","事业","官司诉讼","健康疾病","考试／学业","出行／远行","寻人寻物"};
-    static readonly string[] FOCUS_KEYS = {"loveSingle","lovePartner","marriage","wealth","career","litigation","health","study","travel","search"};
+    static readonly string[] FOCUS_CATEGORIES = {"不选","婚恋·未婚","婚恋·已有对象","婚姻·已婚","财运","事业","官司诉讼","健康疾病","考试／学业","出行／远行","寻人寻物"};
+    static readonly string[] FOCUS_KEYS = {"","loveSingle","lovePartner","marriage","wealth","career","litigation","health","study","travel","search"};
     static readonly string[] ELEMENT_CYCLE = {"木","火","土","金","水"};
     static readonly Dictionary<string,string> BRANCH_ELEMENTS = new Dictionary<string,string> {
         {"子","水"},{"丑","土"},{"寅","木"},{"卯","木"},{"辰","土"},{"巳","火"},
@@ -607,7 +607,7 @@ public class MainForm : Form
 
         homePnl = new FlowLayoutPanel();
         homePnl.SetBounds(12, 90, 636, 36);
-        string[] htabs = {"综合占卜","日期预测"};
+        string[] htabs = {"综合占卜"};
         homeBtns = new Button[htabs.Length];
         for (int i = 0; i < htabs.Length; i++) {
             var b = new Button(); b.Text = htabs[i]; b.AutoSize = true;
@@ -661,7 +661,7 @@ public class MainForm : Form
         liuYaoFocusPnl.Controls.Add(cmbQuestionCategory);
         liuYaoFocusPnl.Controls.Add(new Label { Text = "性别", AutoSize = true, Margin = new Padding(6, 7, 3, 0) });
         cmbGender = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 58 };
-        cmbGender.Items.AddRange(new string[]{"男","女"}); cmbGender.SelectedIndex = 0;
+        cmbGender.Items.AddRange(new string[]{"不选","男","女"}); cmbGender.SelectedIndex = 0;
         liuYaoFocusPnl.Controls.Add(cmbGender);
         liuYaoFocusPnl.Controls.Add(new Label { Text = "寻找对象", AutoSize = true, Margin = new Padding(6, 7, 3, 0) });
         cmbSearchTarget = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 74 };
@@ -729,7 +729,7 @@ public class MainForm : Form
         subPnl.Visible = (i == 2);
         homePnl.Visible = (i == 0);
         liuYaoPnl.Visible = (i == 1);
-        liuYaoFocusPnl.Visible = (i == 1) || (i == 0 && curHomeTab == 0);
+        liuYaoFocusPnl.Visible = true;
         if (i == 0) btnGo.Text = "占 卜";
         else if (i == 1) btnGo.Text = "起 卦";
         else if (i == 5) btnGo.Text = "掷骰子";
@@ -796,7 +796,7 @@ public class MainForm : Form
     string RequestedLiuYaoRelation()
     {
         string key = FOCUS_KEYS[cmbQuestionCategory.SelectedIndex];
-        if (key == "loveSingle" || key == "lovePartner" || key == "marriage") return cmbGender.SelectedIndex == 0 ? "妻财" : "官鬼";
+        if (key == "loveSingle" || key == "lovePartner" || key == "marriage") return cmbGender.SelectedIndex == 1 ? "妻财" : "官鬼";
         if (key == "wealth") return "妻财";
         if (key == "career" || key == "litigation" || key == "health") return "官鬼";
         if (key == "study") return "父母";
@@ -807,6 +807,7 @@ public class MainForm : Form
     string LiuYaoFocusSummary(string[] ben, string upper, string lower)
     {
         if (curModule != 1 && !(curModule == 0 && curHomeTab == 0)) return "";
+        if (cmbQuestionCategory.SelectedIndex <= 0) return "";
         string category = FOCUS_CATEGORIES[cmbQuestionCategory.SelectedIndex];
         string key = FOCUS_KEYS[cmbQuestionCategory.SelectedIndex];
         if (key == "travel") return "事项定位" + category + "，用神六亲世爻本身，用神爻位" + ben[1] + "爻，是否伏神否；";
@@ -960,7 +961,7 @@ public class MainForm : Form
         string[] labels = {"圣意","谋望","家宅","婚姻","失物","官事","行人","占病","解曰"};
         string nl = Environment.NewLine;
         var sb = new System.Text.StringBuilder();
-        sb.Append(q + "：" + head);
+        sb.Append(WithFocusContext(q + "：" + head));
         for (int i = 0; i < labels.Length; i++) sb.Append(nl + labels[i] + "：" + s[i + 3]);
         copyText = sb.ToString();
         AddHistory();
@@ -1032,7 +1033,7 @@ public class MainForm : Form
         }
         var names = new List<string>();
         foreach (int i in drawn) names.Add(TAROT[i][0]);
-        copyText = q + "：" + string.Join("、", names) + "；";
+        copyText = WithFocusContext(q + "：" + string.Join("、", names) + "；");
         var h = histories[2];
         bool isGen = (lo == 0);
         int idx = isGen ? sessGen : sessMaj;
@@ -1063,7 +1064,7 @@ public class MainForm : Form
     void TarotYesNo(string q)
     {
         string[] y = YESNO[rng.Next(YESNO.Length)]; // {判定, 牌, 短语, 解释}
-        copyText = q + "：" + y[0] + "，" + y[1] + "：" + y[2] + "（" + y[3] + "）";
+        copyText = WithFocusContext(q + "：" + y[0] + "，" + y[1] + "：" + y[2] + "（" + y[3] + "）");
         AddHistory();
         string nl = Environment.NewLine;
         txtOut.Clear();
@@ -1082,17 +1083,27 @@ public class MainForm : Form
         for (int k = 0; k < homeBtns.Length; k++)
             homeBtns[k].BackColor = (k == t) ? Color.LightSteelBlue : SystemColors.Control;
         UpdateDateNoteVisibility();
-        if (liuYaoFocusPnl != null) liuYaoFocusPnl.Visible = (curModule == 0 && t == 0) || curModule == 1;
+        if (liuYaoFocusPnl != null) liuYaoFocusPnl.Visible = true;
         RestoreState();
     }
 
     string FocusDescription()
     {
+        if (cmbQuestionCategory.SelectedIndex < 0 || cmbGender.SelectedIndex < 0) return "";
         string key = FOCUS_KEYS[cmbQuestionCategory.SelectedIndex];
-        string detail = "";
-        if (key == "loveSingle" || key == "lovePartner" || key == "marriage") detail = cmbGender.SelectedIndex == 0 ? "男测" : "女测";
-        else if (key == "search") detail = "寻" + new[]{"长辈","平辈","晚辈","财物"}[cmbSearchTarget.SelectedIndex];
-        return FOCUS_CATEGORIES[cmbQuestionCategory.SelectedIndex] + (detail == "" ? "" : "（" + detail + "）");
+        var details = new List<string>();
+        if (cmbGender.SelectedIndex == 1) details.Add("男测");
+        if (cmbGender.SelectedIndex == 2) details.Add("女测");
+        if (key == "search") details.Add("寻" + new[]{"长辈","平辈","晚辈","财物"}[cmbSearchTarget.SelectedIndex]);
+        string category = key == "" ? "" : FOCUS_CATEGORIES[cmbQuestionCategory.SelectedIndex];
+        if (category == "") return string.Join("·", details);
+        return category + (details.Count == 0 ? "" : "（" + string.Join("·", details) + "）");
+    }
+
+    string WithFocusContext(string text)
+    {
+        string description = FocusDescription();
+        return description == "" ? text : "所测何事／性别：" + description + Environment.NewLine + text;
     }
 
     void DivineHome(string q)
@@ -1116,8 +1127,11 @@ public class MainForm : Form
         string nl = Environment.NewLine;
         var sections = new List<string> {
             "【综合占卜数据】",
-            "问题：" + q,
-            "所测何事：" + FocusDescription(),
+            "问题：" + q
+        };
+        string focusDescription = FocusDescription();
+        if (focusDescription != "") sections.Add("所测何事／性别：" + focusDescription);
+        sections.AddRange(new string[] {
             "起卦时间：" + DateTime.Now.ToString("yyyy-MM-dd HH:mm"),
             "",
             "【卡牌与卦象】",
@@ -1129,7 +1143,7 @@ public class MainForm : Form
             "",
             "【请 AI 综合解读】",
             "请先提炼多套体系的共同指向，再说明相互矛盾或证据不足之处；区分盘面事实与推断，不要补造未提供的信息。"
-        };
+        });
         copyText = string.Join(nl, sections); // 复制不含灵签
         AddHistoryText(copyText + nl + qianHead); // 历史仅追加灵签签头
         txtOut.Clear();
@@ -1226,7 +1240,7 @@ public class MainForm : Form
         string nl = Environment.NewLine;
         string msg = "使用说明" + nl + nl
             + "1. 首页-综合占卜：一次生成塔罗三张牌、雷诺曼三张、卢恩三枚、占星骰子、六爻，界面结果末尾附灵签内容。复制结果不含灵签，历史记录仅追加灵签签头。" + nl + nl
-            + "2. 首页-日期预测：理论上无法验证准确时间，仅供参考，自行甄别。" + nl + nl
+            + "2. 择日／黄历：除黄历候选外，同时给出塔罗日期、占星时长及奇门／六壬／梅花应期参考。" + nl + nl
             + "3. 塔罗-通用：默认不包含特殊牌；勾选“包含特殊牌”后，通用塔罗与首页综合占卜的塔罗部分都会纳入特殊牌。YES OR NO 与大牌不受此选项影响。" + nl + nl
             + "4. 历史记录会保存30条，下次打开程序仍可查看。"+ nl + nl
             + "5. 复制结果可直接粘贴到AI解读。";
@@ -1275,6 +1289,8 @@ public class MainForm : Form
     void OnClear(object sender, EventArgs e)
     {
         txtQ.Clear(); txtOut.Clear(); copyText = "";
+        cmbQuestionCategory.SelectedIndex = 0;
+        cmbGender.SelectedIndex = 0;
         if (curModule == 1) {
             cmbUpperTrigram.SelectedIndex = -1;
             cmbLowerTrigram.SelectedIndex = -1;
@@ -1342,6 +1358,11 @@ public class MainForm : Form
 
     void OnDivine(object sender, EventArgs e)
     {
+        string focusKey = cmbQuestionCategory.SelectedIndex >= 0 ? FOCUS_KEYS[cmbQuestionCategory.SelectedIndex] : "";
+        if ((focusKey == "loveSingle" || focusKey == "lovePartner" || focusKey == "marriage") && cmbGender.SelectedIndex <= 0) {
+            MessageBox.Show(this, "婚恋／婚姻类必须选择性别。", "所测何事", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
         if (curModule == 1) {
             bool hasMoving = Array.Exists(movingLineChecks, c => c.Checked);
             bool hasManual = cmbUpperTrigram.SelectedIndex >= 0 || cmbLowerTrigram.SelectedIndex >= 0 || hasMoving;
@@ -1370,7 +1391,7 @@ public class MainForm : Form
         else if (curModule == 3) result = DivineLenormand(lines);
         else if (curModule == 4) result = DivineRunes(lines);
         else result = DivineAstro(lines);
-        copyText = q + "：" + result;
+        copyText = WithFocusContext(q + "：" + result);
         string nl = Environment.NewLine;
         txtOut.Clear();
         AddHistory();

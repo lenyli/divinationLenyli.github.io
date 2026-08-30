@@ -29,8 +29,8 @@ final class Engine: ObservableObject {
     @Published var traditionalNumber = 1
     @Published var traditionalBranch = "子"
     @Published var traditionalScope = "year"
-    @Published var questionCategory = "loveSingle"
-    @Published var questionGender = "male"
+    @Published var questionCategory = ""
+    @Published var questionGender = ""
     @Published var searchTarget = "elder"
     @Published var almanacTopic = "marriage"
     @Published var almanacStartDate = Date()
@@ -51,30 +51,41 @@ final class Engine: ObservableObject {
     var helpText: String { S.helpText }
     let liuYaoTrigramValues = ["天", "泽", "火", "雷", "风", "水", "山", "地"]
     let traditionalMethods = ["qimen", "liuren", "xiaoliuren", "meihua", "taiyi", "jinkoujue", "almanac"]
-    let questionCategories = ["loveSingle", "lovePartner", "marriage", "wealth", "career", "litigation", "health", "study", "travel", "search"]
+    let questionCategories = ["", "loveSingle", "lovePartner", "marriage", "wealth", "career", "litigation", "health", "study", "travel", "search"]
 
     func questionCategoryTitle(_ value: String) -> String {
+        if value.isEmpty { return lang == .en ? "None" : "不选" }
         let zh = ["loveSingle": "婚恋·未婚", "lovePartner": "婚恋·已有对象", "marriage": "婚姻·已婚", "wealth": "财运", "career": "事业", "litigation": "官司诉讼", "health": "健康疾病", "study": "考试／学业", "travel": "出行／远行", "search": "寻人寻物"]
         let en = ["loveSingle": "Love · single", "lovePartner": "Love · partnered", "marriage": "Marriage", "wealth": "Wealth", "career": "Career", "litigation": "Litigation", "health": "Health", "study": "Study / exam", "travel": "Travel", "search": "Find person / item"]
         return (lang == .en ? en : zh)[value] ?? value
     }
 
-    var focusEnabled: Bool { (curModule == 0 && curHomeTab == 0) || curModule == 1 || [8, 9, 10, 11, 12].contains(curModule) }
+    var focusEnabled: Bool { curModule != 13 }
 
     private var focusDescription: String {
         var details: [String] = []
-        if ["loveSingle", "lovePartner", "marriage"].contains(questionCategory) { details.append(questionGender == "male" ? "男测" : "女测") }
+        if questionGender == "male" { details.append("男测") }
+        if questionGender == "female" { details.append("女测") }
         if questionCategory == "search" { details.append("寻" + ["elder":"长辈", "peer":"平辈", "junior":"晚辈", "property":"财物"][searchTarget]!) }
-        let title = questionCategoryTitle(questionCategory)
+        let title = questionCategory.isEmpty ? "" : questionCategoryTitle(questionCategory)
+        if title.isEmpty { return details.joined(separator: "·") }
         return title + (details.isEmpty ? "" : "（" + details.joined(separator: "·") + "）")
     }
 
     private func focusOptions() -> [String: Any] {
-        guard focusEnabled else { return [:] }
+        guard focusEnabled, !questionCategory.isEmpty else { return [:] }
+        if ["loveSingle", "lovePartner", "marriage"].contains(questionCategory), questionGender.isEmpty { return [:] }
         var options: [String: Any] = ["questionCategory": questionCategory]
         if ["loveSingle", "lovePartner", "marriage"].contains(questionCategory) { options["gender"] = questionGender }
         if questionCategory == "search" { options["searchTarget"] = searchTarget }
         return options
+    }
+
+    private func withFocusContext(_ text: String) -> String {
+        let description = focusDescription
+        guard focusEnabled, !description.isEmpty else { return text }
+        let label = S.isEn ? "Question type / gender: " : "所测何事／性别："
+        return label + description + "\n" + text
     }
 
     func liuYaoTrigramTitle(_ value: String) -> String {
@@ -156,6 +167,13 @@ final class Engine: ObservableObject {
 
     // ================= 入口 =================
     func divine() {
+        if focusEnabled,
+           ["loveSingle", "lovePartner", "marriage"].contains(questionCategory),
+           questionGender.isEmpty {
+            copyText = ""
+            output = [Seg(text: S.isEn ? "Please select a gender for love or marriage questions." : "婚恋／婚姻类必须选择性别。", red: true)]
+            return
+        }
         if curModule == 1 {
             let hasManual = !liuYaoUpperTrigram.isEmpty || !liuYaoLowerTrigram.isEmpty || !liuYaoMovingLines.isEmpty
             if hasManual && (liuYaoUpperTrigram.isEmpty || liuYaoLowerTrigram.isEmpty) {
@@ -171,9 +189,10 @@ final class Engine: ObservableObject {
     }
 
     private func doDivine(_ q: String) {
-        if curModule == 0 { if curHomeTab == 0 { divineHome(q) } else { divineDate(q) }; return }
+        if curModule == 0 { divineHome(q); return }
         if curModule == 6 { divineQian(q); return }
         if curModule == 2 { divineTarot(q); return }
+        if curModule == 13 { divineDate(q); return }
         if curModule >= 7 { divineTraditional(q); return }
         var lines: [[String]] = []
         let result: String
@@ -184,7 +203,7 @@ final class Engine: ObservableObject {
         else if curModule == 3 { result = divineLenormand(&lines) }
         else if curModule == 4 { result = divineRunes(&lines) }
         else { result = divineAstro(&lines) }
-        copyText = q + "：" + result
+        copyText = withFocusContext(q + "：" + result)
         output = []
         addHistory()
         ap(copyText + "\n\n" + S.briefNote + "\n")
@@ -221,7 +240,7 @@ final class Engine: ObservableObject {
         }
         do {
             let result = try TraditionalAlgorithmEngine.shared.calculate(method: method, date: date, options: options)
-            copyText = q + "\n\n" + result.display
+            copyText = withFocusContext(q) + "\n\n" + result.display
             output = [Seg(text: copyText)]
             addHistory()
         } catch {
@@ -242,6 +261,7 @@ final class Engine: ObservableObject {
     }
     func clearPage() {
         question = ""; output = []; copyText = ""
+        questionCategory = ""; questionGender = ""
         if curModule == 1 {
             liuYaoUpperTrigram = ""
             liuYaoLowerTrigram = ""
@@ -295,6 +315,7 @@ final class Engine: ObservableObject {
     private func liuYaoFocusSummary(ben: [String], upper: String, lower: String) -> String {
         guard curModule == 1 || (curModule == 0 && curHomeTab == 0) else { return "" }
         let categories = ["loveSingle": "婚恋·未婚", "lovePartner": "婚恋·已有对象", "marriage": "婚姻·已婚", "wealth": "财运", "career": "事业", "litigation": "官司诉讼", "health": "健康疾病", "study": "考试／学业", "travel": "出行／远行", "search": "寻人寻物"]
+        guard !questionCategory.isEmpty else { return "" }
         let category = categories[questionCategory] ?? questionCategory
         if questionCategory == "travel" { return "事项定位\(category)，用神六亲世爻本身，用神爻位\(ben[1])爻，是否伏神否；" }
         let palaces: [String: [String]] = [
@@ -451,7 +472,7 @@ final class Engine: ObservableObject {
         let s = pickQian()
         let head = s[0] + "\u{3000}" + s[1] + "\u{3000}" + s[2]
         let labels = S.qianLabels
-        var sb = q + "：" + head
+        var sb = withFocusContext(q + "：" + head)
         for i in 0..<labels.count { sb += "\n" + labels[i] + "：" + s[i + 3] }
         copyText = sb
         addHistory()
@@ -487,7 +508,7 @@ final class Engine: ObservableObject {
         }
         if gen { drawnGen = drawn } else { drawnMajor = drawn }
         let names = drawn.map { TAROT[$0][0] }
-        copyText = q + "：" + names.joined(separator: "、") + "；"
+        copyText = withFocusContext(q + "：" + names.joined(separator: "、") + "；")
         let entry = timeStamp() + "  " + copyText
         let idx = gen ? sessGen : sessMaj
         if idx >= 0 && idx < histories[2].count { histories[2][idx] = entry }
@@ -517,7 +538,7 @@ final class Engine: ObservableObject {
 
     private func tarotYesNo(_ q: String) {
         let y = YESNO.randomElement()!
-        copyText = q + "：" + y[0] + "，" + y[1] + "：" + y[2] + "（" + y[3] + "）"
+        copyText = withFocusContext(q + "：" + y[0] + "，" + y[1] + "：" + y[2] + "（" + y[3] + "）")
         addHistory()
         output = []
         ap(copyText + "\n\n")
@@ -561,8 +582,11 @@ final class Engine: ObservableObject {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "zh_CN")
         formatter.dateFormat = "yyyy-MM-dd HH:mm"
-        var sections = [
-            "【综合占卜数据】", "问题：" + q, "所测何事：" + focusDescription,
+        var sections = ["【综合占卜数据】", "问题：" + q]
+        if !focusDescription.isEmpty {
+            sections.append((S.isEn ? "Question type / gender: " : "所测何事／性别：") + focusDescription)
+        }
+        sections += [
             "起卦时间：" + formatter.string(from: castDate), "",
             "【卡牌与卦象】", "塔罗：" + tarot, "雷诺曼：" + len,
             "卢恩符文：" + runes, "占星骰子：" + astro, "六爻：" + liuyao,
@@ -621,7 +645,7 @@ final class Engine: ObservableObject {
             ("liuren", "六壬应期", [:]),
             ("meihua", "梅花应期", ["method": "time"]),
         ]
-        var timingLines = timingSpecs.compactMap { method, label, options -> String? in
+        let timingLines = timingSpecs.compactMap { method, label, options -> String? in
             guard let result = try? TraditionalAlgorithmEngine.shared.calculate(method: method, date: castDate, options: options),
                   !result.timingSummary.isEmpty else { return nil }
             return label + "：" + result.timingSummary
@@ -634,12 +658,12 @@ final class Engine: ObservableObject {
             "startDate": formatter.string(from: almanacStartDate),
             "endDate": formatter.string(from: almanacEndDate),
         ]
-        if let result = try? TraditionalAlgorithmEngine.shared.calculate(method: "almanac", date: almanacStartDate, options: almanacOptions),
-           !result.timingSummary.isEmpty {
-            timingLines.append("择日参考：" + result.timingSummary)
-        }
+        let almanacResult = try? TraditionalAlgorithmEngine.shared.calculate(method: "almanac", date: almanacStartDate, options: almanacOptions)
         if !timingLines.isEmpty {
-            copyText += "\n\n―― 应期与择日参考 ――\n" + timingLines.joined(separator: "\n")
+            copyText += "\n\n―― 应期参考 ――\n" + timingLines.joined(separator: "\n")
+        }
+        if let almanacResult, !almanacResult.display.isEmpty {
+            copyText += "\n\n―― 择日／黄历 ――\n" + almanacResult.display
         }
         addHistory()
         output = []

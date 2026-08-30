@@ -23,6 +23,7 @@ body{
   max-width:760px; margin:0 auto;
 }
 #navgrid{ display:grid; grid-template-columns:minmax(0,1fr) auto; column-gap:6px; row-gap:8px; }
+#mobilebar{ display:none; }
 #topbar{ display:contents; }
 #modbar,#methodbar{ display:flex; gap:4px; min-width:0; }
 #methodbar{
@@ -65,6 +66,8 @@ body{
   background:var(--card); color:inherit; font:inherit; min-width:0;
 }
 #traditionalrow input[type="number"]{ width:110px; }
+#traditionalrow.almanac{ display:grid; grid-template-columns:1fr; }
+#traditionalrow .almanac-topic,#traditionalrow .almanac-dates{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
 #inrow{ display:flex; align-items:center; gap:6px; }
 #q{ flex:1; padding:7px 9px; border:1px solid var(--border); border-radius:6px; font-size:15px; }
 #btnrow{ display:flex; gap:6px; }
@@ -106,6 +109,14 @@ body{
   transition:opacity .2s; z-index:99;
 }
 #toast.show{ opacity:1; }
+@media (max-width:640px){
+  #navgrid{ display:none; }
+  #mobilebar{
+    display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px;
+  }
+  #mobilebar .tab{ width:100%; min-width:0; padding:7px 2px; font-size:clamp(10px,3vw,13px); text-align:center; }
+  #mobilebar .nav-empty{ min-height:31px; }
+}
 @media (prefers-color-scheme: dark){
   :root{ --bg:#1b1a22; --card:#2a2935; --border:#4a4860; --sel:#4a5fa5; }
   body{ color:#eee; }
@@ -115,6 +126,7 @@ body{
 </style>
 </head>
 <body>
+  <div id="mobilebar"></div>
   <div id="navgrid">
     <div id="topbar">
       <div id="modbar"></div>

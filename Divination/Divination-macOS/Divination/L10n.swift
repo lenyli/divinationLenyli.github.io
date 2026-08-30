@@ -100,7 +100,7 @@ struct L10n {
         mods: ["首页", "六爻", "塔罗", "雷诺曼", "卢恩符文", "占星骰子", "玄天上帝感应灵签", "奇门遁甲", "大六壬", "小六壬", "梅花易数", "太乙神数", "金口诀", "择日/黄历"],
         modTabs: ["首页", "六爻", "塔罗", "雷诺曼", "卢恩", "占星", "灵签"],
         tarotTabs: ["通用", "YES OR NO", "大牌"],
-        homeTabs: ["综合占卜", "日期预测"],
+        homeTabs: ["综合占卜"],
         qianLabels: ["圣意", "谋望", "家宅", "婚姻", "失物", "官事", "行人", "占病", "解曰"],
         cardPre: ["第一张", "第二张", "第三张"],
         runePre: ["第一枚", "第二枚", "第三枚"],
@@ -157,7 +157,7 @@ struct L10n {
         helpText: """
         1. 首页-综合占卜：一次生成塔罗三张牌、雷诺曼三张、卢恩三枚、占星骰子、六爻，界面结果末尾附灵签内容。复制结果不含灵签，历史记录仅追加灵签签头。
 
-        2. 首页-日期预测：理论上无法验证准确时间，仅供参考，自行甄别。
+        2. 择日／黄历：除黄历候选外，同时给出塔罗日期、占星时长及奇门／六壬／梅花应期参考。
 
         3. 塔罗-通用：默认不包含特殊牌；勾选“包含特殊牌”后，通用塔罗与首页综合占卜的塔罗部分都会纳入特殊牌。YES OR NO 与大牌不受此选项影响。如果没有特殊牌义的解读包，建议给 AI 的解读不要使用特殊牌。
 
@@ -172,7 +172,7 @@ struct L10n {
         mods: ["Home", "I Ching", "Tarot", "Lenormand", "Runes", "Astro Dice", "Fortune Slip", "Qimen", "Da Liu Ren", "Xiao Liu Ren", "Meihua Yishu", "Taiyi", "Jin Kou Jue", "Date Selection"],
         modTabs: ["Home", "I Ching", "Tarot", "Lenormand", "Runes", "Astro Dice", "Slip"],
         tarotTabs: ["General", "YES OR NO", "Major"],
-        homeTabs: ["Combined", "Date forecast"],
+        homeTabs: ["Combined"],
         qianLabels: ["Oracle", "Ambition", "Home", "Marriage", "Lost item", "Legal", "Traveler", "Illness", "Summary"],
         cardPre: ["Card 1", "Card 2", "Card 3"],
         runePre: ["Rune 1", "Rune 2", "Rune 3"],
@@ -229,7 +229,7 @@ struct L10n {
         helpText: """
         1. Home - Combined: draws 3 Tarot, 3 Lenormand, 3 Runes, astro dice, and I Ching in one go. The fortune slip is shown at the end of on-screen results. Copy excludes the slip body; history appends only the slip header.
 
-        2. Home - Date forecast: timing cannot be verified; for reference only.
+        2. Date Selection: includes almanac candidates, Tarot/Astro timing, and Qimen/Liuren/Meihua timing references.
 
         3. Tarot - General: special cards off by default. When enabled, they apply to General and Home combined Tarot. YES OR NO and Major Arcana are unaffected. Without a special-card meaning pack, avoid including special cards in AI readings.
 

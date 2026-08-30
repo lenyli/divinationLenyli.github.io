@@ -8,9 +8,10 @@ const STR = {
   zh: {
     mods: ["首页","六爻","塔罗","雷诺曼","卢恩符文","占星骰子","玄天上帝感应灵签","奇门遁甲","大六壬","小六壬","梅花易数","太乙神数","金口诀","择日/黄历"],
     modTabs: ["首页","六爻","塔罗","雷诺曼","卢恩符文","占星骰子","灵签"],
+    mobileTabs: ["首页","六爻","塔罗","雷诺曼","卢恩符文","占星骰子","灵签","奇门遁甲","大六壬","小六壬","梅花","太乙","金口诀","择日/黄历"],
     newMethodTabs: ["奇门遁甲","大六壬","小六壬","梅花易数","太乙神数","金口诀","择日/黄历"],
     tarotTabs: ["通用","YES OR NO","大牌"],
-    homeTabs: ["综合占卜","日期预测"],
+    homeTabs: ["综合占卜"],
     qianLabels: ["圣意","谋望","家宅","婚姻","失物","官事","行人","占病","解曰"],
     cardPre: ["第一张","第二张","第三张"],
     runePre: ["第一枚","第二枚","第三枚"],
@@ -25,6 +26,7 @@ const STR = {
     lowerTrigram: "下卦",
     movingLines: "动爻",
     completeTrigrams: "手动起卦请同时选择上卦和下卦。",
+    requiredGender: "婚恋／婚姻类必须选择性别。",
     inputLabel: "输入问题：",
     copy: "复制结果",
     clear: "清空",
@@ -88,7 +90,7 @@ const STR = {
     langBtn: "EN",
     langTitle: "切换为 English",
     helpText: "1. 首页-综合占卜：一次生成塔罗三张牌、雷诺曼三张、卢恩三枚、占星骰子、六爻。灵签只在历史记录中追加签头，界面结果和复制结果不包含灵签。\n\n"
-      + "2. 首页-日期预测：理论上无法验证准确时间，仅供参考，自行甄别。\n\n"
+      + "2. 择日／黄历：除黄历候选外，同时给出塔罗日期、占星时长及奇门／六壬／梅花应期参考。\n\n"
       + "3. 塔罗-通用：默认不包含特殊牌；勾选“包含特殊牌”后，通用塔罗与首页综合占卜的塔罗部分都会纳入特殊牌。YES OR NO 与大牌不受此选项影响。若无特殊牌义解读包，建议给 AI 的解读不要使用特殊牌。\n\n"
       + "4. 历史记录会保存30条，下次打开程序仍可查看。\n\n"
       + "5. 复制结果可直接粘贴到AI解读。",
@@ -100,9 +102,10 @@ const STR = {
   en: {
     mods: ["Home","I Ching","Tarot","Lenormand","Runes","Astro Dice","Fortune Slip","Qimen","Da Liu Ren","Xiao Liu Ren","Meihua Yishu","Taiyi","Jin Kou Jue","Date Selection"],
     modTabs: ["Home","I Ching","Tarot","Lenormand","Runes","Astro Dice","Slip"],
+    mobileTabs: ["Home","I Ching","Tarot","Lenormand","Runes","Astro Dice","Slip","Qimen","Da Liu Ren","Xiao Liu Ren","Meihua","Taiyi","Jin Kou Jue","Date Select"],
     newMethodTabs: ["Qimen","Da Liu Ren","Xiao Liu Ren","Meihua Yishu","Taiyi","Jin Kou Jue","Date Selection"],
     tarotTabs: ["General","YES OR NO","Major"],
-    homeTabs: ["Combined","Date forecast"],
+    homeTabs: ["Combined"],
     qianLabels: ["Oracle","Ambition","Home","Marriage","Lost item","Legal","Traveler","Illness","Summary"],
     cardPre: ["Card 1","Card 2","Card 3"],
     runePre: ["Rune 1","Rune 2","Rune 3"],
@@ -117,6 +120,7 @@ const STR = {
     lowerTrigram: "Lower",
     movingLines: "Moving",
     completeTrigrams: "Select both the upper and lower trigrams for a manual cast.",
+    requiredGender: "Please select a gender for love or marriage questions.",
     inputLabel: "Question:",
     copy: "Copy",
     clear: "Clear",
@@ -180,7 +184,7 @@ const STR = {
     langBtn: "中文",
     langTitle: "Switch to 中文",
     helpText: "1. Home - Combined: draws 3 Tarot, 3 Lenormand, 3 Runes, astro dice, and I Ching in one go. The fortune slip is appended to history only; on-screen and copied results exclude the slip body.\n\n"
-      + "2. Home - Date forecast: timing cannot be verified; for reference only.\n\n"
+      + "2. Date Selection: includes almanac candidates, Tarot/Astro timing, and Qimen/Liuren/Meihua timing references.\n\n"
       + "3. Tarot - General: special cards off by default. When enabled, they apply to General and Home combined Tarot. YES OR NO and Major Arcana are unaffected. Without a special-card meaning pack, avoid including special cards in AI readings.\n\n"
       + "4. History keeps the last 30 entries per module.\n\n"
       + "5. Copy results and paste into an AI for interpretation.\n\n"
@@ -242,7 +246,7 @@ function applyStaticI18n() {
 const state = {
   curModule: 0, curTab: 0, curHomeTab: 0,
   includeSpecial: false,
-  questionCategory: 'loveSingle', gender: 'male', searchTarget: 'elder',
+  questionCategory: '', gender: '', searchTarget: 'elder',
   copyText: "",
   drawnGen: [], drawnMajor: [],
   sessGen: -1, sessMaj: -1,
@@ -374,6 +378,7 @@ function liuYaoRequestedRelation(){
 }
 function liuYaoFocusSummary(ben,upper,lower){
   if(state.curModule!==1 && !(state.curModule===0 && state.curHomeTab===0)) return '';
+  if(!state.questionCategory) return '';
   const palace=Object.keys(LIUYAO_PALACES).find(key=>LIUYAO_PALACES[key].includes(ben[0]));
   if(!palace) return '';
   const [palaceElement,pureTrigram]=LIUYAO_PALACE_INFO[palace];
@@ -477,7 +482,7 @@ function divineQian(q) {
   const s = table[rnd(table.length)];
   const labels = L().qianLabels;
   const head = s[0]+"　"+s[1]+"　"+s[2];
-  let sb = q+"："+head;
+  let sb = withFocusContext(q+"："+head);
   labels.forEach((lb,i)=>{ sb += "\n"+lb+"："+s[i+3]; });
   state.copyText = sb;
   addHistory();
@@ -519,7 +524,7 @@ function tarotDraw(q, gen, lo, hi) {
     drawn.push(i);
   }
   const names = drawn.map(i=>TAROT[i][0]);
-  state.copyText = q+"："+names.join("、")+"；";
+  state.copyText = withFocusContext(q+"："+names.join("、")+"；");
   const h = state.histories[2];
   const entry = timeStamp()+"  "+state.copyText;
   const idx = gen ? state.sessGen : state.sessMaj;
@@ -548,7 +553,7 @@ function tarotDraw(q, gen, lo, hi) {
 
 function tarotYesNo(q) {
   const y = YESNO[rnd(YESNO.length)];
-  state.copyText = q+"："+y[0]+"，"+y[1]+"："+y[2]+"（"+y[3]+"）";
+  state.copyText = withFocusContext(q+"："+y[0]+"，"+y[1]+"："+y[2]+"（"+y[3]+"）");
   addHistory();
   state.segs=[];
   seg(state.copyText+"\n\n");
@@ -587,10 +592,10 @@ function divineHome(q) {
     const response=calculateTraditional(method,castTime.getTime(),methodOptions);
     return response.ok && response.result.summary ? [`${label}：${response.result.summary}`] : [];
   });
-  const sections=[
-    '【综合占卜数据】',
-    `问题：${q}`,
-    `所测何事：${focusDescription()}`,
+  const sections=['【综合占卜数据】',`问题：${q}`];
+  const focusText=focusDescription();
+  if(focusText) sections.push(`${lang==='en'?'Question type / gender':'所测何事／性别'}：${focusText}`);
+  sections.push(
     `起卦时间：${localDateTimeValue(castTime).replace('T',' ')}`,
     '',
     '【卡牌与卦象】',
@@ -598,8 +603,8 @@ function divineHome(q) {
     `雷诺曼：${len}`,
     `卢恩符文：${runes}`,
     `占星骰子：${astro}`,
-    `六爻：${liuyao}`,
-  ];
+    `六爻：${liuyao}`
+  );
   if(traditionalLines.length) sections.push('', '【传统术数合参】', ...traditionalLines);
   sections.push('', '【请 AI 综合解读】', '请先提炼多套体系的共同指向，再说明相互矛盾或证据不足之处；区分盘面事实与推断，不要补造未提供的信息。');
   state.copyText=sections.join('\n');
@@ -647,8 +652,8 @@ function divineDate(q) {
   const end=$('traditional-end')?.value||localDateValue(fallbackEnd);
   const topic=$('traditional-topic')?.value||'custom';
   const almanac=calculateTraditional('almanac',new Date(`${start}T12:00`).getTime(),{topic,startDate:start,endDate:end});
-  if(almanac.ok && almanac.result.timingSummary) timingLines.push(`择日参考：${almanac.result.timingSummary}`);
-  if(timingLines.length) state.copyText += "\n\n―― 应期与择日参考 ――\n"+timingLines.join("\n");
+  if(timingLines.length) state.copyText += "\n\n―― 应期参考 ――\n"+timingLines.join("\n");
+  if(almanac.ok && almanac.result.display) state.copyText += "\n\n―― 择日／黄历 ――\n"+almanac.result.display;
   addHistory();
   state.segs=[];
   seg(state.copyText+"\n\n"+s.briefNote+"\n");
@@ -716,6 +721,22 @@ function renderTabs(){
     b.onclick=()=>{ saveState(); state.curModule=moduleIndex; restoreState(); renderAll(); };
     methodBar.appendChild(b);
   });
+  const mobileBar=$('mobilebar'); mobileBar.innerHTML='';
+  [0,13,null,'lang',2,3,4,5,1,7,8,9,10,11,12,6].forEach(item=>{
+    if(item===null){
+      const gap=document.createElement('span'); gap.className='nav-empty'; gap.setAttribute('aria-hidden','true');
+      mobileBar.appendChild(gap); return;
+    }
+    const b=document.createElement('button'); b.className='tab';
+    if(item==='lang'){
+      b.textContent=s.langBtn; b.title=s.langTitle; b.onclick=toggleLang;
+    }else{
+      b.className+=state.curModule===item?' sel':'';
+      b.textContent=s.mobileTabs[item]; b.title=s.mods[item];
+      b.onclick=()=>{ saveState(); state.curModule=item; restoreState(); renderAll(); };
+    }
+    mobileBar.appendChild(b);
+  });
   const sub=$('subbar'); sub.innerHTML=''; sub.style.display='none';
   $('liurow').style.display=state.curModule===1?'flex':'none';
   renderFocusInputs();
@@ -743,20 +764,6 @@ function renderTabs(){
     };
     lb.appendChild(c); lb.appendChild(document.createTextNode(s.includeSpecial));
     sub.appendChild(lb);
-  } else if (state.curModule===0){
-    sub.style.display='flex';
-    s.homeTabs.forEach((t,i)=>{
-      const b=document.createElement('button');
-      b.className='tab'+(state.curHomeTab===i?' sel':'');
-      b.textContent=t;
-      b.onclick=()=>{ saveState(); state.curHomeTab=i; restoreState(); renderAll(); };
-      sub.appendChild(b);
-    });
-    if (state.curHomeTab===1){
-      const w=document.createElement('span'); w.className='warn';
-      w.textContent=s.dateWarn;
-      sub.appendChild(w);
-    }
   }
   $('go').textContent=goText();
 }
@@ -776,19 +783,28 @@ function localDateValue(date=new Date()){
 function option(value,label){ return `<option value="${value}">${label}</option>`; }
 
 function focusEnabled(){
-  return (state.curModule===0 && state.curHomeTab===0) || state.curModule===1 || [8,9,10,11,12].includes(state.curModule);
+  return state.curModule!==13;
 }
 
 function focusDescription(){
-  const category={loveSingle:'婚恋·未婚',lovePartner:'婚恋·已有对象',marriage:'婚姻·已婚',wealth:'财运',career:'事业',litigation:'官司诉讼',health:'健康疾病',study:'考试／学业',travel:'出行／远行',search:'寻人寻物'}[state.questionCategory];
+  const category={loveSingle:'婚恋·未婚',lovePartner:'婚恋·已有对象',marriage:'婚姻·已婚',wealth:'财运',career:'事业',litigation:'官司诉讼',health:'健康疾病',study:'考试／学业',travel:'出行／远行',search:'寻人寻物'}[state.questionCategory]||'';
   const details=[];
-  if(['loveSingle','lovePartner','marriage'].includes(state.questionCategory)) details.push(state.gender==='male'?'男测':'女测');
+  if(state.gender==='male') details.push('男测');
+  if(state.gender==='female') details.push('女测');
   if(state.questionCategory==='search') details.push('寻'+{elder:'长辈',peer:'平辈',junior:'晚辈',property:'财物'}[state.searchTarget]);
+  if(!category) return details.join('·');
   return category+(details.length?`（${details.join('·')}）`:'');
 }
 
+function withFocusContext(text){
+  const description=focusDescription();
+  if(!focusEnabled() || !description) return text;
+  return `${lang==='en'?'Question type / gender':'所测何事／性别'}：${description}\n${text}`;
+}
+
 function focusOptions(){
-  if(!focusEnabled()) return {};
+  if(!focusEnabled() || !state.questionCategory) return {};
+  if(['loveSingle','lovePartner','marriage'].includes(state.questionCategory) && !state.gender) return {};
   return {
     questionCategory:state.questionCategory,
     ...(['loveSingle','lovePartner','marriage'].includes(state.questionCategory)?{gender:state.gender}:{}),
@@ -801,18 +817,18 @@ function renderFocusInputs(){
   if(!focusEnabled()){ row.style.display='none'; row.innerHTML=''; return; }
   const en=lang==='en';
   const categories=[
+    ['',en?'None':'不选'],
     ['loveSingle',en?'Love · single':'婚恋·未婚'],['lovePartner',en?'Love · partnered':'婚恋·已有对象'],
     ['marriage',en?'Marriage':'婚姻·已婚'],['wealth',en?'Wealth':'财运'],['career',en?'Career':'事业'],
     ['litigation',en?'Litigation':'官司诉讼'],['health',en?'Health':'健康疾病'],['study',en?'Study / exam':'考试／学业'],
     ['travel',en?'Travel':'出行／远行'],['search',en?'Find person / item':'寻人寻物']
   ];
   row.style.display='flex';
-  row.innerHTML=`<label>${en?'Question type':'所测何事'}<select id="focus-category">${categories.map(x=>option(x[0],x[1])).join('')}</select></label><label id="focus-gender-wrap">${en?'Gender':'性别'}<select id="focus-gender">${option('male',en?'Male':'男')}${option('female',en?'Female':'女')}</select></label><label id="focus-target-wrap">${en?'Target':'寻找对象'}<select id="focus-target">${option('elder',en?'Elder':'长辈')}${option('peer',en?'Peer':'平辈')}${option('junior',en?'Junior':'晚辈')}${option('property',en?'Property':'财物')}</select></label>`;
+  row.innerHTML=`<label>${en?'Question type':'所测何事'}<select id="focus-category">${categories.map(x=>option(x[0],x[1])).join('')}</select></label><label>${en?'Gender':'性别'}<select id="focus-gender">${option('',en?'None':'不选')}${option('male',en?'Male':'男')}${option('female',en?'Female':'女')}</select></label><label id="focus-target-wrap">${en?'Target':'寻找对象'}<select id="focus-target">${option('elder',en?'Elder':'长辈')}${option('peer',en?'Peer':'平辈')}${option('junior',en?'Junior':'晚辈')}${option('property',en?'Property':'财物')}</select></label>`;
   $('focus-category').value=state.questionCategory;
   $('focus-gender').value=state.gender;
   $('focus-target').value=state.searchTarget;
   const refresh=()=>{
-    $('focus-gender-wrap').style.display=['loveSingle','lovePartner','marriage'].includes(state.questionCategory)?'flex':'none';
     $('focus-target-wrap').style.display=state.questionCategory==='search'?'flex':'none';
   };
   $('focus-category').onchange=()=>{ state.questionCategory=$('focus-category').value; refresh(); };
@@ -823,12 +839,12 @@ function renderFocusInputs(){
 
 function renderTraditionalInputs(){
   const row=$('traditionalrow');
-  const isHomeDate=state.curModule===0 && state.curHomeTab===1;
-  if(state.curModule<7 && !isHomeDate){ row.style.display='none'; row.innerHTML=''; return; }
+  if(state.curModule<7){ row.style.display='none'; row.classList.remove('almanac'); row.innerHTML=''; return; }
   const s=L(), savedTime=row.dataset.time||localDateTimeValue();
   row.style.display='flex';
   row.innerHTML=`<label>${s.dateTime}<input id="traditional-time" type="datetime-local" value="${savedTime}"></label>`;
-  const method=isHomeDate?'almanac':TRADITIONAL_METHODS[state.curModule-7];
+  const method=TRADITIONAL_METHODS[state.curModule-7];
+  row.classList.toggle('almanac',method==='almanac');
   if(method==='meihua'){
     row.insertAdjacentHTML('beforeend',`<label>${s.castMethod}<select id="traditional-method">${option('time',s.timeMethod)}${option('number',s.numberMethod)}</select></label><label id="traditional-number-wrap" style="display:none">${s.numberValue}<input id="traditional-number" type="number" min="1" step="1" value="1"></label>`);
     $('traditional-method').onchange=()=>{ $('traditional-number-wrap').style.display=$('traditional-method').value==='number'?'flex':'none'; };
@@ -843,7 +859,7 @@ function renderTraditionalInputs(){
   }else if(method==='almanac'){
     const start=localDateValue(), endDate=new Date(); endDate.setDate(endDate.getDate()+30); const end=localDateValue(endDate);
     const topics=[['marriage','婚嫁'],['move','搬迁'],['opening','开业'],['contract','签约'],['travel','出行'],['medical','求医'],['study','求学'],['burial','安葬'],['renovation','动土'],['custom','通用']];
-    row.innerHTML=`<label>${s.topic}<select id="traditional-topic">${topics.map(x=>option(x[0],x[1])).join('')}</select></label><label>${s.startDate}<input id="traditional-start" type="date" value="${start}"></label><label>${s.endDate}<input id="traditional-end" type="date" value="${end}"></label>`;
+    row.innerHTML=`<div class="almanac-topic"><label>${s.topic}<select id="traditional-topic">${topics.map(x=>option(x[0],x[1])).join('')}</select></label></div><div class="almanac-dates"><label>${s.startDate}<input id="traditional-start" type="date" value="${start}"></label><label>${s.endDate}<input id="traditional-end" type="date" value="${end}"></label></div>`;
   }
   const timeInput=$('traditional-time');
   if(timeInput) timeInput.onchange=()=>{ row.dataset.time=timeInput.value; };
@@ -875,12 +891,16 @@ function divineTraditional(q){
   const timestamp=timeInput ? new Date(timeInput.value).getTime() : new Date(`${$('traditional-start').value}T12:00`).getTime();
   const response=calculateTraditional(method,timestamp,traditionalOptions(method));
   if(!response.ok){ window.alert(response.error); return false; }
-  state.copyText=`${q}\n\n${response.result.display}`;
+  state.copyText=`${withFocusContext(q)}\n\n${response.result.display}`;
   state.segs=[]; seg(state.copyText); flushOut(); addHistory();
   return true;
 }
 
 function divine(){
+  if(focusEnabled() && ['loveSingle','lovePartner','marriage'].includes(state.questionCategory) && !state.gender){
+    window.alert(L().requiredGender);
+    return;
+  }
   if(state.curModule===1){
     const upper=$('liu-upper').value, lower=$('liu-lower').value;
     const hasMoving=document.querySelector('#moving-lines input:checked')!==null;
@@ -892,9 +912,10 @@ function divine(){
   }
   let q=$('q').value.trim();
   if (!q) q=L().emptyQuestion;
-  if (state.curModule===0){ state.curHomeTab===0 ? divineHome(q) : divineDate(q); }
+  if (state.curModule===0){ divineHome(q); }
   else if (state.curModule===6) divineQian(q);
   else if (state.curModule===2) divineTarot(q);
+  else if (state.curModule===13){ divineDate(q); }
   else if (state.curModule>=7){ if(!divineTraditional(q)) return; }
   else {
     const lines=[];
@@ -903,7 +924,7 @@ function divine(){
     else if (state.curModule===3) result=divineLenormand(lines);
     else if (state.curModule===4) result=divineRunes(lines);
     else result=divineAstro(lines);
-    state.copyText=q+"："+result;
+    state.copyText=withFocusContext(q+"："+result);
     state.segs=[];
     addHistory();
     const s = L();
@@ -922,6 +943,7 @@ function divine(){
 
 function clearPage(){
   $('q').value=''; state.copyText='';
+  state.questionCategory=''; state.gender='';
   if(state.curModule===1){
     $('liu-upper').value=''; $('liu-lower').value='';
     document.querySelectorAll('#moving-lines input').forEach(el=>{ el.checked=false; });
@@ -931,6 +953,7 @@ function clearPage(){
   state.sessGen=-1; state.sessMaj=-1;
   const p=pageIndex();
   state.pageHtml[p]=null; state.pageCopy[p]=null;
+  renderFocusInputs();
 }
 
 function openSpecialWarn(){
