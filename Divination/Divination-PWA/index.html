@@ -51,6 +51,7 @@ body{
 .warn{ color:#d00; font-weight:bold; font-size:13px; }
 #liurow{ display:none; align-items:center; gap:6px; flex-wrap:wrap; white-space:nowrap; }
 #liurow label{ display:flex; align-items:center; gap:4px; }
+.liu-trigram-row,.liu-moving-row{ display:flex; align-items:center; gap:6px; }
 #liurow select{
   padding:6px 8px; border:1px solid var(--border); border-radius:6px;
   background:var(--card); color:inherit; font:inherit;
@@ -116,6 +117,9 @@ body{
   }
   #mobilebar .tab{ width:100%; min-width:0; padding:7px 2px; font-size:clamp(10px,3vw,13px); text-align:center; }
   #mobilebar .nav-empty{ min-height:31px; }
+  #liurow{ flex-direction:column; align-items:stretch; }
+  .liu-trigram-row,.liu-moving-row{ width:100%; overflow-x:auto; scrollbar-width:none; }
+  .liu-trigram-row::-webkit-scrollbar,.liu-moving-row::-webkit-scrollbar{ display:none; }
 }
 @media (prefers-color-scheme: dark){
   :root{ --bg:#1b1a22; --card:#2a2935; --border:#4a4860; --sel:#4a5fa5; }
@@ -136,32 +140,36 @@ body{
   </div>
   <div id="subbar"></div>
   <div id="liurow">
-    <label><span id="upper-label">上卦</span>
-      <select id="liu-upper">
-        <option value="" selected></option>
-        <option value="天">乾（天）</option><option value="泽">兑（泽）</option>
-        <option value="火">离（火）</option><option value="雷">震（雷）</option>
-        <option value="风">巽（风）</option><option value="水">坎（水）</option>
-        <option value="山">艮（山）</option><option value="地">坤（地）</option>
-      </select>
-    </label>
-    <label><span id="lower-label">下卦</span>
-      <select id="liu-lower">
-        <option value="" selected></option>
-        <option value="天">乾（天）</option><option value="泽">兑（泽）</option>
-        <option value="火">离（火）</option><option value="雷">震（雷）</option>
-        <option value="风">巽（风）</option><option value="水">坎（水）</option>
-        <option value="山">艮（山）</option><option value="地">坤（地）</option>
-      </select>
-    </label>
-    <span id="moving-label">动爻</span>
-    <div class="moving-options" id="moving-lines">
-      <label><input type="checkbox" value="0">初</label>
-      <label><input type="checkbox" value="1">二</label>
-      <label><input type="checkbox" value="2">三</label>
-      <label><input type="checkbox" value="3">四</label>
-      <label><input type="checkbox" value="4">五</label>
-      <label><input type="checkbox" value="5">上</label>
+    <div class="liu-trigram-row">
+      <label><span id="upper-label">上卦</span>
+        <select id="liu-upper">
+          <option value="" selected></option>
+          <option value="天">乾（天）</option><option value="泽">兑（泽）</option>
+          <option value="火">离（火）</option><option value="雷">震（雷）</option>
+          <option value="风">巽（风）</option><option value="水">坎（水）</option>
+          <option value="山">艮（山）</option><option value="地">坤（地）</option>
+        </select>
+      </label>
+      <label><span id="lower-label">下卦</span>
+        <select id="liu-lower">
+          <option value="" selected></option>
+          <option value="天">乾（天）</option><option value="泽">兑（泽）</option>
+          <option value="火">离（火）</option><option value="雷">震（雷）</option>
+          <option value="风">巽（风）</option><option value="水">坎（水）</option>
+          <option value="山">艮（山）</option><option value="地">坤（地）</option>
+        </select>
+      </label>
+    </div>
+    <div class="liu-moving-row">
+      <span id="moving-label">动爻</span>
+      <div class="moving-options" id="moving-lines">
+        <label><input type="checkbox" value="0">初</label>
+        <label><input type="checkbox" value="1">二</label>
+        <label><input type="checkbox" value="2">三</label>
+        <label><input type="checkbox" value="3">四</label>
+        <label><input type="checkbox" value="4">五</label>
+        <label><input type="checkbox" value="5">上</label>
+      </div>
     </div>
   </div>
   <div id="focusrow"></div>

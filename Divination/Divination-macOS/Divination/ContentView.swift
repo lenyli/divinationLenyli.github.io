@@ -39,14 +39,14 @@ struct ContentView: View {
 
     private var newMethodTabs: [String] {
         eng.lang == .zh
-            ? ["奇门遁甲", "大六壬", "小六壬", "梅花易数", "太乙神数", "金口诀", "择日/黄历"]
-            : ["Qimen", "Da Liu Ren", "Xiao Liu Ren", "Meihua Yishu", "Taiyi", "Jin Kou Jue", "Date Selection"]
+            ? ["奇门遁甲", "大六壬", "小六壬", "梅花易数", "太乙神数", "金口诀"]
+            : ["Qimen", "Da Liu Ren", "Xiao Liu Ren", "Meihua Yishu", "Taiyi", "Jin Kou Jue"]
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 6) {
-                ForEach([0, 2, 3, 4, 5, 6], id: \.self) { i in
+                ForEach([0, 2, 3, 4, 5, 6, 13], id: \.self) { i in
                     TabButton(title: eng.mods[i], selected: eng.curModule == i) { eng.switchModule(i) }
                 }
                 Spacer(minLength: 8)

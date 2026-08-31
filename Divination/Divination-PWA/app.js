@@ -701,7 +701,7 @@ function goText(){
 function renderTabs(){
   const s = L();
   const bar=$('modbar'); bar.innerHTML='';
-  [0,2,3,4,5,6].forEach(i=>{
+  [0,2,3,4,5,6,13].forEach(i=>{
     const b=document.createElement('button');
     b.className='tab'+(state.curModule===i?' sel':'');
     b.textContent=s.modTabs[i]; b.title=s.mods[i];
@@ -714,7 +714,7 @@ function renderTabs(){
   liuYao.textContent=s.modTabs[1]; liuYao.title=s.mods[1];
   liuYao.onclick=()=>{ saveState(); state.curModule=1; restoreState(); renderAll(); };
   methodBar.appendChild(liuYao);
-  s.newMethodTabs.forEach((t,i)=>{
+  s.newMethodTabs.slice(0,6).forEach((t,i)=>{
     const b=document.createElement('button');
     const moduleIndex=7+i;
     b.className='tab'+(state.curModule===moduleIndex?' sel':''); b.textContent=t; b.title=t;

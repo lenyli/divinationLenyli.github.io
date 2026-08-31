@@ -569,6 +569,9 @@ public class MainForm : Form
             modBtns[i] = b;
             pnl.Controls.Add(b);
         }
+        var almanacButton = new Button(); almanacButton.Text = "择日/黄历"; almanacButton.AutoSize = true;
+        almanacButton.Tag = "almanac"; almanacButton.Click += OnTraditionalMethod;
+        pnl.Controls.Add(almanacButton);
         Controls.Add(pnl);
 
         var methodPnl = new FlowLayoutPanel();
@@ -578,8 +581,8 @@ public class MainForm : Form
         liuYaoButton.Enabled = true; liuYaoButton.Tag = 1; liuYaoButton.Click += OnModule;
         modBtns[1] = liuYaoButton;
         methodPnl.Controls.Add(liuYaoButton);
-        string[] newMethods = {"奇门遁甲", "大六壬", "小六壬", "梅花易数", "太乙神数", "金口诀", "择日/黄历"};
-        string[] newMethodIds = {"qimen", "liuren", "xiaoliuren", "meihua", "taiyi", "jinkoujue", "almanac"};
+        string[] newMethods = {"奇门遁甲", "大六壬", "小六壬", "梅花易数", "太乙神数", "金口诀"};
+        string[] newMethodIds = {"qimen", "liuren", "xiaoliuren", "meihua", "taiyi", "jinkoujue"};
         for (int i = 0; i < newMethods.Length; i++) {
             var b = new Button(); b.Text = newMethods[i]; b.AutoSize = true; b.Enabled = true;
             b.Tag = newMethodIds[i]; b.Click += OnTraditionalMethod;

@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 let selectedColor = Color(red: 0.69, green: 0.77, blue: 0.87) // LightSteelBlue
 
@@ -14,6 +15,37 @@ func render(_ segs: [Seg], baseSize: CGFloat = 15) -> AttributedString {
         a += t
     }
     return a
+}
+
+struct SelectableResultText: UIViewRepresentable {
+    let attributedText: AttributedString
+
+    func makeUIView(context: Context) -> UITextView {
+        let view = UITextView()
+        view.isEditable = false
+        view.isSelectable = true
+        view.isScrollEnabled = true
+        view.alwaysBounceVertical = true
+        view.backgroundColor = .clear
+        view.textContainerInset = UIEdgeInsets(top: 8, left: 8, bottom: 8, right: 8)
+        view.textContainer.lineFragmentPadding = 0
+        view.accessibilityIdentifier = "resultTextView"
+        return view
+    }
+
+    func updateUIView(_ view: UITextView, context: Context) {
+        let value = NSAttributedString(attributedText)
+        guard !view.attributedText.isEqual(to: value) else { return }
+
+        let selectedRange = view.selectedRange
+        let contentOffset = view.contentOffset
+        view.attributedText = value
+        if selectedRange.location != NSNotFound,
+           NSMaxRange(selectedRange) <= value.length {
+            view.selectedRange = selectedRange
+        }
+        view.setContentOffset(contentOffset, animated: false)
+    }
 }
 
 struct TabButton: View {
@@ -97,28 +129,34 @@ struct ContentView: View {
                 }
             }
             if eng.curModule == 1 {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 5) {
-                        Text(eng.S.upperTrigram).font(.system(size: 14))
-                        Picker("", selection: $eng.liuYaoUpperTrigram) {
-                            Text("").tag("")
-                            ForEach(eng.liuYaoTrigramValues, id: \.self) { value in
-                                Text(eng.liuYaoTrigramTitle(value)).tag(value)
+                VStack(alignment: .leading, spacing: 6) {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 5) {
+                            Text(eng.S.upperTrigram).font(.system(size: 14))
+                            Picker("", selection: $eng.liuYaoUpperTrigram) {
+                                Text("").tag("")
+                                ForEach(eng.liuYaoTrigramValues, id: \.self) { value in
+                                    Text(eng.liuYaoTrigramTitle(value)).tag(value)
+                                }
                             }
-                        }
-                        .labelsHidden().pickerStyle(.menu).fixedSize()
-                        Text(eng.S.lowerTrigram).font(.system(size: 14))
-                        Picker("", selection: $eng.liuYaoLowerTrigram) {
-                            Text("").tag("")
-                            ForEach(eng.liuYaoTrigramValues, id: \.self) { value in
-                                Text(eng.liuYaoTrigramTitle(value)).tag(value)
+                            .labelsHidden().pickerStyle(.menu).fixedSize()
+                            Text(eng.S.lowerTrigram).font(.system(size: 14))
+                            Picker("", selection: $eng.liuYaoLowerTrigram) {
+                                Text("").tag("")
+                                ForEach(eng.liuYaoTrigramValues, id: \.self) { value in
+                                    Text(eng.liuYaoTrigramTitle(value)).tag(value)
+                                }
                             }
+                            .labelsHidden().pickerStyle(.menu).fixedSize()
                         }
-                        .labelsHidden().pickerStyle(.menu).fixedSize()
-                        Text(eng.S.movingLines).font(.system(size: 14))
-                        ForEach(POS.indices, id: \.self) { i in
-                            TabButton(title: POS[i], selected: eng.liuYaoMovingLines.contains(i), fontSize: 13) {
-                                eng.setLiuYaoMovingLine(i, selected: !eng.liuYaoMovingLines.contains(i))
+                    }
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 5) {
+                            Text(eng.S.movingLines).font(.system(size: 14))
+                            ForEach(POS.indices, id: \.self) { i in
+                                TabButton(title: POS[i], selected: eng.liuYaoMovingLines.contains(i), fontSize: 13) {
+                                    eng.setLiuYaoMovingLine(i, selected: !eng.liuYaoMovingLines.contains(i))
+                                }
                             }
                         }
                     }
@@ -146,12 +184,8 @@ struct ContentView: View {
                 .minimumScaleFactor(0.6)
                 .frame(maxWidth: .infinity)
             }
-            ScrollView {
-                Text(render(eng.output))
-                    .textSelection(.enabled)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(8)
-            }
+            SelectableResultText(attributedText: render(eng.output))
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
             .background(Color(UIColor.systemBackground))
             .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.gray.opacity(0.4)))
         }
