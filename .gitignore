@@ -3,4 +3,27 @@
 ._*
 .DS_Store
 .AppleDouble
+
+# 可由锁文件重新安装的 Node / pnpm 本地依赖
+node_modules/
+.pnpm-store/
+
+# Xcode 个人状态与本机构建缓存
+xcuserdata/
+*.xcuserstate
+DerivedData/
+.build/
+
+# 本地编译与解释器缓存
+bin/
+obj/
+*.exe
+*.pdb
+__pycache__/
+*.py[cod]
+
+# Windows 与编辑器临时文件
+Thumbs.db
+*.log
+*.tmp
 GEMINI.md

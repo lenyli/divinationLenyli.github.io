@@ -36,6 +36,7 @@ TABLES = [
     ("SIGNS", "list_list"),
     ("HOUSES", "list_list"),
     ("LENORMAND", "list_list"),
+    ("ORACLE", "list_list"),
     ("RUNES", "list_list"),
     ("QIAN", "list_list"),
     ("TAROT", "list_list"),

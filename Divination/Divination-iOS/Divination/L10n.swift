@@ -97,8 +97,8 @@ struct L10n {
 
     static let zh = L10n(
         lang: .zh,
-        mods: ["首页", "六爻纳甲", "塔罗", "雷诺曼", "卢恩符文", "占星骰子", "玄天上帝感应灵签", "奇门遁甲", "大六壬", "小六壬", "梅花易数", "太乙神数", "金口诀", "择日/黄历"],
-        modTabs: ["首页", "六爻纳甲", "塔罗牌", "雷诺曼牌", "卢恩符文", "占星骰子", "玄天灵签", "奇门遁甲", "大六壬", "小六壬", "梅花易数", "太乙神数", "金口诀", "择日黄历"],
+        mods: ["首页", "六爻纳甲", "塔罗", "雷诺曼", "卢恩符文", "占星骰子", "玄天灵签", "奇门遁甲", "大六壬", "小六壬", "梅花易数", "太乙神数", "金口诀", "择日/黄历", "复古神谕"],
+        modTabs: ["首页", "六爻纳甲", "塔罗牌", "雷诺曼牌", "卢恩符文", "占星骰子", "玄天灵签", "奇门遁甲", "大六壬", "小六壬", "梅花易数", "太乙神数", "金口诀", "择日黄历", "复古神谕"],
         tarotTabs: ["通用", "YES OR NO", "大牌"],
         homeTabs: ["综合占卜"],
         qianLabels: ["圣意", "谋望", "家宅", "婚姻", "失物", "官事", "行人", "占病", "解曰"],
@@ -128,8 +128,8 @@ struct L10n {
         briefNote: "―― 简要说明 ――",
         specialCards: "特殊牌",
         none: "无",
-        specialWarnTitle: "特殊塔罗牌说明",
-        specialWarnText: "如果没有特殊牌义的解读包，建议给 AI 的解读不要使用特殊牌。",
+        specialWarnTitle: "特殊牌说明",
+        specialWarnText: "此开关同时启用塔罗特殊牌、国色华光雷诺曼扩展牌和复古神谕强调牌。",
         am: "上午",
         pm: "下午",
         goHome: "占 卜",
@@ -155,11 +155,11 @@ struct L10n {
         seasonSuffix: "季",
         langBtn: "EN",
         helpText: """
-        1. 首页-综合占卜：一次生成塔罗三张牌、雷诺曼三张、卢恩三枚、占星骰子、六爻纳甲，界面结果末尾附灵签内容。复制结果不含灵签，历史记录仅追加灵签签头。
+        1. 首页-综合占卜：一次生成塔罗、雷诺曼、复古神谕、卢恩、占星骰子和六爻纳甲，界面结果末尾附灵签内容。复古神谕在综合提示中只提供牌名、正逆位、领域与流向。
 
         2. 择日／黄历：除黄历候选外，同时给出塔罗日期、占星时长及奇门／六壬／梅花应期参考。
 
-        3. 塔罗-通用：默认不包含特殊牌；勾选“包含特殊牌”后，通用塔罗与首页综合占卜的塔罗部分都会纳入特殊牌。YES OR NO 与大牌不受此选项影响。如果没有特殊牌义的解读包，建议给 AI 的解读不要使用特殊牌。
+        3. “包含特殊牌”同时控制塔罗特殊牌、国色华光雷诺曼扩展牌与复古神谕强调牌；YES OR NO 与大牌不受此选项影响。
 
         4. 历史记录会保存30条，下次打开程序仍可查看。
 
@@ -169,8 +169,8 @@ struct L10n {
 
     static let en = L10n(
         lang: .en,
-        mods: ["Home", "I Ching", "Tarot", "Lenormand", "Runes", "Astro Dice", "Fortune Slip", "Qimen", "Da Liu Ren", "Xiao Liu Ren", "Meihua Yishu", "Taiyi", "Jin Kou Jue", "Date Selection"],
-        modTabs: ["Home", "I Ching", "Tarot", "Lenormand", "Runes", "Astro Dice", "Slip", "Qimen", "Da Liu Ren", "Xiao Liu Ren", "Meihua", "Taiyi", "Jin Kou Jue", "Date Select"],
+        mods: ["Home", "I Ching", "Tarot", "Lenormand", "Runes", "Astro Dice", "Fortune Slip", "Qimen", "Da Liu Ren", "Xiao Liu Ren", "Meihua Yishu", "Taiyi", "Jin Kou Jue", "Date Selection", "Old Style Oracle"],
+        modTabs: ["Home", "I Ching", "Tarot", "Lenormand", "Runes", "Astro Dice", "Slip", "Qimen", "Da Liu Ren", "Xiao Liu Ren", "Meihua", "Taiyi", "Jin Kou Jue", "Date Select", "Old Oracle"],
         tarotTabs: ["General", "YES OR NO", "Major"],
         homeTabs: ["Combined"],
         qianLabels: ["Oracle", "Ambition", "Home", "Marriage", "Lost item", "Legal", "Traveler", "Illness", "Summary"],
@@ -200,8 +200,8 @@ struct L10n {
         briefNote: "―― Brief notes ――",
         specialCards: "Special cards",
         none: "None",
-        specialWarnTitle: "About special Tarot cards",
-        specialWarnText: "If you do not have a meaning pack for special cards, do not include special cards when sending a reading to AI.",
+        specialWarnTitle: "About special cards",
+        specialWarnText: "This switch enables special Tarot cards, Guose Huaguang Lenormand extensions, and Old Style Oracle accent cards.",
         am: "AM",
         pm: "PM",
         goHome: "Divine",
@@ -227,11 +227,11 @@ struct L10n {
         seasonSuffix: " season",
         langBtn: "中文",
         helpText: """
-        1. Home - Combined: draws 3 Tarot, 3 Lenormand, 3 Runes, astro dice, and I Ching in one go. The fortune slip is shown at the end of on-screen results. Copy excludes the slip body; history appends only the slip header.
+        1. Home - Combined: draws Tarot, Lenormand, Old Style Oracle, Runes, astro dice, and I Ching. The Oracle prompt includes only card, orientation, domain, and flow.
 
         2. Date Selection: includes almanac candidates, Tarot/Astro timing, and Qimen/Liuren/Meihua timing references.
 
-        3. Tarot - General: special cards off by default. When enabled, they apply to General and Home combined Tarot. YES OR NO and Major Arcana are unaffected. Without a special-card meaning pack, avoid including special cards in AI readings.
+        3. Include special cards controls Tarot specials, Guose Huaguang Lenormand extensions, and Old Style Oracle accent cards. YES OR NO and Major Arcana are unaffected.
 
         4. History keeps the last 30 entries per module.
 

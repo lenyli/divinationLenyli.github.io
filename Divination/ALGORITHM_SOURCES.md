@@ -16,7 +16,7 @@
 | 金口诀 | 时间、指定地分、数字起课 | Mingyu Core `jinkoujue`；《六壬神课金口诀》相关规则 | 四位、阴阳取用、五动三动、旬空与复算输入 |
 | 择日/黄历 | 事项+起止日期，最多180天 | Mingyu Core `almanac`；《协纪辨方书》《象吉通书》规则范围 | 建除、十二神、冲煞、宜忌支持/限制与候选排序 |
 
-上游许可：Mingyu Core 0.1.32 与 tyme4ts 1.5.2 均为 MIT；许可全文随产品源码保留在 `TraditionalAlgorithms/THIRD_PARTY_NOTICES.md`。Taibu 和 Kintaiyi 只用于核对，没有作为运行时组件接入。
+上游许可：Mingyu Core 0.1.32、tyme4ts 1.5.2 与 Windows 兼容资源内嵌的 core-js 3.50.0 均为 MIT；许可全文随产品源码保留在 `TraditionalAlgorithms/THIRD_PARTY_NOTICES.md`。Taibu 和 Kintaiyi 只用于核对，没有作为运行时组件接入。
 
 ## Trade-offs & Limitations
 
@@ -25,12 +25,12 @@
 - 奇门首版固定时家转盘拆补；飞盘、置闰、日家/月家/年家未开放为 UI 选项。
 - 金口诀未开放随机起课，避免不可复算的随机结果。
 - 择日未输入参与人生辰时，不计算个人刑冲破害，并在结果中明确提示。
-- Windows 单文件 WinForms 不新增脚本运行时；七个入口打开同目录的离线 PWA，因此计算与其他端共用同一算法包。移动或分发 `Divination.exe` 时需同时保留 `Divination-PWA` 文件夹。
+- Windows WinForms 的 `Divination.cs` 已内含由同一适配层生成的 IE11 兼容算法压缩载荷，BAT 只编译 CS，由窗口内部的系统 WebBrowser 脚本引擎执行；编译及运行均不需要外部算法 JS 或 `Divination-PWA`，移动或分发时只需 EXE。
 
 ## Recommendations / Decision Inputs
 
 - 后续每次算法升级都先更新统一适配层和 golden 摘要，再替换四端共用构建产物。
-- 若未来要求 Windows 结果原生嵌入主窗口，需要单独裁决是引入 WebView2 运行时，还是为 C# 做确定性原生移植；在未裁决前不偷偷增加依赖。
+- Windows 结果已回到原生 WinForms 主窗口；为保持单 EXE 与算法一致性，采用系统自带 WebBrowser 执行 CS 内嵌兼容代码，不引入 WebView2、Node、外部算法文件或 PWA 运行依赖。
 - 新增第二批方法前，仍以“算法链闭合、输入完整、可复算、有来源”为准入条件。
 
 ## Citations
@@ -40,3 +40,4 @@
 - Mingyu 太乙源码：<https://github.com/Brhiza/mingyu/tree/main/packages/core/src/taiyi>
 - Taibu 大六壬计算：<https://github.com/hhszzzz/taibu/blob/master/packages/core/src/domains/daliuren/calculate.ts>
 - Kintaiyi 固定核对版本：<https://github.com/kentang2017/kintaiyi/tree/9842d8f35e895ea6f09e9787edf6da5c16fab91b>
+- core-js：<https://github.com/zloirock/core-js>

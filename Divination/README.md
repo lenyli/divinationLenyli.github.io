@@ -1,6 +1,6 @@
 # Divination — 综合占卜工具
 
-十四个占卜模块的多端应用。现有七个模块仍以 **`Divination.cs`（Windows WinForms，单文件 C#）作为静态数据与算法基准**，PWA / iOS / macOS 三端的数据表由它转换生成；新增七种传统术数共用 [`TraditionalAlgorithms/adapter.ts`](TraditionalAlgorithms/adapter.ts) 与离线构建产物，避免四端分别维护口诀表。
+十五个占卜模块的多端应用。卡牌与签文模块仍以 **`Divination.cs`（Windows WinForms，单文件 C#）作为静态数据与算法基准**，PWA / iOS / macOS 三端的数据表由它转换生成；七种传统术数共用 [`TraditionalAlgorithms/adapter.ts`](TraditionalAlgorithms/adapter.ts) 与离线构建产物。Windows 构建会把兼容算法资源直接嵌入 EXE，运行时不依赖 PWA 文件夹。
 
 正式 PWA 地址：<https://lenyli.github.io/divinationLenyli.github.io/Divination/Divination-PWA/>
 （站点级说明与另一个应用见仓库根目录 [`../README.md`](../README.md)）
@@ -12,10 +12,10 @@
 | 首页 | `DATE12` + `traditional-algorithms.js` | 综合占卜合并六种传统术数短摘要 |
 | 六爻纳甲 | `TRI_ELEM`、`HEXAGRAMS`、`POS` | 64 卦，算法复刻自 `抽牌.xlsm`，已用固定掷币序列对照 Excel 验证一致 |
 | 塔罗 | `TAROT`、`YESNO` | 通用 / YES OR NO / 大牌，含特殊牌开关 |
-| 雷诺曼 | `LENORMAND` | 43 张，抽 3 张不重复 |
+| 雷诺曼 | `LENORMAND` | 43 张现有牌 + 6 张国色华光差异扩展牌；扩展牌由现有“包含特殊牌”开关启用 |
 | 卢恩符文 | `RUNES` | 抽 3 枚不重复 |
 | 占星骰子 | `PLANETS`、`SIGNS`、`HOUSES` | 行星 + 星座 + 宫位 |
-| 玄天上帝感应灵签 | `QIAN` | 49 签，每签 12 个字段 |
+| 玄天灵签 | `QIAN` | 49 签，每签 12 个字段 |
 | 奇门遁甲 | `traditional-algorithms.js` | 时家、转盘、拆补法；输出九宫盘和值符值使 |
 | 大六壬 | `traditional-algorithms.js` | 月将加时、四课三传与取传规则 |
 | 小六壬 | `traditional-algorithms.js` | 农历月日时三步排宫 |
@@ -23,14 +23,15 @@
 | 太乙神数 | `traditional-algorithms.js` | 年/月/日/时四计七十二局基础盘 |
 | 金口诀 | `traditional-algorithms.js` | 时间 / 指定地分 / 数字起课 |
 | 择日/黄历 | `DATE12` + `traditional-algorithms.js` | 合并原日期预测：塔罗/占星时长、奇门/六壬/梅花应期及按事项与日期范围生成的黄历候选 |
+| 复古神谕 | `ORACLE` | 全部 52 张：49 张核心牌默认启用，3 张植物强调牌由现有“包含特殊牌”开关启用；独立抽牌含正逆位完整说明 |
 
 各端共有：子标签、页面状态缓存、每模块 30 条历史记录、结果一键复制（格式为「问题：占卜结果」，便于粘给 AI 解读）。
 
 除择日／黄历外，四端所有占卜方式都在问题输入框上方提供“所测何事”和“性别”；两项默认均为不选，婚恋／婚姻类必须选择性别，其他类别允许性别留空，寻人寻物类另提供寻找对象。支持事项定位的术数会固定输出对应的用神／类神：六爻纳甲含六亲与伏神，大六壬含十二天将完整分布，小六壬含分类口诀摘句，太乙含主客算语义，金口诀含四位六亲；梅花继续采用简化体用口径。
 
-PWA 在手机宽度下采用与 iOS 相同的四列四行导航：首页／择日黄历／空位／中英切换位于第一行，其余模块位置保持不变；手机六爻的动爻选择独占第二行。桌面宽度仍使用两排导航，择日／黄历位于第一排灵签之后。
+PWA 在手机宽度下采用与 iOS 相同的四列四行导航：首页／择日黄历／复古神谕／中英切换位于第一行，其余模块位置保持不变；手机六爻的动爻选择独占第二行。桌面宽度仍使用两排导航，复古神谕位于占星骰子之后，择日／黄历位置不变。
 
-首页只保留“综合占卜”，会把奇门、大六壬、小六壬、梅花、太乙和金口诀压缩为同一版合参结果。原“日期预测”已合并进“择日／黄历”：采用塔罗、占星骰子及有应期依据的奇门、大六壬、梅花，再按事项和日期范围附上完整黄历候选；太乙、金口诀、小六壬不强行换算为具体日期。单项结果只显示盘面和结论，不显示算法版本、来源、限制等开发信息。
+首页只保留“综合占卜”，会加入复古神谕三张牌，并把奇门、大六壬、小六壬、梅花、太乙和金口诀压缩为同一版合参结果。综合 AI 提示中的复古神谕只给牌名、正逆位、领域与流向，不展开细致牌义。原“日期预测”已合并进“择日／黄历”：采用塔罗、占星骰子及有应期依据的奇门、大六壬、梅花，再按事项和日期范围附上完整黄历候选；太乙、金口诀、小六壬不强行换算为具体日期。单项结果只显示盘面和结论，不显示算法版本、来源、限制等开发信息。
 
 复制文本统一为“问题—可选事项与性别—方法—结果”的短格式；综合占卜按卡牌与卦象、传统术数分段，仅保留一行解读要求。事项分类会传给六爻纳甲、大六壬、小六壬、梅花、太乙和金口诀；择日／黄历及灵签正文不进入综合占卜的 AI 输出。
 
@@ -38,7 +39,7 @@ PWA 在手机宽度下采用与 iOS 相同的四列四行导航：首页／择�
 
 | 端 | 位置 | 构建 / 运行 | 数据表 |
 | --- | --- | --- | --- |
-| **Windows** | `Divination.cs` + `Divination.ico` + `Divination.bat` / `build.bat` | 现有模块保持单文件 WinForms；构建时嵌入统一应用图标；新增七种入口打开同目录离线 PWA，分发时须保留 `Divination-PWA/` | 源文件内嵌 + 共用离线算法包 |
+| **Windows** | `Divination.cs` + `Divination.bat` / `build.bat`（`Divination.ico` 可选） | WinForms 原生界面；算法已压缩内嵌在 CS 中，BAT 只编译 CS，生成后的 `Divination.exe` 可单文件运行，不需要外部 JS 或 `Divination-PWA/` | 源文件内嵌 + CS 内嵌兼容算法 |
 | **PWA** | `Divination-PWA/` | 正式地址见上方；本地可用 `python3 -m http.server`，需 https/localhost 才能安装与离线 | `data.js` + 共用离线算法包 |
 | **iOS** | `Divination-iOS/` | Xcode 14+ / iOS 16+；SwiftUI 通过系统 JavaScriptCore 读取共用离线算法资源 | `DivinationData.swift` + 共用离线算法包 |
 | **macOS** | `Divination-macOS/` | Xcode 14+ / macOS 13+；SwiftUI 通过系统 JavaScriptCore 读取共用离线算法资源 | `DivinationData.swift` + 共用离线算法包 |
@@ -60,7 +61,9 @@ python3 gen_data.py            # 生成三端数据表
 python3 gen_data.py --check    # 只校验现有文件是否与 cs 一致（可用作提交前检查）
 ```
 
-`gen_data.py` 从 cs 解析 12 张表（`TRI_ELEM` / `HEXAGRAMS` / `POS` / `PLANETS` / `SIGNS` / `HOUSES` / `LENORMAND` / `RUNES` / `QIAN` / `TAROT` / `YESNO` / `DATE12`），写出 `Divination-PWA/data.js` 与 iOS、macOS 两份 `DivinationData.swift`（后两者内容相同）。脚本同时会报告 cs 里残留的私用区乱码字符。
+`gen_data.py` 从 cs 解析 13 张表（`TRI_ELEM` / `HEXAGRAMS` / `POS` / `PLANETS` / `SIGNS` / `HOUSES` / `LENORMAND` / `ORACLE` / `RUNES` / `QIAN` / `TAROT` / `YESNO` / `DATE12`），写出 `Divination-PWA/data.js` 与 iOS、macOS 两份 `DivinationData.swift`（后两者内容相同）。脚本同时会报告 cs 里残留的私用区乱码字符。
+
+传统术数适配层变化后，另在 `TraditionalAlgorithms/` 运行 `pnpm run build:windows`，更新供 BAT 嵌入 EXE 的 IE11 兼容资源。该资源仅是构建输入，生成后的 EXE 不需要旁路脚本文件。
 
 > 该脚本是 2026-07-23 重写的——原转换脚本已遗失，导致源改了、三端没跟上。重写后用**未修改的 cs** 做过回归：生成结果与当时的三端文件逐字节一致（仅差当时已知的两处内容），确认与原转换器行为相同。
 

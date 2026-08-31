@@ -18,7 +18,7 @@ final class Engine: ObservableObject {
     @Published var curTab = 0      // 塔罗：0通用 1YESNO 2大牌
     @Published var curHomeTab = 0  // 首页：0综合 1日期
     @Published var includeSpecial = false
-    @Published var histories: [[String]] = Array(repeating: [], count: 14)
+    @Published var histories: [[String]] = Array(repeating: [], count: 15)
     @Published var lang: AppLang = AppLang.detect()
     @Published var showCopied = false
     @Published var liuYaoUpperTrigram = ""
@@ -40,9 +40,11 @@ final class Engine: ObservableObject {
     var drawnGen: [Int] = []
     var drawnMajor: [Int] = []
     var sessGen = -1, sessMaj = -1
-    var pageSegs: [[Seg]?] = Array(repeating: nil, count: 17)
-    var pageCopy: [String?] = Array(repeating: nil, count: 17)
+    var pageSegs: [[Seg]?] = Array(repeating: nil, count: 18)
+    var pageCopy: [String?] = Array(repeating: nil, count: 18)
     let SPECIAL_TAROT_START = 156
+    let LENORMAND_SPECIAL_START = 43
+    let ORACLE_SPECIAL_START = 49
 
     var S: L10n { L10n.of(lang) }
     var mods: [String] { S.mods }
@@ -150,6 +152,7 @@ final class Engine: ObservableObject {
         if curModule == 1 { return 2 }
         if curModule == 2 { return 3 + curTab }
         if curModule <= 6 { return 6 + (curModule - 3) }
+        if curModule == 14 { return 17 }
         return 10 + (curModule - 7)
     }
     func saveState() {
@@ -206,7 +209,8 @@ final class Engine: ObservableObject {
         if curModule == 6 { divineQian(q); return }
         if curModule == 2 { divineTarot(q); return }
         if curModule == 13 { divineDate(q); return }
-        if curModule >= 7 { divineTraditional(q); return }
+        if curModule == 14 { divineOracle(q); return }
+        if curModule >= 7 && curModule <= 13 { divineTraditional(q); return }
         var lines: [[String]] = []
         let result: String
         if curModule == 1 {
@@ -449,8 +453,9 @@ final class Engine: ObservableObject {
     // ================= 雷诺曼 =================
     private func divineLenormand(_ lines: inout [[String]]) -> String {
         var idx: [Int] = []
+        let hi = includeSpecial ? LENORMAND.count : LENORMAND_SPECIAL_START
         while idx.count < 3 {
-            let i = Int.random(in: 0..<LENORMAND.count)
+            let i = Int.random(in: 0..<hi)
             if !idx.contains(i) { idx.append(i) }
         }
         let pre = S.cardPre
@@ -461,6 +466,33 @@ final class Engine: ObservableObject {
             lines.append([pre[k], card[0], card[1], ""])
         }
         return names.joined(separator: "、") + "；"
+    }
+
+    private func drawOracleCards() -> [(card: [String], upright: Bool)] {
+        let hi = includeSpecial ? ORACLE.count : ORACLE_SPECIAL_START
+        var indices: [Int] = []
+        while indices.count < 3 {
+            let i = Int.random(in: 0..<hi)
+            if !indices.contains(i) { indices.append(i) }
+        }
+        return indices.map { (ORACLE[$0], Bool.random()) }
+    }
+
+    private func oraclePromptSummary(_ drawn: [(card: [String], upright: Bool)]) -> String {
+        drawn.map { item in
+            item.card[2] + "（" + (item.upright ? "正位" : "逆位") + "；领域：" + item.card[3] + "；流向：" + item.card[4] + "）"
+        }.joined(separator: "、") + "；"
+    }
+
+    private func divineOracle(_ q: String) {
+        let body = drawOracleCards().map { item in
+            item.card[2] + "（" + (item.upright ? "正位" : "逆位") + "）\n"
+                + "领域：" + item.card[3] + "\n流向：" + item.card[4] + "\n"
+                + "关键词：" + item.card[5] + "\n牌义：" + (item.upright ? item.card[6] : item.card[7])
+        }.joined(separator: "\n\n")
+        copyText = copyBlock(q, title: S.mods[14], body: body)
+        addHistory()
+        output = [Seg(text: copyText)]
     }
 
     // ================= 卢恩符文 =================
@@ -480,7 +512,7 @@ final class Engine: ObservableObject {
         return names.joined(separator: "、") + "；"
     }
 
-    // ================= 玄天上帝感应灵签 =================
+    // ================= 玄天灵签 =================
     private func divineQian(_ q: String) {
         let s = pickQian()
         let head = s[0] + "\u{3000}" + s[1] + "\u{3000}" + s[2]
@@ -574,6 +606,7 @@ final class Engine: ObservableObject {
         let runes = divineRunes(&dummy)
         let astro = divineAstro(&dummy)
         let liuyao = divineLiuYao(&dummy)
+        let oracle = oraclePromptSummary(drawOracleCards())
         let qs = pickQian()
         let qianHead = qs[0] + "　" + qs[1] + "　" + qs[2]
         let castDate = Date()
@@ -601,7 +634,7 @@ final class Engine: ObservableObject {
         }
         sections += [
             "起卦时间：" + formatter.string(from: castDate), "",
-            "【卡牌与卦象】", "塔罗牌：" + tarot, "雷诺曼牌：" + len,
+            "【卡牌与卦象】", "塔罗牌：" + tarot, "雷诺曼牌：" + len, "复古神谕：" + oracle,
             "卢恩符文：" + runes, "占星骰子：" + astro, "六爻纳甲：" + liuyao,
         ]
         if !traditionalLines.isEmpty {

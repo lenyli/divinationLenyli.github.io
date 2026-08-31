@@ -3,12 +3,14 @@
 
 const LANG_KEY = 'divination_lang';
 const SPECIAL_TAROT_START = 156;
+const LENORMAND_SPECIAL_START = 43;
+const ORACLE_SPECIAL_START = 49;
 
 const STR = {
   zh: {
-    mods: ["首页","六爻纳甲","塔罗","雷诺曼","卢恩符文","占星骰子","玄天上帝感应灵签","奇门遁甲","大六壬","小六壬","梅花易数","太乙神数","金口诀","择日/黄历"],
-    modTabs: ["首页","六爻纳甲","塔罗牌","雷诺曼牌","卢恩符文","占星骰子","玄天灵签"],
-    mobileTabs: ["首页","六爻纳甲","塔罗牌","雷诺曼牌","卢恩符文","占星骰子","玄天灵签","奇门遁甲","大六壬","小六壬","梅花易数","太乙神数","金口诀","择日黄历"],
+    mods: ["首页","六爻纳甲","塔罗","雷诺曼","卢恩符文","占星骰子","玄天灵签","奇门遁甲","大六壬","小六壬","梅花易数","太乙神数","金口诀","择日/黄历","复古神谕"],
+    modTabs: ["首页","六爻纳甲","塔罗牌","雷诺曼牌","卢恩符文","占星骰子","玄天灵签","奇门遁甲","大六壬","小六壬","梅花易数","太乙神数","金口诀","择日黄历","复古神谕"],
+    mobileTabs: ["首页","六爻纳甲","塔罗牌","雷诺曼牌","卢恩符文","占星骰子","玄天灵签","奇门遁甲","大六壬","小六壬","梅花易数","太乙神数","金口诀","择日黄历","复古神谕"],
     newMethodTabs: ["奇门遁甲","大六壬","小六壬","梅花易数","太乙神数","金口诀","择日/黄历"],
     tarotTabs: ["通用","YES OR NO","大牌"],
     homeTabs: ["综合占卜"],
@@ -46,8 +48,8 @@ const STR = {
     specialCards: "特殊牌",
     none: "无",
     histTitleFmt: name => `历史记录 - ${name}（最近30条）`,
-    specialWarnTitle: "特殊塔罗牌说明",
-    specialWarnText: "如果没有特殊牌义的解读包，建议给 AI 的解读不要使用特殊牌。",
+    specialWarnTitle: "特殊牌说明",
+    specialWarnText: "此开关同时启用塔罗特殊牌、国色华光雷诺曼扩展牌和复古神谕强调牌。",
     am: "上午",
     pm: "下午",
     goHome: "占 卜",
@@ -89,9 +91,9 @@ const STR = {
     algorithmUnavailable: "本地算法包未加载，请刷新后重试。",
     langBtn: "EN",
     langTitle: "切换为 English",
-    helpText: "1. 首页-综合占卜：一次生成塔罗三张牌、雷诺曼三张、卢恩三枚、占星骰子、六爻纳甲。灵签只在历史记录中追加签头，界面结果和复制结果不包含灵签。\n\n"
+    helpText: "1. 首页-综合占卜：一次生成塔罗、雷诺曼、复古神谕、卢恩、占星骰子和六爻纳甲。复古神谕在综合提示中只提供牌名、正逆位、领域与流向。\n\n"
       + "2. 择日／黄历：除黄历候选外，同时给出塔罗日期、占星时长及奇门／六壬／梅花应期参考。\n\n"
-      + "3. 塔罗-通用：默认不包含特殊牌；勾选“包含特殊牌”后，通用塔罗与首页综合占卜的塔罗部分都会纳入特殊牌。YES OR NO 与大牌不受此选项影响。若无特殊牌义解读包，建议给 AI 的解读不要使用特殊牌。\n\n"
+      + "3. “包含特殊牌”同时控制塔罗特殊牌、国色华光雷诺曼扩展牌与复古神谕强调牌；YES OR NO 与大牌不受此选项影响。\n\n"
       + "4. 历史记录会保存30条，下次打开程序仍可查看。\n\n"
       + "5. 复制结果可直接粘贴到AI解读。",
     liuYaoSummary: (ben, dong, shi, ying, bian, hu, cuo, zong) => {
@@ -100,9 +102,9 @@ const STR = {
     }
   },
   en: {
-    mods: ["Home","I Ching","Tarot","Lenormand","Runes","Astro Dice","Fortune Slip","Qimen","Da Liu Ren","Xiao Liu Ren","Meihua Yishu","Taiyi","Jin Kou Jue","Date Selection"],
-    modTabs: ["Home","I Ching","Tarot","Lenormand","Runes","Astro Dice","Slip"],
-    mobileTabs: ["Home","I Ching","Tarot","Lenormand","Runes","Astro Dice","Slip","Qimen","Da Liu Ren","Xiao Liu Ren","Meihua","Taiyi","Jin Kou Jue","Date Select"],
+    mods: ["Home","I Ching","Tarot","Lenormand","Runes","Astro Dice","Fortune Slip","Qimen","Da Liu Ren","Xiao Liu Ren","Meihua Yishu","Taiyi","Jin Kou Jue","Date Selection","Old Style Oracle"],
+    modTabs: ["Home","I Ching","Tarot","Lenormand","Runes","Astro Dice","Slip","Qimen","Da Liu Ren","Xiao Liu Ren","Meihua","Taiyi","Jin Kou Jue","Date Select","Old Oracle"],
+    mobileTabs: ["Home","I Ching","Tarot","Lenormand","Runes","Astro Dice","Slip","Qimen","Da Liu Ren","Xiao Liu Ren","Meihua","Taiyi","Jin Kou Jue","Date Select","Old Oracle"],
     newMethodTabs: ["Qimen","Da Liu Ren","Xiao Liu Ren","Meihua Yishu","Taiyi","Jin Kou Jue","Date Selection"],
     tarotTabs: ["General","YES OR NO","Major"],
     homeTabs: ["Combined"],
@@ -140,8 +142,8 @@ const STR = {
     specialCards: "Special cards",
     none: "None",
     histTitleFmt: name => `History - ${name} (last 30)`,
-    specialWarnTitle: "About special Tarot cards",
-    specialWarnText: "If you do not have a meaning pack for special cards, do not include special cards when sending a reading to AI.",
+    specialWarnTitle: "About special cards",
+    specialWarnText: "This switch enables special Tarot cards, Guose Huaguang Lenormand extensions, and Old Style Oracle accent cards.",
     am: "AM",
     pm: "PM",
     goHome: "Divine",
@@ -183,9 +185,9 @@ const STR = {
     algorithmUnavailable: "The local algorithm bundle is unavailable. Refresh and try again.",
     langBtn: "中文",
     langTitle: "Switch to 中文",
-    helpText: "1. Home - Combined: draws 3 Tarot, 3 Lenormand, 3 Runes, astro dice, and I Ching in one go. The fortune slip is appended to history only; on-screen and copied results exclude the slip body.\n\n"
+    helpText: "1. Home - Combined: draws Tarot, Lenormand, Old Style Oracle, Runes, astro dice, and I Ching. The Oracle prompt contains only card, orientation, domain, and flow.\n\n"
       + "2. Date Selection: includes almanac candidates, Tarot/Astro timing, and Qimen/Liuren/Meihua timing references.\n\n"
-      + "3. Tarot - General: special cards off by default. When enabled, they apply to General and Home combined Tarot. YES OR NO and Major Arcana are unaffected. Without a special-card meaning pack, avoid including special cards in AI readings.\n\n"
+      + "3. Include special cards controls Tarot specials, Guose Huaguang Lenormand extensions, and Old Style Oracle accent cards. YES OR NO and Major Arcana are unaffected.\n\n"
       + "4. History keeps the last 30 entries per module.\n\n"
       + "5. Copy results and paste into an AI for interpretation.\n\n"
       + "Note: card names, runes, and hexagrams remain in Chinese; fortune-slip text is translated in English mode.",
@@ -250,9 +252,9 @@ const state = {
   copyText: "",
   drawnGen: [], drawnMajor: [],
   sessGen: -1, sessMaj: -1,
-  histories: Array.from({length:14},()=>[]),
-  pageHtml: new Array(17).fill(null),
-  pageCopy: new Array(17).fill(null),
+  histories: Array.from({length:15},()=>[]),
+  pageHtml: new Array(18).fill(null),
+  pageCopy: new Array(18).fill(null),
   segs: []
 };
 
@@ -303,6 +305,7 @@ function pageIndex() {
   if (state.curModule === 1) return 2;
   if (state.curModule === 2) return 3 + state.curTab;
   if (state.curModule <= 6) return 6 + (state.curModule - 3);
+  if (state.curModule === 14) return 17;
   return 10 + (state.curModule - 7);
 }
 function saveState() {
@@ -460,10 +463,30 @@ function divineAstro(lines) {
 // ================= 雷诺曼 / 卢恩 =================
 function divineLenormand(lines) {
   const idx=[];
-  while (idx.length<3){ const i=rnd(LENORMAND.length); if(!idx.includes(i)) idx.push(i); }
+  const hi=state.includeSpecial?LENORMAND.length:LENORMAND_SPECIAL_START;
+  while (idx.length<3){ const i=rnd(hi); if(!idx.includes(i)) idx.push(i); }
   const pre = L().cardPre, names=[];
   idx.forEach((v,k)=>{ names.push(LENORMAND[v][0]); lines.push([pre[k],LENORMAND[v][0],LENORMAND[v][1],""]); });
   return names.join("、")+"；";
+}
+
+function drawOracleCards(){
+  const hi=state.includeSpecial?ORACLE.length:ORACLE_SPECIAL_START;
+  const idx=[];
+  while(idx.length<3){ const i=rnd(hi); if(!idx.includes(i)) idx.push(i); }
+  return idx.map(i=>({card:ORACLE[i],upright:rnd(2)===0}));
+}
+
+function oraclePromptSummary(drawn){
+  return drawn.map(({card,upright})=>`${card[2]}（${upright?'正位':'逆位'}；领域：${card[3]}；流向：${card[4]}）`).join('、')+'；';
+}
+
+function divineOracle(q){
+  const drawn=drawOracleCards();
+  const body=drawn.map(({card,upright})=>`${card[2]}（${upright?'正位':'逆位'}）\n领域：${card[3]}\n流向：${card[4]}\n关键词：${card[5]}\n牌义：${upright?card[6]:card[7]}`).join('\n\n');
+  state.copyText=copyBlock(q,L().mods[14],body);
+  addHistory();
+  state.segs=[]; seg(state.copyText); flushOut();
 }
 function divineRunes(lines) {
   const idx=[], used=[];
@@ -575,6 +598,7 @@ function divineHome(q) {
   const runes = divineRunes(dummy);
   const astro = divineAstro(dummy);
   const liuyao = divineLiuYao(dummy);
+  const oracle = oraclePromptSummary(drawOracleCards());
   const qTable = qianTable();
   const qs = qTable[rnd(qTable.length)];
   const qianHead = qs[0]+"　"+qs[1]+"　"+qs[2];
@@ -601,6 +625,7 @@ function divineHome(q) {
     '【卡牌与卦象】',
     `塔罗牌：${tarot}`,
     `雷诺曼牌：${len}`,
+    `复古神谕：${oracle}`,
     `卢恩符文：${runes}`,
     `占星骰子：${astro}`,
     `六爻纳甲：${liuyao}`
@@ -678,8 +703,8 @@ function saveHistories(){
 function loadHistories(){
   try {
     const d = JSON.parse(localStorage.getItem('divination_history'));
-    if (Array.isArray(d) && (d.length===7 || d.length===14)) {
-      const migrated = Array.from({length:14},(_,i)=>Array.isArray(d[i])?d[i].slice(-30):[]);
+    if (Array.isArray(d) && (d.length===7 || d.length===14 || d.length===15)) {
+      const migrated = Array.from({length:15},(_,i)=>Array.isArray(d[i])?d[i].slice(-30):[]);
       state.histories = migrated;
     }
   } catch(e){}
@@ -701,7 +726,7 @@ function goText(){
 function renderTabs(){
   const s = L();
   const bar=$('modbar'); bar.innerHTML='';
-  [0,2,3,4,5,6,13].forEach(i=>{
+  [0,2,3,4,5,14,6,13].forEach(i=>{
     const b=document.createElement('button');
     b.className='tab'+(state.curModule===i?' sel':'');
     b.textContent=s.modTabs[i]; b.title=s.mods[i];
@@ -722,7 +747,7 @@ function renderTabs(){
     methodBar.appendChild(b);
   });
   const mobileBar=$('mobilebar'); mobileBar.innerHTML='';
-  [0,13,null,'lang',2,3,4,5,1,7,8,9,10,11,12,6].forEach(item=>{
+  [0,13,14,'lang',2,3,4,5,1,7,8,9,10,11,12,6].forEach(item=>{
     if(item===null){
       const gap=document.createElement('span'); gap.className='nav-empty'; gap.setAttribute('aria-hidden','true');
       mobileBar.appendChild(gap); return;
@@ -850,7 +875,7 @@ function renderFocusInputs(){
 
 function renderTraditionalInputs(){
   const row=$('traditionalrow');
-  if(state.curModule<7){ row.style.display='none'; row.classList.remove('almanac'); row.innerHTML=''; return; }
+  if(state.curModule<7 || state.curModule>13){ row.style.display='none'; row.classList.remove('almanac'); row.innerHTML=''; return; }
   const s=L(), savedTime=row.dataset.time||localDateTimeValue();
   row.style.display='flex';
   row.innerHTML=`<label>${s.dateTime}<input id="traditional-time" type="datetime-local" value="${savedTime}"></label>`;
@@ -927,7 +952,8 @@ function divine(){
   else if (state.curModule===6) divineQian(q);
   else if (state.curModule===2) divineTarot(q);
   else if (state.curModule===13){ divineDate(q); }
-  else if (state.curModule>=7){ if(!divineTraditional(q)) return; }
+  else if (state.curModule===14) divineOracle(q);
+  else if (state.curModule>=7 && state.curModule<=13){ if(!divineTraditional(q)) return; }
   else {
     const lines=[];
     let result;

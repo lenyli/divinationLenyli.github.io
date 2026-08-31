@@ -76,7 +76,7 @@ struct ContentView: View {
     @State private var showHelp = false
     @State private var showSpecialWarn = false
     private let mobileTabLayout: [Int?] = [
-        0, 13, nil, -1,
+        0, 13, 14, -1,
         2, 3, 4, 5,
         1, 7, 8, 9,
         10, 11, 12, 6,
@@ -163,7 +163,7 @@ struct ContentView: View {
                 }
             }
             if eng.focusEnabled { focusInputRow }
-            if eng.curModule >= 7 {
+            if eng.curModule >= 7 && eng.curModule <= 13 {
                 traditionalInputRow
             }
             HStack {

@@ -1,7 +1,7 @@
 {
   "name": "Divination",
   "short_name": "Divination",
-  "description": "六爻 / 塔罗 / 雷诺曼 / 卢恩符文 / 占星骰子 / 玄天上帝感应灵签",
+  "description": "六爻 / 塔罗 / 雷诺曼 / 复古神谕 / 卢恩符文 / 占星骰子 / 玄天灵签",
   "lang": "zh-CN",
   "start_url": "./index.html",
   "scope": "./",

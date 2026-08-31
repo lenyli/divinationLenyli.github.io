@@ -36,6 +36,7 @@ Zhanbu/
 
 - **100% 纯静态与完全离线**：两个 PWA 应用均由 `index.html + JavaScript + sw.js` 组成，无服务端、无云端数据库、无在线 AI。
 - **单一数据源约束**：原有模块继续以 `Divination.cs` 为权威，禁止手改 `data.js` 或原生衍生表；新增七种术数以统一适配层和共用静态算法包为权威，禁止在 PWA、Swift、C# 分别维护口诀表。
+- **Windows 单 EXE**：IE11 兼容算法已压缩写入 `Divination.cs`；用户侧只需 BAT + CS（图标可选），生成后的 EXE 不读取外部算法文件或 `Divination-PWA`。适配层变化时，开发者在 `TraditionalAlgorithms/` 运行 `pnpm run build:windows` 刷新 CS 内嵌载荷。
 - **签文数量固定**：Drawing 严格遵循《灌顶梵天神策经》卷第十的 99 签，禁止增补第 100 签。
 - **缓存升级一致性**：改动任何静态资源后，必须同步更新对应 `sw.js` 的缓存版本号与资源清单。
 
@@ -60,6 +61,7 @@ Zhanbu/
   ```bash
   xcodebuild -project Divination/Divination-iOS-macOS/Divination.xcodeproj -scheme Divination -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO build
   ```
+- **Divination Windows 单 EXE**：在 Windows 双击 `Divination/Divination.bat` 或 `Divination/build.bat`；BAT 使用系统 `.NET Framework csc.exe` 编译 `Divination.cs`，不需要外部算法 JS（`Divination.ico` 仅为可选图标）。
 
 ### 本地运行与预览
 

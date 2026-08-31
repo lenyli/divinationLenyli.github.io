@@ -1,9 +1,15 @@
 {
   "private": true,
   "scripts": {
-    "build": "esbuild adapter.ts --bundle --format=iife --global-name=ZhanbuAlgorithms --platform=browser --target=es2020 --minify --outfile=../Divination-PWA/traditional-algorithms.js"
+    "build": "esbuild adapter.ts --bundle --format=iife --global-name=ZhanbuAlgorithms --platform=browser --target=es2020 --minify --outfile=../Divination-PWA/traditional-algorithms.js",
+    "build:windows": "node build-windows.mjs"
   },
   "devDependencies": {
+    "@babel/core": "^7.29.7",
+    "@babel/parser": "^7.29.8",
+    "@babel/preset-env": "^7.29.7",
+    "core-js": "^3.50.0",
+    "core-js-bundle": "^3.50.0",
     "esbuild": "0.28.1",
     "mingyu-core": "0.1.32"
   }

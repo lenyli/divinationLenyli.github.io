@@ -46,7 +46,7 @@ struct ContentView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 6) {
-                ForEach([0, 2, 3, 4, 5, 6, 13], id: \.self) { i in
+                ForEach([0, 2, 3, 4, 5, 14, 6, 13], id: \.self) { i in
                     TabButton(title: eng.mods[i], selected: eng.curModule == i) { eng.switchModule(i) }
                 }
                 Spacer(minLength: 8)
@@ -101,7 +101,7 @@ struct ContentView: View {
                 }
             }
             if eng.focusEnabled { focusInputRow }
-            if eng.curModule >= 7 {
+            if eng.curModule >= 7 && eng.curModule <= 13 {
                 traditionalInputRow
             }
             HStack {
