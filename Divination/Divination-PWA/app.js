@@ -252,6 +252,7 @@ const state = {
   copyText: "",
   drawnGen: [], drawnMajor: [],
   sessGen: -1, sessMaj: -1,
+  tarotSessionKeyGen: '', tarotSessionKeyMaj: '',
   histories: Array.from({length:15},()=>[]),
   pageHtml: new Array(18).fill(null),
   pageCopy: new Array(18).fill(null),
@@ -259,8 +260,35 @@ const state = {
 };
 
 // ================= 工具 =================
-const rnd = n => Math.floor(Math.random() * n);
+function randomIndex(n) {
+  if (!Number.isSafeInteger(n) || n <= 0) throw new Error(`随机范围无效：${n}`);
+  if (!globalThis.crypto || typeof globalThis.crypto.getRandomValues !== 'function') {
+    throw new Error('当前环境不支持系统安全随机数。');
+  }
+  const range = 0x100000000;
+  const limit = range - (range % n);
+  const value = new Uint32Array(1);
+  do { globalThis.crypto.getRandomValues(value); } while (value[0] >= limit);
+  return value[0] % n;
+}
+const rnd = randomIndex;
 const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+function fixedEast8Context() {
+  return {
+    calculationTimezoneMode: 'fixedEast8',
+    calculationTimezoneOffsetMinutes: 480,
+  };
+}
+
+function drawUnique(items, count) {
+  const pool = items.slice();
+  const result = [];
+  while (result.length < count && pool.length) {
+    result.push(pool.splice(rnd(pool.length), 1)[0]);
+  }
+  return result;
+}
 
 function seg(text, opt) { state.segs.push(Object.assign({text}, opt || {})); }
 function segC(text) { seg(text, {bold:true, red:true, big:true}); }
@@ -453,7 +481,7 @@ function cjk(s) {
 }
 function divineAstro(lines) {
   const s = L();
-  const p = PLANETS[rnd(12)], sg = SIGNS[rnd(12)], h = HOUSES[rnd(12)];
+  const p = PLANETS[rnd(PLANETS.length)], sg = SIGNS[rnd(SIGNS.length)], h = HOUSES[rnd(HOUSES.length)];
   lines.push([s.planet, p[0], p[1], s.planetDesc]);
   lines.push([s.sign, sg[0], sg[1], s.signDesc]);
   lines.push([s.house, h[0], h[1], s.houseDesc]);
@@ -472,8 +500,7 @@ function divineLenormand(lines) {
 
 function drawOracleCards(){
   const hi=state.includeSpecial?ORACLE.length:ORACLE_SPECIAL_START;
-  const idx=[];
-  while(idx.length<3){ const i=rnd(hi); if(!idx.includes(i)) idx.push(i); }
+  const idx=drawUnique(Array.from({length:hi},(_,i)=>i),3);
   return idx.map(i=>({card:ORACLE[i],upright:rnd(2)===0}));
 }
 
@@ -483,16 +510,48 @@ function oraclePromptSummary(drawn){
 
 function divineOracle(q){
   const drawn=drawOracleCards();
-  const body=drawn.map(({card,upright})=>`${card[2]}（${upright?'正位':'逆位'}）\n领域：${card[3]}\n流向：${card[4]}\n关键词：${card[5]}\n牌义：${upright?card[6]:card[7]}`).join('\n\n');
-  state.copyText=copyBlock(q,L().mods[14],body);
+  state.copyText=copyBlock(q,L().mods[14],oraclePromptSummary(drawn));
   addHistory();
-  state.segs=[]; seg(state.copyText); flushOut();
+  const s=L(), pre=s.cardPre;
+  state.segs=[]; seg(state.copyText+"\n\n"+s.briefNote+"\n");
+  drawn.forEach(({card,upright},i)=>{
+    seg(pre[i]);
+    seg(`${card[2]}（${upright?'正位':'逆位'}）`,{bold:true});
+    seg(`：${card[5]}；${upright?card[6]:card[7]}。`);
+    if(i<drawn.length-1) seg("\n");
+  });
+  flushOut();
 }
+function buildRuneEntities() {
+  const byName=new Map();
+  RUNES.forEach((row,index)=>{
+    const base=row[2];
+    if(!byName.has(base)) byName.set(base,{id:`rune-${String(byName.size+1).padStart(2,'0')}`,base,uprightIndex:null,reversedIndex:null});
+    const entity=byName.get(base);
+    if(row[0].endsWith('逆位')) entity.reversedIndex=index;
+    else entity.uprightIndex=index;
+  });
+  return [...byName.values()];
+}
+const RUNE_ENTITIES=buildRuneEntities();
+
+function drawRuneRecords(count=3) {
+  return drawUnique(RUNE_ENTITIES,count).map(entity=>{
+    const reversed=entity.reversedIndex!==null && rnd(2)===1;
+    const rowIndex=reversed?entity.reversedIndex:entity.uprightIndex;
+    if(rowIndex===null) throw new Error(`符文资料缺少可用牌面：${entity.base}`);
+    return {entityId:entity.id,baseName:entity.base,orientation:reversed?'reversed':'upright',rowIndex};
+  });
+}
+
 function divineRunes(lines) {
-  const idx=[], used=[];
-  while (idx.length<3){ const i=rnd(RUNES.length); if(!used.includes(RUNES[i][2])){ idx.push(i); used.push(RUNES[i][2]); } }
+  const drawn=drawRuneRecords();
   const pre = L().runePre, names=[];
-  idx.forEach((v,k)=>{ names.push(RUNES[v][0]); lines.push([pre[k],RUNES[v][0],RUNES[v][1],""]); });
+  drawn.forEach((record,k)=>{
+    const row=RUNES[record.rowIndex];
+    names.push(row[0]);
+    lines.push([pre[k],row[0],row[1],""]);
+  });
   return names.join("、")+"；";
 }
 
@@ -500,16 +559,20 @@ function divineRunes(lines) {
 function qianTable() {
   return (lang === 'en' && typeof QIAN_EN !== 'undefined') ? QIAN_EN : QIAN;
 }
+function qianSourceStatus(index){
+  return [41,42].includes(index)?{complete:false,note:'原始《抽牌.xlsm》对应签文存在截断，保留原文且不补写。'}:{complete:true,note:''};
+}
 function divineQian(q) {
   const table = qianTable();
-  const s = table[rnd(table.length)];
+  const index=rnd(table.length), s = table[index], sourceStatus=qianSourceStatus(index);
   const labels = L().qianLabels;
   const head = s[0]+"　"+s[1]+"　"+s[2];
-  const body=[head,...labels.map((lb,i)=>lb+"："+s[i+3])].join('\n');
+  const body=[head,...labels.map((lb,i)=>lb+"："+s[i+3]),...(sourceStatus.complete?[]:[`资料状态：${sourceStatus.note}`])].join('\n');
   state.copyText = copyBlock(q,L().mods[6],body);
-  addHistory();
+  addHistory({kind:'qian',schemaVersion:2,sourceIndex:index+1,sourceComplete:sourceStatus.complete,sourceNote:sourceStatus.note});
   state.segs = [];
   appendQian(s);
+  if(!sourceStatus.complete){ seg("\n资料状态：",{bold:true}); seg(sourceStatus.note); }
   flushOut();
 }
 function appendQian(s) {
@@ -523,32 +586,71 @@ function appendQian(s) {
 }
 
 // ================= 塔罗 =================
-const tarotGeneralHi = () => state.includeSpecial ? TAROT.length : SPECIAL_TAROT_START;
+function tarotBaseName(name){ return name.startsWith('逆位')?name.slice(2):name; }
+
+function buildTarotEntities(){
+  const byName=new Map();
+  TAROT.forEach((row,index)=>{
+    const base=tarotBaseName(row[0]);
+    if(!byName.has(base)) byName.set(base,{id:`tarot-${String(byName.size+1).padStart(3,'0')}`,base,uprightIndex:null,reversedIndex:null,special:index>=SPECIAL_TAROT_START});
+    const entity=byName.get(base);
+    entity.special=entity.special||index>=SPECIAL_TAROT_START;
+    if(row[0].startsWith('逆位')) entity.reversedIndex=index;
+    else entity.uprightIndex=index;
+  });
+  return [...byName.values()];
+}
+const TAROT_ENTITIES=buildTarotEntities();
+const STANDARD_TAROT_ENTITIES=TAROT_ENTITIES.filter(entity=>!entity.special);
+const MAJOR_TAROT_ENTITIES=STANDARD_TAROT_ENTITIES.filter(entity=>entity.uprightIndex>=56&&entity.uprightIndex<=77);
+
+function tarotProfileEntities(profile){
+  if(profile==='major22') return MAJOR_TAROT_ENTITIES;
+  if(profile==='generalAll') return TAROT_ENTITIES;
+  return STANDARD_TAROT_ENTITIES;
+}
+
+function tarotRecord(entity){
+  const reversed=entity.reversedIndex!==null&&rnd(2)===1;
+  const rowIndex=reversed?entity.reversedIndex:entity.uprightIndex;
+  if(rowIndex===null) throw new Error(`塔罗资料缺少可用牌面：${entity.base}`);
+  return {entityId:entity.id,baseName:entity.base,orientation:reversed?'reversed':'upright',rowIndex,special:entity.special};
+}
+
+function drawTarotRecords(profile,count){
+  return drawUnique(tarotProfileEntities(profile),count).map(tarotRecord);
+}
 
 function resetTarotSessions() {
   state.drawnGen = [];
   state.sessGen = -1;
+  state.tarotSessionKeyGen = '';
   state.pageHtml[3] = null; state.pageCopy[3] = null;
   if (state.curModule===2 && state.curTab===0) restoreState();
 }
 
 function divineTarot(q) {
-  if (state.curTab===0) tarotDraw(q, true, 0, tarotGeneralHi());
+  if (state.curTab===0) tarotDraw(q, true);
   else if (state.curTab===1) tarotYesNo(q);
-  else tarotDraw(q, false, 56, 100);
+  else tarotDraw(q, false);
 }
 
-function tarotDraw(q, gen, lo, hi) {
+function tarotDraw(q, gen) {
+  const profile=gen?(state.includeSpecial?'generalAll':'standard78'):'major22';
+  const sessionKey=`${profile}|${q}`;
   const drawn = gen ? state.drawnGen : state.drawnMajor;
-  if (drawn.length < hi-lo) {
-    let i;
-    do { i = lo + rnd(hi-lo); } while (drawn.includes(i));
-    drawn.push(i);
+  const currentKey=gen?state.tarotSessionKeyGen:state.tarotSessionKeyMaj;
+  if(currentKey!==sessionKey){
+    drawn.length=0;
+    if(gen){ state.sessGen=-1; state.tarotSessionKeyGen=sessionKey; }
+    else { state.sessMaj=-1; state.tarotSessionKeyMaj=sessionKey; }
   }
-  const names = drawn.map(i=>TAROT[i][0]);
+  const available=tarotProfileEntities(profile).filter(entity=>!drawn.some(record=>record.entityId===entity.id));
+  if(available.length) drawn.push(tarotRecord(available[rnd(available.length)]));
+  const names = drawn.map(record=>TAROT[record.rowIndex][0]);
   state.copyText = copyBlock(q,`${L().mods[2]}·${L().tarotTabs[state.curTab]}`,names.join("、"));
   const h = state.histories[2];
-  const entry = timeStamp()+"  "+state.copyText;
+  const entry = makeHistoryEntry(state.copyText,{kind:'tarot-session',schemaVersion:2,profile,draws:drawn.map(record=>({...record}))});
   const idx = gen ? state.sessGen : state.sessMaj;
   if (idx>=0 && idx<h.length) h[idx]=entry;
   else {
@@ -561,13 +663,14 @@ function tarotDraw(q, gen, lo, hi) {
   state.segs=[];
   seg(state.copyText+"\n\n"+s.briefNote+"\n");
   if (gen) {
-    const specials = drawn.filter(i=>i>=SPECIAL_TAROT_START).map(i=>TAROT[i][0]);
+    const specials = drawn.filter(record=>record.special).map(record=>TAROT[record.rowIndex][0]);
     seg(s.specialCards,{bold:true});
     seg("："+(specials.length?specials.join("、"):s.none)+"\n");
   }
-  drawn.forEach((d,k)=>{
-    seg(TAROT[d][0],{bold:true});
-    seg("："+TAROT[d][1]);
+  drawn.forEach((record,k)=>{
+    const row=TAROT[record.rowIndex];
+    seg(row[0],{bold:true});
+    seg("："+row[1]);
     if (k<drawn.length-1) seg("\n");
   });
   flushOut();
@@ -587,22 +690,22 @@ function tarotYesNo(q) {
 
 // ================= 首页 =================
 function divineHome(q) {
+  const castTime=new Date();
+  const includeSpecial=state.includeSpecial;
+  const focus={...focusOptions()};
   const dummy=[];
-  const hi = tarotGeneralHi(), tarotIdx=[];
-  while (tarotIdx.length<3 && tarotIdx.length<hi){
-    const i=rnd(hi); if(!tarotIdx.includes(i)) tarotIdx.push(i);
-  }
-  const tarot = tarotIdx.map(i=>TAROT[i][0]).join("、")+"；";
+  const tarotProfile=includeSpecial?'generalAll':'standard78';
+  const tarotDraws=drawTarotRecords(tarotProfile,3);
+  const tarot = tarotDraws.map(record=>TAROT[record.rowIndex][0]).join("、")+"；";
   const len = divineLenormand(dummy);
   const runes = divineRunes(dummy);
   const astro = divineAstro(dummy);
   const liuyao = divineLiuYao(dummy);
   const oracle = oraclePromptSummary(drawOracleCards());
   const qTable = qianTable();
-  const qs = qTable[rnd(qTable.length)];
+  const qianIndex=rnd(qTable.length), qs = qTable[qianIndex], qianStatus=qianSourceStatus(qianIndex);
   const qianHead = qs[0]+"　"+qs[1]+"　"+qs[2];
-  const castTime=new Date();
-  const focus=focusOptions();
+  const calculationContext=fixedEast8Context();
   const traditionalLines = [
     ['qimen','奇门遁甲',{}],
     ['liuren','大六壬',{}],
@@ -610,10 +713,10 @@ function divineHome(q) {
     ['meihua','梅花易数',{method:'time'}],
     ['taiyi','太乙神数',{scope:'day'}],
     ['jinkoujue','金口诀',{method:'time'}],
-  ].flatMap(([method,label,options])=>{
-    const methodOptions=method==='qimen'?options:{...options,...focus};
+  ].map(([method,label,options])=>{
+    const methodOptions=method==='qimen'?{...options,...calculationContext}:{...options,...focus,...calculationContext};
     const response=calculateTraditional(method,castTime.getTime(),methodOptions);
-    return response.ok && response.result.summary ? [`${label}：${response.result.summary}`] : [];
+    return response.ok && response.result.summary ? `${label}：${response.result.summary}` : `${label}：计算失败（${response.error||'没有返回摘要'}）`;
   });
   const sections=['【综合占卜】',`问题：${q}`];
   const focusText=focusDescription();
@@ -629,9 +732,10 @@ function divineHome(q) {
     `占星骰子：${astro}`
   );
   sections.push('', '【传统术数】', `六爻纳甲：${liuyao}`, ...traditionalLines);
+  if(!qianStatus.complete) sections.push('', `灵签资料状态：${qianStatus.note}`);
   sections.push('', '解读要求：综合各体系的共同指向与矛盾，只依据以上数据。');
   state.copyText=sections.join('\n');
-  addHistoryText(state.copyText+"\n"+qianHead);
+  addHistoryText(state.copyText+"\n"+qianHead,{kind:'combined',schemaVersion:2,castTimestampUtc:castTime.getTime(),calculationContext,focus,includeSpecial,tarotDraws,qian:{sourceIndex:qianIndex+1,sourceComplete:qianStatus.complete}});
   state.segs=[];
   seg(state.copyText+"\n");
   appendQian(qs);
@@ -639,6 +743,7 @@ function divineHome(q) {
 }
 
 function divineDate(q) {
+  const castTime=new Date();
   const pool=[]; for(let i=4;i<=55;i++) pool.push(i);
   const drawn=[]; let ace=null;
   for (let n=1;n<=25;n++){
@@ -650,7 +755,7 @@ function divineDate(q) {
   }
   const s = L();
   let tarotResult=null;
-  if (ace===null) tarotResult=s.noWithinYear;
+  if (ace===null) tarotResult=`${s.noWithinYear}（25张内未见 Ace 的自定义牌阵规则，不等同客观一年内必无）`;
   else {
     let season=null;
     for (const row of DATE12){
@@ -663,22 +768,22 @@ function divineDate(q) {
     }
     if (tarotResult===null) tarotResult=season+"季";
   }
-  const p2=PLANETS[rnd(12)], sg2=SIGNS[rnd(12)], h2=HOUSES[rnd(12)];
-  let body = `${s.tarotPred}：${tarotResult}\n\n${s.astroPred}\n${s.baseDuration}：${p2[2]}\n${s.unit}：${sg2[2]}\n${s.adjustNum}：${h2[2]}`;
+  const p2=PLANETS[rnd(PLANETS.length)], sg2=SIGNS[rnd(SIGNS.length)], h2=HOUSES[rnd(HOUSES.length)];
+  let body = `${s.tarotPred}（自定义日期启发式，DATE12 水瓶区间源表存在重叠，未擅自改写）：${tarotResult}\n\n${s.astroPred}\n${s.baseDuration}：${p2[2]}\n${s.unit}：${sg2[2]}\n${s.adjustNum}：${h2[2]}`;
   const timingLines=[];
   [['qimen','奇门应期',{}],['liuren','六壬应期',{}],['meihua','梅花应期',{method:'time'}]].forEach(([method,label,options])=>{
-    const response=calculateTraditional(method,Date.now(),options);
-    if(response.ok && response.result.timingSummary) timingLines.push(`${label}：${response.result.timingSummary}`);
+    const response=calculateTraditional(method,castTime.getTime(),{...options,...fixedEast8Context()});
+    timingLines.push(response.ok && response.result.timingSummary?`${label}：${response.result.timingSummary}`:`${label}：计算失败（${response.error||'没有返回应期摘要'}）`);
   });
   const start=$('traditional-start')?.value||localDateValue();
   const fallbackEnd=new Date(); fallbackEnd.setDate(fallbackEnd.getDate()+30);
   const end=$('traditional-end')?.value||localDateValue(fallbackEnd);
   const topic=$('traditional-topic')?.value||'custom';
-  const almanac=calculateTraditional('almanac',new Date(`${start}T12:00`).getTime(),{topic,startDate:start,endDate:end});
+  const almanac=calculateTraditional('almanac',new Date(`${start}T12:00`).getTime(),{topic,startDate:start,endDate:end,...fixedEast8Context()});
   if(timingLines.length) body += "\n\n【应期参考】\n"+timingLines.join("\n");
-  if(almanac.ok && almanac.result.display) body += "\n\n"+almanac.result.display;
+  body += almanac.ok && almanac.result.display ? "\n\n"+almanac.result.display : `\n\n择日黄历：计算失败（${almanac.error||'没有返回盘面'}）`;
   state.copyText=copyBlock(q,s.mods[13].replace('/',''),body);
-  addHistory();
+  addHistory({kind:'timing',schemaVersion:2,castTimestampUtc:castTime.getTime(),tarotOrder:drawn,tarotResult,astroDice:{planet:p2[0],sign:sg2[0],house:h2[0]},date12SourceStatus:'水瓶区间源表重叠，未改写'});
   state.segs=[];
   seg(state.copyText+"\n\n"+s.briefNote+"\n");
   seg(s.tarotOrder,{bold:true});
@@ -689,10 +794,14 @@ function divineDate(q) {
 }
 
 // ================= 历史 =================
-function addHistory(){ addHistoryText(state.copyText); }
-function addHistoryText(text){
+function makeHistoryEntry(text,record=null){
+  return {schemaVersion:2,createdAt:new Date().toISOString(),text:timeStamp()+"  "+text,...(record?{record}:{})};
+}
+function historyText(item){ return typeof item==='string'?item:String(item?.text||''); }
+function addHistory(record=null){ addHistoryText(state.copyText,record); }
+function addHistoryText(text,record=null){
   const h = state.histories[state.curModule];
-  h.push(timeStamp()+"  "+text);
+  h.push(makeHistoryEntry(text,record));
   if (h.length>30){ h.shift(); if(state.sessGen>0)state.sessGen--; if(state.sessMaj>0)state.sessMaj--; }
   saveHistories();
 }
@@ -912,11 +1021,12 @@ function renderTraditionalInputs(){
 
 function traditionalOptions(method){
   const focus=focusOptions();
-  if(method==='meihua') return {method:$('traditional-method').value,number:Number($('traditional-number').value),...focus};
-  if(method==='taiyi') return {scope:$('traditional-scope').value,...focus};
-  if(method==='jinkoujue') return {method:$('traditional-method').value,branch:$('traditional-branch').value,number:Number($('traditional-number').value),...focus};
-  if(method==='almanac') return {topic:$('traditional-topic').value,startDate:$('traditional-start').value,endDate:$('traditional-end').value};
-  return focus;
+  const context=fixedEast8Context();
+  if(method==='meihua') return {method:$('traditional-method').value,number:Number($('traditional-number').value),...focus,...context};
+  if(method==='taiyi') return {scope:$('traditional-scope').value,...focus,...context};
+  if(method==='jinkoujue') return {method:$('traditional-method').value,branch:$('traditional-branch').value,number:Number($('traditional-number').value),...focus,...context};
+  if(method==='almanac') return {topic:$('traditional-topic').value,startDate:$('traditional-start').value,endDate:$('traditional-end').value,...context};
+  return {...focus,...context};
 }
 
 function calculateTraditional(method,timestamp,options={}){
@@ -997,6 +1107,7 @@ function clearPage(){
   state.segs=[]; setOutHtml('');
   state.drawnGen=[]; state.drawnMajor=[];
   state.sessGen=-1; state.sessMaj=-1;
+  state.tarotSessionKeyGen=''; state.tarotSessionKeyMaj='';
   const p=pageIndex();
   state.pageHtml[p]=null; state.pageCopy[p]=null;
   renderFocusInputs();
@@ -1017,11 +1128,11 @@ function openHistory(){
   renderHistoryBody(mod);
   $('hist-copy').onclick=()=>{
     const h=state.histories[mod];
-    if (h.length) toClipboard(h.join('\n\n'));
+    if (h.length) toClipboard(h.map(historyText).join('\n\n'));
   };
   $('hist-clear').onclick=()=>{
     state.histories[mod]=[];
-    if (mod===2){ state.sessGen=-1; state.sessMaj=-1; }
+    if (mod===2){ state.sessGen=-1; state.sessMaj=-1; state.tarotSessionKeyGen=''; state.tarotSessionKeyMaj=''; }
     saveHistories(); renderHistoryBody(mod);
   };
   $('hist').style.display='flex';
@@ -1029,9 +1140,9 @@ function openHistory(){
 function renderHistoryBody(mod){
   const h=state.histories[mod];
   $('hist-body').innerHTML=h.map(item=>{
-    const sepI=item.indexOf('  ');
-    if (sepI>0) return '<span class="b">'+esc(item.slice(0,sepI))+'</span>'+esc(item.slice(sepI));
-    return esc(item);
+    const value=historyText(item), sepI=value.indexOf('  ');
+    if (sepI>0) return '<span class="b">'+esc(value.slice(0,sepI))+'</span>'+esc(value.slice(sepI));
+    return esc(value);
   }).join('\n\n');
 }
 
@@ -1057,5 +1168,4 @@ window.addEventListener('DOMContentLoaded', ()=>{
   document.querySelectorAll('.modal').forEach(m=>{
     m.addEventListener('click',e=>{ if(e.target===m) m.style.display='none'; });
   });
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
 });

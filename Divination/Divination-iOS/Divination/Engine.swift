@@ -11,6 +11,27 @@ struct Seg {
     var big = false
 }
 
+private struct TarotEntity {
+    let id: String
+    let baseName: String
+    var uprightIndex: Int?
+    var reversedIndex: Int?
+    var isSpecial: Bool
+}
+
+private struct TarotDraw {
+    let entityID: String
+    let rowIndex: Int
+    let isSpecial: Bool
+}
+
+private struct RuneEntity {
+    let id: String
+    let baseName: String
+    var uprightIndex: Int?
+    var reversedIndex: Int?
+}
+
 final class Engine: ObservableObject {
     @Published var question = ""
     @Published var output: [Seg] = []
@@ -37,9 +58,10 @@ final class Engine: ObservableObject {
     @Published var almanacEndDate = Calendar.current.date(byAdding: .day, value: 30, to: Date()) ?? Date()
 
     var copyText = ""
-    var drawnGen: [Int] = []
-    var drawnMajor: [Int] = []
+    private var drawnGen: [TarotDraw] = []
+    private var drawnMajor: [TarotDraw] = []
     var sessGen = -1, sessMaj = -1
+    var tarotSessionKeyGen = "", tarotSessionKeyMaj = ""
     var pageSegs: [[Seg]?] = Array(repeating: nil, count: 18)
     var pageCopy: [String?] = Array(repeating: nil, count: 18)
     let SPECIAL_TAROT_START = 156
@@ -81,6 +103,10 @@ final class Engine: ObservableObject {
         if ["loveSingle", "lovePartner", "marriage"].contains(questionCategory) { options["gender"] = questionGender }
         if questionCategory == "search" { options["searchTarget"] = searchTarget }
         return options
+    }
+
+    private var fixedEast8Options: [String: Any] {
+        ["calculationTimezoneMode": "fixedEast8", "calculationTimezoneOffsetMinutes": 480]
     }
 
     private func withFocusContext(_ text: String) -> String {
@@ -145,9 +171,13 @@ final class Engine: ObservableObject {
 
     private func qianTable() -> [[String]] { lang == .en ? QIAN_EN : QIAN }
 
-    private func pickQian() -> [String] {
+    private func pickQianWithIndex() -> (row: [String], index: Int) {
         let i = Int.random(in: 0..<QIAN.count)
-        return qianTable()[i]
+        return (qianTable()[i], i)
+    }
+    private func pickQian() -> [String] { pickQianWithIndex().row }
+    private func qianSourceStatus(_ index: Int) -> String? {
+        [41, 42].contains(index) ? "原始《抽牌.xlsm》对应签文存在截断，保留原文且不补写。" : nil
     }
 
     // ================= 输出辅助 =================
@@ -188,6 +218,7 @@ final class Engine: ObservableObject {
     func resetTarotSessions() {
         drawnGen.removeAll()
         sessGen = -1
+        tarotSessionKeyGen = ""
         pageSegs[3] = nil
         pageCopy[3] = nil
         if curModule == 2 && curTab == 0 { restoreState() }
@@ -267,6 +298,7 @@ final class Engine: ObservableObject {
         if method != "qimen" && method != "almanac" {
             options.merge(focusOptions()) { current, _ in current }
         }
+        options.merge(fixedEast8Options) { current, _ in current }
         do {
             let result = try TraditionalAlgorithmEngine.shared.calculate(method: method, date: date, options: options)
             copyText = traditionalCopyBlock(q, fallbackTitle: S.mods[curModule], display: result.display)
@@ -297,6 +329,7 @@ final class Engine: ObservableObject {
             liuYaoMovingLines.removeAll()
         }
         drawnGen.removeAll(); drawnMajor.removeAll()
+        tarotSessionKeyGen = ""; tarotSessionKeyMaj = ""
         sessGen = -1; sessMaj = -1
         let p = pageIndex()
         pageSegs[p] = nil; pageCopy[p] = nil
@@ -497,22 +530,43 @@ final class Engine: ObservableObject {
     }
 
     private func divineOracle(_ q: String) {
-        let body = drawOracleCards().map { item in
-            item.card[2] + "（" + (item.upright ? "正位" : "逆位") + "）\n"
-                + "领域：" + item.card[3] + "\n流向：" + item.card[4] + "\n"
-                + "关键词：" + item.card[5] + "\n牌义：" + (item.upright ? item.card[6] : item.card[7])
-        }.joined(separator: "\n\n")
-        copyText = copyBlock(q, title: S.mods[14], body: body)
+        let drawn = drawOracleCards()
+        copyText = copyBlock(q, title: S.mods[14], body: oraclePromptSummary(drawn))
         addHistory()
-        output = [Seg(text: copyText)]
+        output = []
+        ap(copyText + "\n\n" + S.briefNote + "\n")
+        for (i, item) in drawn.enumerated() {
+            ap(S.cardPre[i])
+            ap(item.card[2] + "（" + (item.upright ? "正位" : "逆位") + "）", bold: true)
+            ap("：" + item.card[5] + "；" + (item.upright ? item.card[6] : item.card[7]) + "。")
+            if i < drawn.count - 1 { ap("\n") }
+        }
     }
 
     // ================= 卢恩符文 =================
+    private var runeEntities: [RuneEntity] {
+        var order: [String] = []
+        var values: [String: RuneEntity] = [:]
+        for (index, row) in RUNES.enumerated() {
+            let base = row[2]
+            if values[base] == nil {
+                order.append(base)
+                values[base] = RuneEntity(id: String(format: "rune-%02d", order.count), baseName: base, uprightIndex: nil, reversedIndex: nil)
+            }
+            if row[0].hasSuffix("逆位") { values[base]?.reversedIndex = index }
+            else { values[base]?.uprightIndex = index }
+        }
+        return order.compactMap { values[$0] }
+    }
+
     private func divineRunes(_ lines: inout [[String]]) -> String {
-        var idx: [Int] = []; var used: [String] = []
-        while idx.count < 3 {
-            let i = Int.random(in: 0..<RUNES.count)
-            if !used.contains(RUNES[i][2]) { idx.append(i); used.append(RUNES[i][2]) }
+        var pool = runeEntities
+        var idx: [Int] = []
+        while idx.count < 3, !pool.isEmpty {
+            let entity = pool.remove(at: Int.random(in: 0..<pool.count))
+            let reversed = entity.reversedIndex != nil && Bool.random()
+            guard let rowIndex = reversed ? entity.reversedIndex : entity.uprightIndex else { continue }
+            idx.append(rowIndex)
         }
         let pre = S.runePre
         var names: [String] = []
@@ -526,14 +580,17 @@ final class Engine: ObservableObject {
 
     // ================= 玄天灵签 =================
     private func divineQian(_ q: String) {
-        let s = pickQian()
+        let picked = pickQianWithIndex(), s = picked.row
         let head = s[0] + "\u{3000}" + s[1] + "\u{3000}" + s[2]
         let labels = S.qianLabels
-        let body = ([head] + labels.indices.map { labels[$0] + "：" + s[$0 + 3] }).joined(separator: "\n")
+        var bodyLines = [head] + labels.indices.map { labels[$0] + "：" + s[$0 + 3] }
+        if let note = qianSourceStatus(picked.index) { bodyLines.append("资料状态：" + note) }
+        let body = bodyLines.joined(separator: "\n")
         copyText = copyBlock(q, title: S.mods[6], body: body)
         addHistory()
         output = []
         appendQian(s)
+        if let note = qianSourceStatus(picked.index) { ap("\n资料状态：", bold: true); ap(note) }
     }
     private func appendQian(_ s: [String]) {
         let head = s[0] + "\u{3000}" + s[1] + "\u{3000}" + s[2]
@@ -547,23 +604,68 @@ final class Engine: ObservableObject {
     }
 
     // ================= 塔罗 =================
-    private var tarotGeneralHi: Int { includeSpecial ? TAROT.count : SPECIAL_TAROT_START }
-
-    private func divineTarot(_ q: String) {
-        if curTab == 0 { tarotDraw(q, gen: true, lo: 0, hi: tarotGeneralHi) }
-        else if curTab == 1 { tarotYesNo(q) }
-        else { tarotDraw(q, gen: false, lo: 56, hi: 100) }
+    private var tarotEntities: [TarotEntity] {
+        var order: [String] = []
+        var values: [String: TarotEntity] = [:]
+        for (index, row) in TAROT.enumerated() {
+            let reversed = row[0].hasPrefix("逆位")
+            let base = reversed ? String(row[0].dropFirst(2)) : row[0]
+            if values[base] == nil {
+                order.append(base)
+                values[base] = TarotEntity(id: String(format: "tarot-%03d", order.count), baseName: base, uprightIndex: nil, reversedIndex: nil, isSpecial: index >= SPECIAL_TAROT_START)
+            }
+            if reversed { values[base]?.reversedIndex = index }
+            else { values[base]?.uprightIndex = index }
+            if index >= SPECIAL_TAROT_START { values[base]?.isSpecial = true }
+        }
+        return order.compactMap { values[$0] }
     }
 
-    private func tarotDraw(_ q: String, gen: Bool, lo: Int, hi: Int) {
+    private func tarotProfile(_ profile: String) -> [TarotEntity] {
+        let standard = tarotEntities.filter { !$0.isSpecial }
+        if profile == "major22" { return standard.filter { ($0.uprightIndex ?? -1) >= 56 && ($0.uprightIndex ?? -1) <= 77 } }
+        if profile == "generalAll" { return tarotEntities }
+        return standard
+    }
+
+    private func makeTarotDraw(_ entity: TarotEntity) -> TarotDraw? {
+        let reversed = entity.reversedIndex != nil && Bool.random()
+        guard let rowIndex = reversed ? entity.reversedIndex : entity.uprightIndex else { return nil }
+        return TarotDraw(entityID: entity.id, rowIndex: rowIndex, isSpecial: entity.isSpecial)
+    }
+
+    private func drawTarot(_ profile: String, count: Int) -> [TarotDraw] {
+        var pool = tarotProfile(profile)
+        var result: [TarotDraw] = []
+        while result.count < count, !pool.isEmpty {
+            let entity = pool.remove(at: Int.random(in: 0..<pool.count))
+            if let draw = makeTarotDraw(entity) { result.append(draw) }
+        }
+        return result
+    }
+
+    private func divineTarot(_ q: String) {
+        if curTab == 0 { tarotDraw(q, gen: true) }
+        else if curTab == 1 { tarotYesNo(q) }
+        else { tarotDraw(q, gen: false) }
+    }
+
+    private func tarotDraw(_ q: String, gen: Bool) {
+        let profile = gen ? (includeSpecial ? "generalAll" : "standard78") : "major22"
+        let sessionKey = profile + "|" + q
         var drawn = gen ? drawnGen : drawnMajor
-        if drawn.count < hi - lo {
-            var i: Int
-            repeat { i = lo + Int.random(in: 0..<(hi - lo)) } while drawn.contains(i)
-            drawn.append(i)
+        let currentKey = gen ? tarotSessionKeyGen : tarotSessionKeyMaj
+        if currentKey != sessionKey {
+            drawn.removeAll()
+            if gen { sessGen = -1; tarotSessionKeyGen = sessionKey }
+            else { sessMaj = -1; tarotSessionKeyMaj = sessionKey }
+        }
+        let available = tarotProfile(profile).filter { entity in !drawn.contains { $0.entityID == entity.id } }
+        if let entity = available.randomElement(), let item = makeTarotDraw(entity) {
+            drawn.append(item)
         }
         if gen { drawnGen = drawn } else { drawnMajor = drawn }
-        let names = drawn.map { TAROT[$0][0] }
+        let names = drawn.map { TAROT[$0.rowIndex][0] }
         copyText = copyBlock(q, title: S.mods[2] + "·" + S.tarotTabs[curTab], body: names.joined(separator: "、"))
         let entry = timeStamp() + "  " + copyText
         let idx = gen ? sessGen : sessMaj
@@ -581,13 +683,13 @@ final class Engine: ObservableObject {
         output = []
         ap(copyText + "\n\n" + S.briefNote + "\n")
         if gen {
-            let specials = drawn.filter { $0 >= SPECIAL_TAROT_START }.map { TAROT[$0][0] }
+            let specials = drawn.filter { $0.isSpecial }.map { TAROT[$0.rowIndex][0] }
             ap(S.specialCards, bold: true)
             ap("：" + (specials.isEmpty ? S.none : specials.joined(separator: "、")) + "\n")
         }
         for (k, d) in drawn.enumerated() {
-            ap(TAROT[d][0], bold: true)
-            ap("：" + TAROT[d][1])
+            ap(TAROT[d.rowIndex][0], bold: true)
+            ap("：" + TAROT[d.rowIndex][1])
             if k < drawn.count - 1 { ap("\n") }
         }
     }
@@ -605,22 +707,18 @@ final class Engine: ObservableObject {
 
     // ================= 首页 =================
     private func divineHome(_ q: String) {
+        let castDate = Date()
         var dummy: [[String]] = []
-        var tarotIdx: [Int] = []
-        let hi = tarotGeneralHi
-        while tarotIdx.count < 3 && tarotIdx.count < hi {
-            let i = Int.random(in: 0..<hi)
-            if !tarotIdx.contains(i) { tarotIdx.append(i) }
-        }
-        let tarot = tarotIdx.map { TAROT[$0][0] }.joined(separator: "、") + "；"
+        let tarotProfileName = includeSpecial ? "generalAll" : "standard78"
+        let tarotItems = drawTarot(tarotProfileName, count: 3)
+        let tarot = tarotItems.map { TAROT[$0.rowIndex][0] }.joined(separator: "、") + "；"
         let len = divineLenormand(&dummy)
         let runes = divineRunes(&dummy)
         let astro = divineAstro(&dummy)
         let liuyao = divineLiuYao(&dummy)
         let oracle = oraclePromptSummary(drawOracleCards())
-        let qs = pickQian()
+        let pickedQian = pickQianWithIndex(), qs = pickedQian.row
         let qianHead = qs[0] + "　" + qs[1] + "　" + qs[2]
-        let castDate = Date()
         let traditionalSpecs: [(String, String, [String: Any])] = [
             ("qimen", "奇门遁甲", [:]),
             ("liuren", "大六壬", [:]),
@@ -629,12 +727,14 @@ final class Engine: ObservableObject {
             ("taiyi", "太乙神数", ["scope": "day"]),
             ("jinkoujue", "金口诀", ["method": "time"]),
         ]
-        let traditionalLines = traditionalSpecs.compactMap { method, label, options -> String? in
+        let traditionalLines = traditionalSpecs.map { method, label, options -> String in
             var methodOptions = options
             if method != "qimen" { methodOptions.merge(focusOptions()) { current, _ in current } }
-            guard let result = try? TraditionalAlgorithmEngine.shared.calculate(method: method, date: castDate, options: methodOptions),
-                  !result.summary.isEmpty else { return nil }
-            return label + "：" + result.summary
+            methodOptions.merge(fixedEast8Options) { current, _ in current }
+            do {
+                let result = try TraditionalAlgorithmEngine.shared.calculate(method: method, date: castDate, options: methodOptions)
+                return label + "：" + (result.summary.isEmpty ? "计算失败（没有返回摘要）" : result.summary)
+            } catch { return label + "：计算失败（" + error.localizedDescription + "）" }
         }
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "zh_CN")
@@ -649,6 +749,7 @@ final class Engine: ObservableObject {
             "卢恩符文：" + runes, "占星骰子：" + astro,
         ]
         sections += ["", "【传统术数】", "六爻纳甲：" + liuyao] + traditionalLines
+        if let note = qianSourceStatus(pickedQian.index) { sections += ["", "灵签资料状态：" + note] }
         sections += ["", "解读要求：综合各体系的共同指向与矛盾，只依据以上数据。"]
         copyText = sections.joined(separator: "\n")
         addHistoryText(copyText + "\n" + qianHead)
@@ -670,7 +771,7 @@ final class Engine: ObservableObject {
             if ["权杖1", "圣杯1", "宝剑1", "星币1"].contains(name) { ace = name; break }
         }
         var tarotResult: String? = nil
-        if ace == nil { tarotResult = S.noWithinYear }
+        if ace == nil { tarotResult = S.noWithinYear + "（25张内未见 Ace 的自定义牌阵规则，不等同客观一年内必无）" }
         else {
             var season: String? = nil
             for row in DATE12 where row[0] == ace {
@@ -688,7 +789,7 @@ final class Engine: ObservableObject {
         let p2 = PLANETS.randomElement()!
         let s2 = SIGNS.randomElement()!
         let h2 = HOUSES.randomElement()!
-        var body = S.tarotPred + "：" + (tarotResult ?? "") + "\n\n"
+        var body = S.tarotPred + "（自定义日期启发式；DATE12 水瓶区间源表存在重叠，未擅自改写）：" + (tarotResult ?? "") + "\n\n"
             + S.astroPred + "\n"
             + S.baseDuration + "：" + p2[2] + "\n"
             + S.unit + "：" + s2[2] + "\n"
@@ -699,26 +800,30 @@ final class Engine: ObservableObject {
             ("liuren", "六壬应期", [:]),
             ("meihua", "梅花应期", ["method": "time"]),
         ]
-        let timingLines = timingSpecs.compactMap { method, label, options -> String? in
-            guard let result = try? TraditionalAlgorithmEngine.shared.calculate(method: method, date: castDate, options: options),
-                  !result.timingSummary.isEmpty else { return nil }
-            return label + "：" + result.timingSummary
+        let timingLines = timingSpecs.map { method, label, options -> String in
+            var methodOptions = options
+            methodOptions.merge(fixedEast8Options) { current, _ in current }
+            do {
+                let result = try TraditionalAlgorithmEngine.shared.calculate(method: method, date: castDate, options: methodOptions)
+                return label + "：" + (result.timingSummary.isEmpty ? "计算失败（没有返回应期摘要）" : result.timingSummary)
+            } catch { return label + "：计算失败（" + error.localizedDescription + "）" }
         }
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "yyyy-MM-dd"
-        let almanacOptions: [String: Any] = [
+        var almanacOptions: [String: Any] = [
             "topic": almanacTopic,
             "startDate": formatter.string(from: almanacStartDate),
             "endDate": formatter.string(from: almanacEndDate),
         ]
-        let almanacResult = try? TraditionalAlgorithmEngine.shared.calculate(method: "almanac", date: almanacStartDate, options: almanacOptions)
+        almanacOptions.merge(fixedEast8Options) { current, _ in current }
         if !timingLines.isEmpty {
             body += "\n\n【应期参考】\n" + timingLines.joined(separator: "\n")
         }
-        if let almanacResult, !almanacResult.display.isEmpty {
-            body += "\n\n" + almanacResult.display
-        }
+        do {
+            let almanacResult = try TraditionalAlgorithmEngine.shared.calculate(method: "almanac", date: almanacStartDate, options: almanacOptions)
+            body += "\n\n" + (almanacResult.display.isEmpty ? "择日黄历：计算失败（没有返回盘面）" : almanacResult.display)
+        } catch { body += "\n\n择日黄历：计算失败（" + error.localizedDescription + "）" }
         copyText = copyBlock(q, title: S.mods[13].replacingOccurrences(of: "/", with: ""), body: body)
         addHistory()
         output = []
@@ -755,7 +860,7 @@ final class Engine: ObservableObject {
 
     func clearHistory(module: Int) {
         histories[module].removeAll()
-        if module == 2 { sessGen = -1; sessMaj = -1 }
+        if module == 2 { sessGen = -1; sessMaj = -1; tarotSessionKeyGen = ""; tarotSessionKeyMaj = "" }
         saveHistories()
     }
 

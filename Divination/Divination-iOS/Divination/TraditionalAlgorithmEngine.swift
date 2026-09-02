@@ -5,6 +5,11 @@ struct TraditionalCalculation {
     let display: String
     let summary: String
     let timingSummary: String
+    let methodVersion: String
+    let input: [String: Any]
+    let calculatedFacts: Any
+    let limitations: [String]
+    let provenance: [String: Any]
 }
 
 enum TraditionalAlgorithmError: LocalizedError {
@@ -65,7 +70,12 @@ final class TraditionalAlgorithmEngine {
         return TraditionalCalculation(
             display: display,
             summary: result["summary"] as? String ?? "",
-            timingSummary: result["timingSummary"] as? String ?? ""
+            timingSummary: result["timingSummary"] as? String ?? "",
+            methodVersion: result["methodVersion"] as? String ?? "",
+            input: result["input"] as? [String: Any] ?? [:],
+            calculatedFacts: result["calculatedFacts"] ?? NSNull(),
+            limitations: result["limitations"] as? [String] ?? [],
+            provenance: result["provenance"] as? [String: Any] ?? [:]
         )
     }
 }

@@ -5,6 +5,7 @@ using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Text;
 using System.Web.Script.Serialization;
 using System.Windows.Forms;
@@ -117,6 +118,11 @@ sealed class TraditionalAlgorithmResult
     public string Display;
     public string Summary;
     public string TimingSummary;
+    public string MethodVersion;
+    public object Input;
+    public object CalculatedFacts;
+    public object Limitations;
+    public object Provenance;
 }
 
 sealed class EmbeddedTraditionalAlgorithmEngine
@@ -186,7 +192,12 @@ sealed class EmbeddedTraditionalAlgorithmEngine
         return new TraditionalAlgorithmResult {
             Display = Convert.ToString(result["display"]),
             Summary = result.ContainsKey("summary") ? Convert.ToString(result["summary"]) : "",
-            TimingSummary = result.ContainsKey("timingSummary") ? Convert.ToString(result["timingSummary"]) : ""
+            TimingSummary = result.ContainsKey("timingSummary") ? Convert.ToString(result["timingSummary"]) : "",
+            MethodVersion = result.ContainsKey("methodVersion") ? Convert.ToString(result["methodVersion"]) : "",
+            Input = result.ContainsKey("input") ? result["input"] : null,
+            CalculatedFacts = result.ContainsKey("calculatedFacts") ? result["calculatedFacts"] : null,
+            Limitations = result.ContainsKey("limitations") ? result["limitations"] : null,
+            Provenance = result.ContainsKey("provenance") ? result["provenance"] : null
         };
     }
 }
@@ -781,7 +792,7 @@ public class MainForm : Form
         new string[]{"星币1","冬","圣杯骑士","双鱼","2.19-3.20","圣杯8","2.19-2.28","圣杯9","3.1-3.10","圣杯10","3.11-3.20"}
     };
 
-    Random rng = new Random();
+    readonly RandomNumberGenerator secureRandom = RandomNumberGenerator.Create();
     TextBox txtQ; RichTextBox txtOut; Button btnGo; Button btnCopy, btnClear, btnHist, btnHelp, btnLanguage; CheckBox chkSpecialTarot;
     Label lblQuestion, lblUpperTrigram, lblLowerTrigram, lblMovingLines, lblQuestionCategory, lblGender, lblSearchTarget;
     FlowLayoutPanel liuYaoPnl, liuYaoFocusPnl; ComboBox cmbUpperTrigram, cmbLowerTrigram, cmbQuestionCategory, cmbGender, cmbSearchTarget; CheckBox[] movingLineChecks;
@@ -797,6 +808,7 @@ public class MainForm : Form
     List<string>[] histories = new List<string>[15];
     string[] pageRtf = new string[18]; string[] pageCopy = new string[18];
     int sessGen = -1, sessMaj = -1; // 通用/大牌累积抽牌的历史条目索引
+    string tarotSessionKeyGen = "", tarotSessionKeyMaj = "";
     int curModule = 0; // 0首页 1六爻 2塔罗 3雷诺曼 4卢恩符文 5占星骰子 6灵签 7...13传统术数 14复古神谕
     string copyText = "";
     bool isEnglish;
@@ -805,6 +817,17 @@ public class MainForm : Form
     const int SPECIAL_TAROT_START = 156;
     const int LENORMAND_SPECIAL_START = 43;
     const int ORACLE_SPECIAL_START = 49;
+
+    int NextInt(int maxExclusive)
+    {
+        if (maxExclusive <= 0) throw new ArgumentOutOfRangeException("maxExclusive");
+        ulong range = (ulong)UInt32.MaxValue + 1UL;
+        ulong limit = range - (range % (uint)maxExclusive);
+        var bytes = new byte[4];
+        uint value;
+        do { secureRandom.GetBytes(bytes); value = BitConverter.ToUInt32(bytes, 0); } while ((ulong)value >= limit);
+        return (int)(value % (uint)maxExclusive);
+    }
     static readonly string[] MODULE_NAMES_ZH = {"首页","六爻纳甲","塔罗","雷诺曼","卢恩符文","占星骰子","玄天灵签","奇门遁甲","大六壬","小六壬","梅花易数","太乙神数","金口诀","择日/黄历","复古神谕"};
     static readonly string[] MODULE_NAMES_EN = {"Home","I Ching","Tarot","Lenormand","Runes","Astro Dice","Fortune Slip","Qimen","Da Liu Ren","Xiao Liu Ren","Meihua Yishu","Taiyi","Jin Kou Jue","Date Selection","Old Style Oracle"};
     static readonly string[] MODULE_TABS_ZH = {"首页","六爻纳甲","塔罗","雷诺曼","卢恩符文","占星骰子","玄天灵签","奇门遁甲","大六壬","小六壬","梅花易数","太乙神数","金口诀","择日/黄历","复古神谕"};
@@ -1338,7 +1361,7 @@ public class MainForm : Form
         } else {
             for (int i = 0; i < 6; i++) {
                 int heads = 0;
-                for (int j = 0; j < 3; j++) if (rng.Next(2) == 0) heads++;
+                for (int j = 0; j < 3; j++) if (NextInt(2) == 0) heads++;
                 string zz, cc;
                 h[i] = LineOfToss(heads, out zz, out cc); z[i] = zz; c[i] = cc;
             }
@@ -1383,9 +1406,9 @@ public class MainForm : Form
 
     string DivineAstro(List<string[]> lines)
     {
-        string[] p = PLANETS[rng.Next(PLANETS.Length)];
-        string[] s = SIGNS[rng.Next(SIGNS.Length)];
-        string[] h = HOUSES[rng.Next(HOUSES.Length)];
+        string[] p = PLANETS[NextInt(PLANETS.Length)];
+        string[] s = SIGNS[NextInt(SIGNS.Length)];
+        string[] h = HOUSES[NextInt(HOUSES.Length)];
         lines.Add(new string[]{"行星", p[0], p[1], "【做什么：发挥这股能量】"});
         lines.Add(new string[]{"星座", s[0], s[1], "【怎么做：以这种方式】"});
         lines.Add(new string[]{"宫位", h[0], h[1], "【在哪里做：在这个领域】"});
@@ -1398,7 +1421,7 @@ public class MainForm : Form
         var idx = new List<int>();
         int hi = chkSpecialTarot != null && chkSpecialTarot.Checked ? LENORMAND.Length : LENORMAND_SPECIAL_START;
         while (idx.Count < 3) {
-            int i = rng.Next(hi);
+            int i = NextInt(hi);
             if (!idx.Contains(i)) idx.Add(i);
         }
         string[] pre = {"第一张", "第二张", "第三张"};
@@ -1417,8 +1440,8 @@ public class MainForm : Form
         var drawn = new List<Tuple<string[], bool>>();
         var used = new List<int>();
         while (drawn.Count < 3) {
-            int i = rng.Next(hi);
-            if (!used.Contains(i)) { used.Add(i); drawn.Add(Tuple.Create(ORACLE[i], rng.Next(2) == 0)); }
+            int i = NextInt(hi);
+            if (!used.Contains(i)) { used.Add(i); drawn.Add(Tuple.Create(ORACLE[i], NextInt(2) == 0)); }
         }
         return drawn;
     }
@@ -1437,27 +1460,38 @@ public class MainForm : Form
     {
         var drawn = DrawOracleCards();
         string nl = Environment.NewLine;
-        var promptLines = new List<string>();
-        foreach (var item in drawn) {
-            string[] card = item.Item1;
-            bool upright = item.Item2;
-            promptLines.Add(card[2] + "（" + (upright ? "正位" : "逆位") + "）" + nl
-                + "领域：" + card[3] + nl + "流向：" + card[4] + nl
-                + "关键词：" + card[5] + nl + "牌义：" + (upright ? card[6] : card[7]));
-        }
-        copyText = CopyBlock(q, (isEnglish ? MODULE_NAMES_EN : MODULE_NAMES_ZH)[14], string.Join(nl + nl, promptLines));
+        copyText = CopyBlock(q, (isEnglish ? MODULE_NAMES_EN : MODULE_NAMES_ZH)[14], OraclePromptSummary(drawn));
         AddHistory();
         txtOut.Clear();
-        Append(copyText, FontStyle.Regular);
+        Append(copyText + nl + nl + "―― 简要说明 ――" + nl, FontStyle.Regular);
+        string[] pre = {"第一张", "第二张", "第三张"};
+        for (int i = 0; i < drawn.Count; i++) {
+            string[] card = drawn[i].Item1;
+            bool upright = drawn[i].Item2;
+            Append(pre[i], FontStyle.Regular);
+            Append(card[2] + "（" + (upright ? "正位" : "逆位") + "）", FontStyle.Bold);
+            Append("：" + card[5] + "；" + (upright ? card[6] : card[7]) + "。", FontStyle.Regular);
+            if (i < drawn.Count - 1) Append(nl, FontStyle.Regular);
+        }
     }
 
     // ================= 卢恩符文 =================
     string DivineRunes(List<string[]> lines)
     {
-        var idx = new List<int>(); var used = new List<string>();
-        while (idx.Count < 3) {
-            int i = rng.Next(RUNES.Length);
-            if (!used.Contains(RUNES[i][2])) { idx.Add(i); used.Add(RUNES[i][2]); }
+        var groups = new Dictionary<string, List<int>>();
+        var entities = new List<string>();
+        for (int i = 0; i < RUNES.Length; i++) {
+            string key = RUNES[i][2];
+            if (!groups.ContainsKey(key)) { groups[key] = new List<int>(); entities.Add(key); }
+            groups[key].Add(i);
+        }
+        var idx = new List<int>();
+        while (idx.Count < 3 && entities.Count > 0) {
+            int entityIndex = NextInt(entities.Count);
+            string key = entities[entityIndex];
+            entities.RemoveAt(entityIndex);
+            List<int> variants = groups[key];
+            idx.Add(variants.Count > 1 ? variants[NextInt(variants.Count)] : variants[0]);
         }
         string[] pre = {"第一枚", "第二枚", "第三枚"};
         var names = new List<string>();
@@ -1472,17 +1506,23 @@ public class MainForm : Form
     // ================= 玄天灵签 =================
     void DivineQian(string q)
     {
-        string[] s = QIAN[rng.Next(QIAN.Length)];
+        int sourceIndex = NextInt(QIAN.Length);
+        string[] s = QIAN[sourceIndex];
         string head = s[0] + "\u3000" + s[1] + "\u3000" + s[2];
         string[] labels = {"圣意","谋望","家宅","婚姻","失物","官事","行人","占病","解曰"};
         string nl = Environment.NewLine;
         var body = new List<string>();
         body.Add(head);
         for (int i = 0; i < labels.Length; i++) body.Add(labels[i] + "：" + s[i + 3]);
+        if (sourceIndex == 41 || sourceIndex == 42) body.Add("资料状态：原始《抽牌.xlsm》对应签文存在截断，保留原文且不补写。");
         copyText = CopyBlock(q, (isEnglish ? MODULE_NAMES_EN : MODULE_NAMES_ZH)[6], string.Join(nl, body.ToArray()));
         AddHistory();
         txtOut.Clear();
         AppendQian(s);
+        if (sourceIndex == 41 || sourceIndex == 42) {
+            Append(nl + "资料状态：", FontStyle.Bold);
+            Append("原始《抽牌.xlsm》对应签文存在截断，保留原文且不补写。", FontStyle.Regular);
+        }
     }
 
     void AppendQian(string[] s)
@@ -1518,15 +1558,60 @@ public class MainForm : Form
         RestoreState();
     }
 
-    int TarotGeneralHi()
+    string TarotBaseName(string name)
     {
-        return chkSpecialTarot != null && chkSpecialTarot.Checked ? TAROT.Length : SPECIAL_TAROT_START;
+        return name.StartsWith("逆位", StringComparison.Ordinal) ? name.Substring(2) : name;
+    }
+
+    List<string> TarotProfileEntities(string profile)
+    {
+        var result = new List<string>();
+        var seen = new HashSet<string>();
+        for (int i = 0; i < TAROT.Length; i++) {
+            bool special = i >= SPECIAL_TAROT_START;
+            if (profile == "standard78" && special) continue;
+            string baseName = TarotBaseName(TAROT[i][0]);
+            if (profile == "major22") {
+                int upright = -1;
+                for (int j = 56; j <= 77; j++) if (TarotBaseName(TAROT[j][0]) == baseName) { upright = j; break; }
+                if (upright < 0) continue;
+            }
+            if (seen.Add(baseName)) result.Add(baseName);
+        }
+        return result;
+    }
+
+    int TarotRowForEntity(string baseName)
+    {
+        int upright = -1, reversed = -1;
+        for (int i = 0; i < TAROT.Length; i++) {
+            if (TarotBaseName(TAROT[i][0]) != baseName) continue;
+            if (TAROT[i][0].StartsWith("逆位", StringComparison.Ordinal)) reversed = i;
+            else upright = i;
+        }
+        if (upright < 0 && reversed < 0) throw new InvalidOperationException("塔罗资料缺少可用牌面：" + baseName);
+        if (upright >= 0 && reversed >= 0) return NextInt(2) == 0 ? upright : reversed;
+        return upright >= 0 ? upright : reversed;
+    }
+
+    List<int> DrawTarotRows(string profile, int count)
+    {
+        var entities = TarotProfileEntities(profile);
+        var result = new List<int>();
+        while (result.Count < count && entities.Count > 0) {
+            int i = NextInt(entities.Count);
+            string entity = entities[i];
+            entities.RemoveAt(i);
+            result.Add(TarotRowForEntity(entity));
+        }
+        return result;
     }
 
     void ResetTarotSessions()
     {
         drawnGen.Clear();
         sessGen = -1;
+        tarotSessionKeyGen = "";
         int p = 3;
         pageRtf[p] = null;
         pageCopy[p] = null;
@@ -1535,23 +1620,30 @@ public class MainForm : Form
 
     void DivineTarot(string q)
     {
-        if (curTab == 0) TarotDraw(q, drawnGen, 0, TarotGeneralHi()); // 通用：按选项使用普通牌库或包含特殊牌
+        if (curTab == 0) TarotDraw(q, drawnGen, chkSpecialTarot != null && chkSpecialTarot.Checked ? "generalAll" : "standard78", true);
         else if (curTab == 1) TarotYesNo(q);
-        else TarotDraw(q, drawnMajor, 56, 100); // 大牌：大牌牌库
+        else TarotDraw(q, drawnMajor, "major22", false);
     }
 
-    void TarotDraw(string q, List<int> drawn, int lo, int hi)
+    void TarotDraw(string q, List<int> drawn, string profile, bool isGen)
     {
-        if (drawn.Count < hi - lo) {
-            int i;
-            do { i = lo + rng.Next(hi - lo); } while (drawn.Contains(i));
-            drawn.Add(i);
+        string sessionKey = profile + "|" + q;
+        string currentKey = isGen ? tarotSessionKeyGen : tarotSessionKeyMaj;
+        if (currentKey != sessionKey) {
+            drawn.Clear();
+            if (isGen) { sessGen = -1; tarotSessionKeyGen = sessionKey; }
+            else { sessMaj = -1; tarotSessionKeyMaj = sessionKey; }
+        }
+        var available = TarotProfileEntities(profile);
+        foreach (int row in drawn) available.Remove(TarotBaseName(TAROT[row][0]));
+        if (available.Count > 0) {
+            string entity = available[NextInt(available.Count)];
+            drawn.Add(TarotRowForEntity(entity));
         }
         var names = new List<string>();
         foreach (int i in drawn) names.Add(TAROT[i][0]);
         copyText = CopyBlock(q, "塔罗·" + new[]{"通用","YES OR NO","大牌"}[curTab], string.Join("、", names));
         var h = histories[2];
-        bool isGen = (lo == 0);
         int idx = isGen ? sessGen : sessMaj;
         string entry = TimeStamp() + "  " + copyText;
         if (idx >= 0 && idx < h.Count) h[idx] = entry;
@@ -1564,7 +1656,7 @@ public class MainForm : Form
         string nl = Environment.NewLine;
         txtOut.Clear();
         Append(copyText + nl + nl + "―― 简要说明 ――" + nl, FontStyle.Regular);
-        if (lo == 0) {
+        if (isGen) {
             var specials = new List<string>();
             foreach (int i in drawn) if (i >= SPECIAL_TAROT_START) specials.Add(TAROT[i][0]);
             Append("特殊牌", FontStyle.Bold);
@@ -1579,7 +1671,7 @@ public class MainForm : Form
 
     void TarotYesNo(string q)
     {
-        string[] y = YESNO[rng.Next(YESNO.Length)]; // {判定, 牌, 短语, 解释}
+        string[] y = YESNO[NextInt(YESNO.Length)]; // {判定, 牌, 短语, 解释}
         copyText = CopyBlock(q, "塔罗·YES OR NO", y[0] + "，" + y[1] + "：" + y[2] + "（" + y[3] + "）");
         AddHistory();
         string nl = Environment.NewLine;
@@ -1657,6 +1749,12 @@ public class MainForm : Form
         return options;
     }
 
+    void AddFixedEast8Context(Dictionary<string, object> options)
+    {
+        options["calculationTimezoneMode"] = "fixedEast8";
+        options["calculationTimezoneOffsetMinutes"] = 480;
+    }
+
     void DivineTraditional(string q)
     {
         string method = TRADITIONAL_IDS[curModule - 7];
@@ -1680,6 +1778,7 @@ public class MainForm : Form
         if (method != "qimen" && method != "almanac") {
             foreach (var item in FocusOptions()) options[item.Key] = item.Value;
         }
+        AddFixedEast8Context(options);
         try {
             TraditionalAlgorithmResult result = traditionalEngine.Calculate(method, date, json.Serialize(options));
             copyText = TraditionalCopyBlock(q, (isEnglish ? MODULE_NAMES_EN : MODULE_NAMES_ZH)[curModule], result.Display);
@@ -1694,13 +1793,9 @@ public class MainForm : Form
 
     void DivineHome(string q)
     {
+        DateTime castDate = DateTime.Now;
         var dummy = new List<string[]>();
-        var tarotIdx = new List<int>();
-        int tarotHi = TarotGeneralHi();
-        while (tarotIdx.Count < 3 && tarotIdx.Count < tarotHi) {
-            int i = rng.Next(tarotHi);
-            if (!tarotIdx.Contains(i)) tarotIdx.Add(i);
-        }
+        var tarotIdx = DrawTarotRows(chkSpecialTarot != null && chkSpecialTarot.Checked ? "generalAll" : "standard78", 3);
         var tarotNames = new List<string>();
         foreach (int i in tarotIdx) tarotNames.Add(TAROT[i][0]);
         string tarot = string.Join("、", tarotNames) + "；";
@@ -1709,7 +1804,8 @@ public class MainForm : Form
         string astro = DivineAstro(dummy);
         string liuyao = DivineLiuYao(dummy);
         string oracle = OraclePromptSummary(DrawOracleCards());
-        string[] qs = QIAN[rng.Next(QIAN.Length)];
+        int qianIndex = NextInt(QIAN.Length);
+        string[] qs = QIAN[qianIndex];
         string qianHead = qs[0] + "　" + qs[1] + "　" + qs[2];
         string nl = Environment.NewLine;
         var sections = new List<string> {
@@ -1719,7 +1815,7 @@ public class MainForm : Form
         string focusDescription = FocusDescription();
         if (focusDescription != "") sections.Add("所测何事／性别：" + focusDescription);
         sections.AddRange(new string[] {
-            "起卦时间：" + DateTime.Now.ToString("yyyy-MM-dd HH:mm"),
+            "起卦时间：" + castDate.ToString("yyyy-MM-dd HH:mm"),
             "",
             "【卡牌与卦象】",
             "塔罗牌：" + tarot,
@@ -1729,10 +1825,29 @@ public class MainForm : Form
             "占星骰子：" + astro,
             "",
             "【传统术数】",
-            "六爻纳甲：" + liuyao,
-            "",
-            "解读要求：综合各体系的共同指向与矛盾，只依据以上数据。"
+            "六爻纳甲：" + liuyao
         });
+        string[][] specs = {
+            new string[] { "qimen", "奇门遁甲" }, new string[] { "liuren", "大六壬" },
+            new string[] { "xiaoliuren", "小六壬" }, new string[] { "meihua", "梅花易数" },
+            new string[] { "taiyi", "太乙神数" }, new string[] { "jinkoujue", "金口诀" }
+        };
+        Dictionary<string, object> frozenFocus = FocusOptions();
+        foreach (string[] spec in specs) {
+            var options = new Dictionary<string, object>();
+            if (spec[0] == "meihua") options["method"] = "time";
+            if (spec[0] == "taiyi") options["scope"] = "day";
+            if (spec[0] == "jinkoujue") options["method"] = "time";
+            if (spec[0] != "qimen") foreach (var item in frozenFocus) options[item.Key] = item.Value;
+            AddFixedEast8Context(options);
+            try {
+                TraditionalAlgorithmResult result = traditionalEngine.Calculate(spec[0], castDate, json.Serialize(options));
+                sections.Add(spec[1] + "：" + (result.Summary == "" ? "计算失败（没有返回摘要）" : result.Summary));
+            } catch (Exception ex) { sections.Add(spec[1] + "：计算失败（" + ex.Message + "）"); }
+        }
+        if (qianIndex == 41 || qianIndex == 42) sections.Add("灵签资料状态：原始《抽牌.xlsm》对应签文存在截断，保留原文且不补写。");
+        sections.Add("");
+        sections.Add("解读要求：综合各体系的共同指向与矛盾，只依据以上数据。");
         copyText = string.Join(nl, sections); // 复制不含灵签
         AddHistoryText(copyText + nl + qianHead); // 历史仅追加灵签签头
         txtOut.Clear();
@@ -1743,6 +1858,7 @@ public class MainForm : Form
 
     void DivineDate(string q)
     {
+        DateTime castDate = DateTime.Now;
         string nl = Environment.NewLine;
         // 塔罗日期：抽牌最多25张，抽到首牌为止（结果只显示季节或时间段）
         var pool = new List<int>();
@@ -1750,14 +1866,14 @@ public class MainForm : Form
         var drawn = new List<string>();
         string ace = null;
         for (int n = 1; n <= 25; n++) {
-            int p = rng.Next(pool.Count);
+            int p = NextInt(pool.Count);
             string name = TAROT[pool[p]][0];
             pool.RemoveAt(p);
             drawn.Add(name);
             if (name == "权杖1" || name == "圣杯1" || name == "宝剑1" || name == "星币1") { ace = name; break; }
         }
         string tarotResult = null;
-        if (ace == null) tarotResult = "一年内无";
+        if (ace == null) tarotResult = "一年内无（25张内未见 Ace 的自定义牌阵规则，不等同客观一年内必无）";
         else {
             string season = null;
             for (int r = 0; r < DATE12.Length; r++) {
@@ -1773,14 +1889,37 @@ public class MainForm : Form
             if (tarotResult == null) tarotResult = season + "季";
         }
         // 占星骰子日期：行星=基础时长，星座=计量单位，宫位=调整数字
-        string[] p2 = PLANETS[rng.Next(PLANETS.Length)];
-        string[] s2 = SIGNS[rng.Next(SIGNS.Length)];
-        string[] h2 = HOUSES[rng.Next(HOUSES.Length)];
-        string body = "塔罗预测：" + tarotResult + nl + nl
+        string[] p2 = PLANETS[NextInt(PLANETS.Length)];
+        string[] s2 = SIGNS[NextInt(SIGNS.Length)];
+        string[] h2 = HOUSES[NextInt(HOUSES.Length)];
+        string body = "塔罗预测（自定义日期启发式；DATE12 水瓶区间源表存在重叠，未擅自改写）：" + tarotResult + nl + nl
                     + "占星预测" + nl
                     + "基础时长：" + p2[2] + nl
                     + "计量单位：" + s2[2] + nl
                     + "调整数字：" + h2[2];
+        string[][] timingSpecs = {
+            new string[] { "qimen", "奇门应期" }, new string[] { "liuren", "六壬应期" }, new string[] { "meihua", "梅花应期" }
+        };
+        var timingLines = new List<string>();
+        foreach (string[] spec in timingSpecs) {
+            var options = new Dictionary<string, object>();
+            if (spec[0] == "meihua") options["method"] = "time";
+            AddFixedEast8Context(options);
+            try {
+                TraditionalAlgorithmResult result = traditionalEngine.Calculate(spec[0], castDate, json.Serialize(options));
+                timingLines.Add(spec[1] + "：" + (result.TimingSummary == "" ? "计算失败（没有返回应期摘要）" : result.TimingSummary));
+            } catch (Exception ex) { timingLines.Add(spec[1] + "：计算失败（" + ex.Message + "）"); }
+        }
+        body += nl + nl + "【应期参考】" + nl + string.Join(nl, timingLines.ToArray());
+        var almanacOptions = new Dictionary<string, object>();
+        almanacOptions["topic"] = new[] { "marriage", "move", "opening", "contract", "travel", "medical", "study", "burial", "renovation", "custom" }[cmbAlmanacTopic.SelectedIndex];
+        almanacOptions["startDate"] = dtAlmanacStart.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        almanacOptions["endDate"] = dtAlmanacEnd.Value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        AddFixedEast8Context(almanacOptions);
+        try {
+            TraditionalAlgorithmResult almanac = traditionalEngine.Calculate("almanac", dtAlmanacStart.Value, json.Serialize(almanacOptions));
+            body += nl + nl + (almanac.Display == "" ? "择日黄历：计算失败（没有返回盘面）" : almanac.Display);
+        } catch (Exception ex) { body += nl + nl + "择日黄历：计算失败（" + ex.Message + "）"; }
         copyText = CopyBlock(q, "择日黄历", body);
         AddHistory();
         txtOut.Clear();
@@ -1899,6 +2038,7 @@ public class MainForm : Form
         }
         drawnGen.Clear(); drawnMajor.Clear();
         sessGen = -1; sessMaj = -1;
+        tarotSessionKeyGen = ""; tarotSessionKeyMaj = "";
         int p = PageIndex();
         pageRtf[p] = null; pageCopy[p] = null;
     }
@@ -1942,7 +2082,7 @@ public class MainForm : Form
         bClr.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
         bClr.Click += delegate(object s2, EventArgs e2) {
             h.Clear(); rt.Clear();
-            if (mod == 2) { sessGen = -1; sessMaj = -1; }
+            if (mod == 2) { sessGen = -1; sessMaj = -1; tarotSessionKeyGen = ""; tarotSessionKeyMaj = ""; }
             SaveHistories();
         };
         f.Controls.Add(bClr);
