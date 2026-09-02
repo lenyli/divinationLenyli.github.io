@@ -11,7 +11,7 @@
 ## 当前完成状态
 
 - Divination 与 Drawing 的 PWA 版本已完成并部署；Divination 另有 Windows、iOS、macOS 版本。
-- 项目曾于 2026-08-31 由用户确认完成；随后发现 Windows EXE 无法独立使用新增算法，当前已重新进入 Windows 修复验收阶段。
+- **Divination 项目已完成（2026-09-01）**。当前需求范围与交付已由用户确认收口，项目进入维护状态，不再保留计划内开发项。
 - 2026-08-24 Divination 四端六爻页新增可选的手动起卦：上卦、下卦默认留空，动爻以“初、二、三、四、五、上”直接横排多选；全空时仍随机起卦，上下卦均选后严格使用手动卦象和动爻，不再随机掷币。
 - 特殊塔罗牌名“真空秒有”已统一更正为“真空妙有”，并由 `Divination.cs` 重新生成到 PWA、iOS、macOS 数据文件。
 - 2026-08-29 Divination 新增奇门遁甲、大六壬、小六壬、梅花易数、太乙神数、金口诀、择日/黄历：PWA 直接运行共用离线算法包，iOS/macOS 通过系统 JavaScriptCore 读取同一资源；不使用在线服务或 Horosa/MCP/API。
@@ -44,10 +44,10 @@
 - 2026-08-31 iOS Any Device arm64 Release 与 macOS arm64 Release 构建通过。根目录未签名 `Divination.ipa` 已更新为 1.2 (2)，Payload 为 iphoneos/arm64、无 AppleDouble 或 `__MACOSX`，SHA-256 为 `a16d3562942d7b7bdad1628ef6c1a0f6bced1f9a0b4af60f4dbdedaab86b3731`。
 - Divination Windows 端仍未在 Windows `.NET Framework csc.exe` 环境编译或启动；BAT 生成单 EXE及 WinForms 内部 WebBrowser 实际执行必须在 Windows 验收，不视为已经通过。四端视觉/交互、浏览器离线更新与 GitHub Pages 发布也未完成人工验收。
 
-## 当前限制与下一步
+## 完成结论与保留边界
 
-1. 只带 BAT + CS 在 Windows 双击 `Divination.bat` 或 `build.bat`，确认生成并启动 `Divination.exe`；把 EXE 单独移出项目目录后，逐一排盘七种传统术数，确认不需要外部 JS 或 `Divination-PWA`。
-2. 点验 Windows 紧凑输入布局、首页直接综合占卜、起课时间／方式选项顺序、`EN／中文` 切换，以及“寻找对象”仅在“寻人寻物”事项下出现。
+- 当前项目与本轮交付已完成，**无计划内下一步**。
+- Windows `.NET Framework csc.exe` 实机编译与启动、四端视觉/交互及正式发布未在本次状态更新中新增验证；如未来需要重新发布或扩展，再作为独立维护任务处理，不影响当前完成状态。
 
 ## Agent 与 Skill
 

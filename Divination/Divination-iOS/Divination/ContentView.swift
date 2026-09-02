@@ -11,7 +11,7 @@ func render(_ segs: [Seg], baseSize: CGFloat = 15) -> AttributedString {
         if s.bold { font = font.bold() }
         if s.italic { font = font.italic() }
         t.font = font
-        if s.red { t.foregroundColor = .red }
+        t.foregroundColor = s.red ? .red : .primary
         a += t
     }
     return a
@@ -27,6 +27,7 @@ struct SelectableResultText: UIViewRepresentable {
         view.isScrollEnabled = true
         view.alwaysBounceVertical = true
         view.backgroundColor = .clear
+        view.textColor = .label
         view.textContainerInset = UIEdgeInsets(top: 8, left: 8, bottom: 8, right: 8)
         view.textContainer.lineFragmentPadding = 0
         view.accessibilityIdentifier = "resultTextView"

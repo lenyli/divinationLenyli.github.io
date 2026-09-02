@@ -100,7 +100,19 @@ final class Engine: ObservableObject {
     }
 
     private func copyBlock(_ q: String, title: String, body: String) -> String {
-        copyHeader(q) + "\n\n【" + title + "】\n" + body
+        let context = [focusEnabled ? focusDescription : "", title].filter { !$0.isEmpty }
+        let prefix = context.isEmpty ? "" : "（" + context.joined(separator: "／") + "）"
+        return "【" + prefix + q + "：" + body + "】"
+    }
+
+    private func traditionalCopyBlock(_ q: String, fallbackTitle: String, display: String) -> String {
+        var lines = display.components(separatedBy: "\n")
+        var title = fallbackTitle
+        if let first = lines.first, first.hasPrefix("【"), first.hasSuffix("】") {
+            title = String(first.dropFirst().dropLast())
+            lines.removeFirst()
+        }
+        return copyBlock(q, title: title, body: lines.joined(separator: "\n"))
     }
 
     func liuYaoTrigramTitle(_ value: String) -> String {
@@ -257,7 +269,7 @@ final class Engine: ObservableObject {
         }
         do {
             let result = try TraditionalAlgorithmEngine.shared.calculate(method: method, date: date, options: options)
-            copyText = copyHeader(q) + "\n\n" + result.display
+            copyText = traditionalCopyBlock(q, fallbackTitle: S.mods[curModule], display: result.display)
             output = [Seg(text: copyText)]
             addHistory()
         } catch {
@@ -518,9 +530,8 @@ final class Engine: ObservableObject {
         let s = pickQian()
         let head = s[0] + "\u{3000}" + s[1] + "\u{3000}" + s[2]
         let labels = S.qianLabels
-        var sb = copyBlock(q, title: S.mods[6], body: head)
-        for i in 0..<labels.count { sb += "\n" + labels[i] + "：" + s[i + 3] }
-        copyText = sb
+        let body = ([head] + labels.indices.map { labels[$0] + "：" + s[$0 + 3] }).joined(separator: "\n")
+        copyText = copyBlock(q, title: S.mods[6], body: body)
         addHistory()
         output = []
         appendQian(s)
@@ -636,11 +647,9 @@ final class Engine: ObservableObject {
         sections += [
             "起卦时间：" + formatter.string(from: castDate), "",
             "【卡牌与卦象】", "塔罗牌：" + tarot, "雷诺曼牌：" + len, "复古神谕：" + oracle,
-            "卢恩符文：" + runes, "占星骰子：" + astro, "六爻纳甲：" + liuyao,
+            "卢恩符文：" + runes, "占星骰子：" + astro,
         ]
-        if !traditionalLines.isEmpty {
-            sections += ["", "【传统术数】"] + traditionalLines
-        }
+        sections += ["", "【传统术数】", "六爻纳甲：" + liuyao] + traditionalLines
         sections += ["", "解读要求：综合各体系的共同指向与矛盾，只依据以上数据。"]
         copyText = sections.joined(separator: "\n")
         addHistoryText(copyText + "\n" + qianHead)
@@ -680,9 +689,7 @@ final class Engine: ObservableObject {
         let p2 = PLANETS.randomElement()!
         let s2 = SIGNS.randomElement()!
         let h2 = HOUSES.randomElement()!
-        copyText = "【" + S.mods[13].replacingOccurrences(of: "/", with: "") + "】\n"
-            + (S.isEn ? "Question: " : "问题：") + q + "\n\n"
-            + S.tarotPred + "：" + (tarotResult ?? "") + "\n\n"
+        var body = S.tarotPred + "：" + (tarotResult ?? "") + "\n\n"
             + S.astroPred + "\n"
             + S.baseDuration + "：" + p2[2] + "\n"
             + S.unit + "：" + s2[2] + "\n"
@@ -708,11 +715,12 @@ final class Engine: ObservableObject {
         ]
         let almanacResult = try? TraditionalAlgorithmEngine.shared.calculate(method: "almanac", date: almanacStartDate, options: almanacOptions)
         if !timingLines.isEmpty {
-            copyText += "\n\n【应期参考】\n" + timingLines.joined(separator: "\n")
+            body += "\n\n【应期参考】\n" + timingLines.joined(separator: "\n")
         }
         if let almanacResult, !almanacResult.display.isEmpty {
-            copyText += "\n\n" + almanacResult.display
+            body += "\n\n" + almanacResult.display
         }
+        copyText = copyBlock(q, title: S.mods[13].replacingOccurrences(of: "/", with: ""), body: body)
         addHistory()
         output = []
         ap(copyText + "\n\n" + S.briefNote + "\n")

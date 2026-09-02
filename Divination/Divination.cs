@@ -1476,10 +1476,10 @@ public class MainForm : Form
         string head = s[0] + "\u3000" + s[1] + "\u3000" + s[2];
         string[] labels = {"圣意","谋望","家宅","婚姻","失物","官事","行人","占病","解曰"};
         string nl = Environment.NewLine;
-        var sb = new System.Text.StringBuilder();
-        sb.Append(CopyBlock(q, (isEnglish ? MODULE_NAMES_EN : MODULE_NAMES_ZH)[6], head));
-        for (int i = 0; i < labels.Length; i++) sb.Append(nl + labels[i] + "：" + s[i + 3]);
-        copyText = sb.ToString();
+        var body = new List<string>();
+        body.Add(head);
+        for (int i = 0; i < labels.Length; i++) body.Add(labels[i] + "：" + s[i + 3]);
+        copyText = CopyBlock(q, (isEnglish ? MODULE_NAMES_EN : MODULE_NAMES_ZH)[6], string.Join(nl, body.ToArray()));
         AddHistory();
         txtOut.Clear();
         AppendQian(s);
@@ -1623,7 +1623,25 @@ public class MainForm : Form
 
     string CopyBlock(string q, string title, string body)
     {
-        return CopyHeader(q) + Environment.NewLine + Environment.NewLine + "【" + title + "】" + Environment.NewLine + body;
+        var context = new List<string>();
+        string description = FocusDescription();
+        if (description != "") context.Add(description);
+        if (title != "") context.Add(title);
+        string prefix = context.Count == 0 ? "" : "（" + string.Join("／", context.ToArray()) + "）";
+        return "【" + prefix + q + "：" + body + "】";
+    }
+
+    string TraditionalCopyBlock(string q, string fallbackTitle, string display)
+    {
+        string[] lines = display.Replace("\r\n", "\n").Split('\n');
+        string title = fallbackTitle;
+        int bodyStart = 0;
+        if (lines.Length > 0 && lines[0].StartsWith("【") && lines[0].EndsWith("】")) {
+            title = lines[0].Substring(1, lines[0].Length - 2);
+            bodyStart = 1;
+        }
+        string body = string.Join(Environment.NewLine, lines, bodyStart, lines.Length - bodyStart);
+        return CopyBlock(q, title, body);
     }
 
     Dictionary<string, object> FocusOptions()
@@ -1664,7 +1682,7 @@ public class MainForm : Form
         }
         try {
             TraditionalAlgorithmResult result = traditionalEngine.Calculate(method, date, json.Serialize(options));
-            copyText = CopyHeader(q) + Environment.NewLine + Environment.NewLine + result.Display;
+            copyText = TraditionalCopyBlock(q, (isEnglish ? MODULE_NAMES_EN : MODULE_NAMES_ZH)[curModule], result.Display);
             txtOut.Clear();
             AddHistory();
             Append(copyText, FontStyle.Regular);
@@ -1709,6 +1727,8 @@ public class MainForm : Form
             "复古神谕：" + oracle,
             "卢恩符文：" + runes,
             "占星骰子：" + astro,
+            "",
+            "【传统术数】",
             "六爻纳甲：" + liuyao,
             "",
             "解读要求：综合各体系的共同指向与矛盾，只依据以上数据。"
@@ -1756,13 +1776,12 @@ public class MainForm : Form
         string[] p2 = PLANETS[rng.Next(PLANETS.Length)];
         string[] s2 = SIGNS[rng.Next(SIGNS.Length)];
         string[] h2 = HOUSES[rng.Next(HOUSES.Length)];
-        copyText = "【择日黄历】" + nl
-                 + "问题：" + q + nl + nl
-                 + "塔罗预测：" + tarotResult + nl + nl
-                 + "占星预测" + nl
-                 + "基础时长：" + p2[2] + nl
-                 + "计量单位：" + s2[2] + nl
-                 + "调整数字：" + h2[2];
+        string body = "塔罗预测：" + tarotResult + nl + nl
+                    + "占星预测" + nl
+                    + "基础时长：" + p2[2] + nl
+                    + "计量单位：" + s2[2] + nl
+                    + "调整数字：" + h2[2];
+        copyText = CopyBlock(q, "择日黄历", body);
         AddHistory();
         txtOut.Clear();
         Append(copyText + nl + nl + "―― 简要说明 ――" + nl, FontStyle.Regular);

@@ -10,7 +10,7 @@ func render(_ segs: [Seg], baseSize: CGFloat = 14) -> AttributedString {
         if s.bold { font = font.bold() }
         if s.italic { font = font.italic() }
         t.font = font
-        if s.red { t.foregroundColor = .red }
+        t.foregroundColor = s.red ? .red : .primary
         a += t
     }
     return a
@@ -25,6 +25,7 @@ struct TabButton: View {
             Text(title)
                 .padding(.horizontal, 10).padding(.vertical, 5)
                 .background(selected ? selectedColor : Color(NSColor.controlColor))
+                .foregroundColor(.primary)
                 .cornerRadius(5)
         }
         .buttonStyle(.plain)

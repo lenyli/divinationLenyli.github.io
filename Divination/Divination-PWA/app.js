@@ -505,9 +505,8 @@ function divineQian(q) {
   const s = table[rnd(table.length)];
   const labels = L().qianLabels;
   const head = s[0]+"　"+s[1]+"　"+s[2];
-  let sb = copyBlock(q,L().mods[6],head);
-  labels.forEach((lb,i)=>{ sb += "\n"+lb+"："+s[i+3]; });
-  state.copyText = sb;
+  const body=[head,...labels.map((lb,i)=>lb+"："+s[i+3])].join('\n');
+  state.copyText = copyBlock(q,L().mods[6],body);
   addHistory();
   state.segs = [];
   appendQian(s);
@@ -627,10 +626,9 @@ function divineHome(q) {
     `雷诺曼牌：${len}`,
     `复古神谕：${oracle}`,
     `卢恩符文：${runes}`,
-    `占星骰子：${astro}`,
-    `六爻纳甲：${liuyao}`
+    `占星骰子：${astro}`
   );
-  if(traditionalLines.length) sections.push('', '【传统术数】', ...traditionalLines);
+  sections.push('', '【传统术数】', `六爻纳甲：${liuyao}`, ...traditionalLines);
   sections.push('', '解读要求：综合各体系的共同指向与矛盾，只依据以上数据。');
   state.copyText=sections.join('\n');
   addHistoryText(state.copyText+"\n"+qianHead);
@@ -666,7 +664,7 @@ function divineDate(q) {
     if (tarotResult===null) tarotResult=season+"季";
   }
   const p2=PLANETS[rnd(12)], sg2=SIGNS[rnd(12)], h2=HOUSES[rnd(12)];
-  state.copyText = `【${s.mods[13].replace('/','')}】\n${lang==='en'?'Question':'问题'}：${q}\n\n${s.tarotPred}：${tarotResult}\n\n${s.astroPred}\n${s.baseDuration}：${p2[2]}\n${s.unit}：${sg2[2]}\n${s.adjustNum}：${h2[2]}`;
+  let body = `${s.tarotPred}：${tarotResult}\n\n${s.astroPred}\n${s.baseDuration}：${p2[2]}\n${s.unit}：${sg2[2]}\n${s.adjustNum}：${h2[2]}`;
   const timingLines=[];
   [['qimen','奇门应期',{}],['liuren','六壬应期',{}],['meihua','梅花应期',{method:'time'}]].forEach(([method,label,options])=>{
     const response=calculateTraditional(method,Date.now(),options);
@@ -677,8 +675,9 @@ function divineDate(q) {
   const end=$('traditional-end')?.value||localDateValue(fallbackEnd);
   const topic=$('traditional-topic')?.value||'custom';
   const almanac=calculateTraditional('almanac',new Date(`${start}T12:00`).getTime(),{topic,startDate:start,endDate:end});
-  if(timingLines.length) state.copyText += "\n\n【应期参考】\n"+timingLines.join("\n");
-  if(almanac.ok && almanac.result.display) state.copyText += "\n\n"+almanac.result.display;
+  if(timingLines.length) body += "\n\n【应期参考】\n"+timingLines.join("\n");
+  if(almanac.ok && almanac.result.display) body += "\n\n"+almanac.result.display;
+  state.copyText=copyBlock(q,s.mods[13].replace('/',''),body);
   addHistory();
   state.segs=[];
   seg(state.copyText+"\n\n"+s.briefNote+"\n");
@@ -835,7 +834,17 @@ function copyHeader(q){
 }
 
 function copyBlock(q,title,body){
-  return `${copyHeader(q)}\n\n【${title}】\n${body}`;
+  const context=[focusEnabled()?focusDescription():'',title].filter(Boolean);
+  const prefix=context.length?`（${context.join('／')}）`:'';
+  return `【${prefix}${q}：${body}】`;
+}
+
+function traditionalCopyBlock(q,fallbackTitle,display){
+  const lines=display.split('\n');
+  const match=lines[0]&&lines[0].match(/^【(.+)】$/);
+  const title=match?match[1]:fallbackTitle;
+  if(match) lines.shift();
+  return copyBlock(q,title,lines.join('\n'));
 }
 
 function focusOptions(){
@@ -927,7 +936,7 @@ function divineTraditional(q){
   const timestamp=timeInput ? new Date(timeInput.value).getTime() : new Date(`${$('traditional-start').value}T12:00`).getTime();
   const response=calculateTraditional(method,timestamp,traditionalOptions(method));
   if(!response.ok){ window.alert(response.error); return false; }
-  state.copyText=`${copyHeader(q)}\n\n${response.result.display}`;
+  state.copyText=traditionalCopyBlock(q,L().mods[state.curModule],response.result.display);
   state.segs=[]; seg(state.copyText); flushOut(); addHistory();
   return true;
 }
