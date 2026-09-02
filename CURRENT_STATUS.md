@@ -14,7 +14,8 @@
 - **Divination 已于 2026-09-02 重新打开维护**：当前按 `divination-module-guides` 做全模块事实边界、公平抽取、时区上下文和离线实现修复，原 2026-09-01“项目已完成”结论不再代表当前状态。
 - 2026-09-02 已完成源码层修复：共享适配层统一 UTC 时间戳、固定东八区墙钟与换日策略；塔罗／卢恩改为先抽实体、再抽可用正逆位；首页固定同一时间上下文且算法失败不再静默缺项；灵签第 42/43 条与 DATE12 水瓶重叠按原表标记未决；PWA 只保留一处 Service Worker 注册并更新缓存名。
 - 共享六爻适配源码已补齐主变互卦、八宫世应、纳甲干支、六亲六神、旬空旺衰、月破日冲暗动、动变、伏神及事项候选；小六壬不再从口诀关键词推断，大六壬不再猜十二天将落宫，太乙不再按主客算数值判胜负，金口诀不把候选冒充唯一用神。
-- 2026-09-02 PWA/Apple 共用算法包已重新生成到 `mingyu-core-0.1.32+zhanbu-3`；macOS 与 iOS 正式产物统一为决定版本 `2.0`、构建号 `3`。
+- 2026-09-02 PWA/Apple 共用算法包已重新生成到 `mingyu-core-0.1.32+zhanbu-3`；macOS 与 iOS 正式产物统一为决定版本 `2.0`、构建号 `4`。
+- 四端复古神谕单项结果已按雷诺曼的显示/复制边界统一：复制正文只含与综合占卜相同的牌名、正逆位、领域和流向；界面下方另显示关键词及当前正/逆位牌义的简要说明，简要说明不进入复制或历史正文。PWA 缓存为 `divination-v25-oracle-display`。
 - 2026-08-24 Divination 四端六爻页新增可选的手动起卦：上卦、下卦默认留空，动爻以“初、二、三、四、五、上”直接横排多选；全空时仍随机起卦，上下卦均选后严格使用手动卦象和动爻，不再随机掷币。
 - 特殊塔罗牌名“真空秒有”已统一更正为“真空妙有”，并由 `Divination.cs` 重新生成到 PWA、iOS、macOS 数据文件。
 - 2026-08-29 Divination 新增奇门遁甲、大六壬、小六壬、梅花易数、太乙神数、金口诀、择日/黄历：PWA 直接运行共用离线算法包，iOS/macOS 通过系统 JavaScriptCore 读取同一资源；不使用在线服务或 Horosa/MCP/API。
@@ -45,8 +46,8 @@
 - 2026-08-31 Windows CS 内嵌兼容算法已与现有共用算法包对七种方法逐项差分，display/summary 全部一致；BAT 外部算法文件/PWA 依赖、条件式“寻找对象”和语言切换的源码红灯检查转绿，`gen_data.py --check` 继续通过。
 - 2026-08-31 新牌库接入后 `gen_data.py --check` 通过，确认 `LENORMAND=49`、`ORACLE=52` 且 PWA/iOS/macOS 生成数据与 `Divination.cs` 一致；PWA 三个 JavaScript 文件通过语法检查，离线缓存更新为 `divination-v23`。
 - 2026-08-31 iOS Any Device arm64 Release 与 macOS arm64 Release 构建通过。根目录未签名 `Divination.ipa` 已更新为 1.2 (2)，Payload 为 iphoneos/arm64、无 AppleDouble 或 `__MACOSX`，SHA-256 为 `a16d3562942d7b7bdad1628ef6c1a0f6bced1f9a0b4af60f4dbdedaab86b3731`。
-- 2026-09-02 修改版 macOS My Mac arm64 Release 构建通过；临时产物完成 `2.0 (3)`、arm64、`zhanbu-3` 资源和 adhoc 签名校验后覆盖 `/Applications/Divination.app`，安装产物再次通过签名校验并已从正式路径成功启动。
-- 2026-09-02 修改版 iOS Any iOS Device arm64 Release 构建通过。根目录未签名 `Divination.ipa` 已原子替换为 `2.0 (3)`，Payload 为 iphoneos/arm64、最低 iOS 16.0、包含 `zhanbu-3`，无 `_CodeSignature`、embedded mobileprovision、AppleDouble 或 `__MACOSX`；ZIP 完整，SHA-256 为 `13fe7bc7b6ebad8d910131215e16775daef843b07a9a743d90cd805497f91080`。
+- 2026-09-02 修改版 macOS My Mac arm64 Release 构建通过；临时产物完成 `2.0 (4)`、arm64、`zhanbu-3` 资源和 adhoc 签名校验后覆盖 `/Applications/Divination.app`，安装产物再次通过签名校验并已从正式路径成功启动。
+- 2026-09-02 修改版 iOS Any iOS Device arm64 Release 构建通过。根目录未签名 `Divination.ipa` 已原子替换为 `2.0 (4)`，Payload 为 iphoneos/arm64、最低 iOS 16.0、包含 `zhanbu-3`，无 `_CodeSignature`、embedded mobileprovision、AppleDouble 或 `__MACOSX`；ZIP 完整，SHA-256 为 `dada03bdc5c7618eaf5c0f502f5e1f7c37015923dcd6c2484ae386e2efa96363`。
 - Divination Windows 端仍未在 Windows `.NET Framework csc.exe` 环境编译或启动；BAT 生成单 EXE及 WinForms 内部 WebBrowser 实际执行必须在 Windows 验收，不视为已经通过。四端视觉/交互、浏览器离线更新与 GitHub Pages 发布也未完成人工验收。
 
 ## 完成结论与保留边界
@@ -61,4 +62,4 @@
 
 - `frontend-developer`、`pwa-release-checker` 只存在平台配置，未 canonical 化。
 - 2026-08-29 使用 `research`、`implement` 与 `pwa-app` 完成来源核对、最小接入和离线缓存复核。
-- 2026-09-02 使用 `implement`、`pwa-app` 与 `spreadsheets`（只读核对原始 XLSM）完成本轮源码修复；未运行构建或测试。
+- 2026-09-02 使用 `implement`、`pwa-app` 与 `spreadsheets`（只读核对原始 XLSM）完成本轮源码修复；随后在用户授权出包阶段完成共享 JavaScript 生成、Apple Release 构建与正式产物替换，未运行完整自动化测试。

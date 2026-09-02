@@ -71,7 +71,7 @@ python3 gen_data.py --check    # 只校验现有文件是否与 cs 一致（可�
 
 当前仍有三项明确开放项：
 
-- PWA/Apple 共用的 `traditional-algorithms.js` 已由 `adapter.ts` 重新生成到 `mingyu-core-0.1.32+zhanbu-3`；macOS 与 iOS 的修改版正式产物已统一为 `2.0 (3)`。Windows 内嵌载荷和 golden 摘要仍待按既有流程机械生成、复核。
+- PWA/Apple 共用的 `traditional-algorithms.js` 已由 `adapter.ts` 重新生成到 `mingyu-core-0.1.32+zhanbu-3`；复古神谕单项复制已与综合占卜精简格式一致，简要说明只显示、不进入复制。macOS 与 iOS 的修改版正式产物已统一为 `2.0 (4)`。Windows 内嵌载荷和 golden 摘要仍待按既有流程机械生成、复核。
 - 原始 `抽牌.xlsm` 的第 42/43 签本身已截断，且 DATE12 水瓶三段日期互相重叠；在取得权威补充来源前只标记不完整，不补写。
 - Apple/Windows 卡牌历史尚未迁移为与 PWA 相同的结构化 schema。
 
