@@ -5,6 +5,7 @@ import { generateMeihua } from 'mingyu-core/divination/meihua';
 import { generateJinkoujue } from 'mingyu-core/divination/jinkoujue';
 import { generateAlmanacSelection } from 'mingyu-core/divination/almanac';
 import { generateLiuyao } from 'mingyu-core/divination/liuyao';
+import { hexagramsData } from 'mingyu-core/divination/hexagram-data';
 import { configure } from 'mingyu-core/calendar';
 import { taiyi } from 'mingyu-core';
 
@@ -12,7 +13,8 @@ const { generateTaiyi } = taiyi;
 
 type Options = Record<string, unknown>;
 
-const METHOD_VERSION = 'mingyu-core-0.1.32+zhanbu-3';
+const METHOD_VERSION = 'mingyu-core-0.1.32+zhanbu-5';
+const AI_PROMPT_VERSION = 'zhanbu-ai-prompt-v1';
 const SOURCE_URL = 'https://github.com/Brhiza/mingyu/tree/main/packages/core';
 
 type CalculationTimezoneMode = 'fixedEast8' | 'deviceLocal';
@@ -157,6 +159,7 @@ function timezoneLabel(offsetMinutes: number): string {
 
 function text(value: unknown): string {
   if (value === undefined || value === null || value === '') return '—';
+  if (typeof value === 'object') return JSON.stringify(value);
   return String(value);
 }
 
@@ -170,6 +173,54 @@ function dateText(date: Date, offsetMinutes = 480): string {
   return `${shifted.getUTCFullYear()}-${pad(shifted.getUTCMonth() + 1)}-${pad(shifted.getUTCDate())} ${pad(shifted.getUTCHours())}:${pad(shifted.getUTCMinutes())}`;
 }
 
+function questionText(options: Options): string {
+  const value = String(options.question ?? '').trim();
+  return value || '未提供具体问题';
+}
+
+function promptFocus(profile?: FocusProfile): string {
+  return profile ? focusLabel(profile) : '未指定';
+}
+
+const COMMON_INTERPRETATION_REQUIREMENTS = [
+  '只依据以上已计算事实进行解读，不重新排盘，不补造未给出的数据。',
+  '明确区分“盘面事实”和“象义推断”。',
+  '先给主线判断，再列支持证据、矛盾证据与不确定项。',
+  '用神或类神未唯一确定时，按候选分别讨论，不得自行指定一个。',
+  '涉及应期时，只依据已给出的应期证据判断，不硬造唯一日期。',
+];
+
+function buildTraditionalPrompt(
+  options: Options,
+  profile: FocusProfile | undefined,
+  methodLabel: string,
+  methodBasis: string,
+  context: CalculationContext,
+  section: string,
+  limitations: string[],
+  extraRequirements: string[] = [],
+) {
+  const aiPrompt = [
+    '【占卜解读输入】',
+    '',
+    `问题：${questionText(options)}`,
+    `所测事项：${promptFocus(profile)}`,
+    `方法：${methodLabel}`,
+    `方法口径：${methodBasis}`,
+    `起盘时间：${context.inputWallClock}（${timezoneLabel(context.calculationTimezoneOffsetMinutes)}）`,
+    '',
+    '【计算事实】',
+    section,
+    '',
+    '【资料边界】',
+    limitations.length ? limitations.join('\n') : '仅使用应用已计算事实。',
+    '',
+    '【解读要求】',
+    [...COMMON_INTERPRETATION_REQUIREMENTS, ...extraRequirements].join('\n'),
+  ].join('\n');
+  return { aiPromptVersion: AI_PROMPT_VERSION, aiPromptSection: section, aiPrompt };
+}
+
 function envelope(
   method: string,
   timestamp: number,
@@ -179,6 +230,7 @@ function envelope(
   limitations: string[] = [],
   summary = '',
   timingSummary = '',
+  prompt?: { aiPromptVersion: string; aiPromptSection: string; aiPrompt: string },
 ) {
   return {
     method,
@@ -195,6 +247,9 @@ function envelope(
     summary,
     timingSummary,
     display,
+    aiPromptVersion: prompt?.aiPromptVersion ?? AI_PROMPT_VERSION,
+    aiPromptSection: prompt?.aiPromptSection ?? '',
+    aiPrompt: prompt?.aiPrompt ?? '',
   };
 }
 
@@ -215,6 +270,20 @@ function liuyaoNaJiaStems(yaoTypes: string[]): string[] {
   if (!lower || !upper) throw new Error('六爻经卦结构无效，无法配置纳甲天干。');
   return [NAJIA_STEMS[lower].lower, NAJIA_STEMS[lower].lower, NAJIA_STEMS[lower].lower,
     NAJIA_STEMS[upper].upper, NAJIA_STEMS[upper].upper, NAJIA_STEMS[upper].upper];
+}
+
+function liuyaoHexagramName(yaoTypes: string[]): string {
+  const bits = yaoTypes.map((yao) => yao === '阳' ? '1' : '0');
+  const binary = [...bits.slice(3, 6), ...bits.slice(0, 3)].join('');
+  const found = hexagramsData.find((item) => item.binarySymbol === binary);
+  if (!found) throw new Error(`六爻卦象查找失败：${binary}`);
+  return found.name;
+}
+
+function liuyaoWorldResponseText(lines: Array<{ position: number; isWorld: boolean; isResponse: boolean }>): string {
+  const world = lines.find((line) => line.isWorld)?.position;
+  const response = lines.find((line) => line.isResponse)?.position;
+  return `世爻 ${world ?? '—'}、应爻 ${response ?? '—'}`;
 }
 
 function liuyaoUsefulGod(result: ReturnType<typeof generateLiuyao>, profile?: FocusProfile) {
@@ -279,6 +348,10 @@ function formatLiuyao(date: Date, options: Options, context: CalculationContext)
   const changedTypes = result.yaosDetail.map((line) => line.isChanging ? (line.yaoType === '阳' ? '阴' : '阳') : line.yaoType);
   const mainStems = liuyaoNaJiaStems(mainTypes);
   const changedStems = liuyaoNaJiaStems(changedTypes);
+  const changedResult = generateLiuyao(date, {
+    method: 'manual',
+    yaos: changedTypes.map((yao) => yao === '阳' ? 7 : 8),
+  });
   const lines = result.yaosDetail.map((line, index) => ({
     ...line,
     naJia: { stem: mainStems[index], branch: line.najiaDizhi },
@@ -289,7 +362,26 @@ function formatLiuyao(date: Date, options: Options, context: CalculationContext)
       changeDirection: line.changeDirection ?? null,
     } : null,
   }));
+  const changedLines = changedResult.yaosDetail.map((changedLine, index) => ({
+    position: changedLine.position,
+    yaoType: changedLine.yaoType,
+    sixGod: lines[index].sixGod,
+    sixRelative: sixRelation(result.palace.wuxing, changedLine.wuxing),
+    naJia: { stem: changedStems[index], branch: changedLine.najiaDizhi },
+    wuxing: changedLine.wuxing,
+    isWorld: lines[index].isWorld,
+    isResponse: lines[index].isResponse,
+    sourceIsChanging: lines[index].isChanging,
+    changeRelations: lines[index].changeRelations ?? [],
+    changeDirection: lines[index].changeDirection ?? null,
+    isVoid: changedLine.isVoid,
+  }));
   const usefulGod = liuyaoUsefulGod(result, profile);
+  const oppositeName = liuyaoHexagramName(mainTypes.map((yao) => yao === '阳' ? '阴' : '阳'));
+  const reversedName = liuyaoHexagramName([...mainTypes].reverse());
+  const worldResponse = liuyaoWorldResponseText(lines);
+  const moving = result.changingYaos.map((line) => `${line.position}爻`).join('、') || '无';
+  const worldResponseAndMoving = `${worldResponse}、动爻 ${moving}`;
   const lineDisplay = lines.slice().reverse().map((line) => {
     const flags = [line.isVoid && '空', line.isMonthBreak && '月破', line.isDayClash && '日冲', line.isDayBreak && '日破', line.isHiddenMove && '暗动', line.seasonState].filter(Boolean).join('、');
     const role = line.isWorld ? '世' : line.isResponse ? '应' : '—';
@@ -301,12 +393,36 @@ function formatLiuyao(date: Date, options: Options, context: CalculationContext)
     `起卦：${dateText(date, context.calculationTimezoneOffsetMinutes)}（${timezoneLabel(context.calculationTimezoneOffsetMinutes)}）｜${generationMethod === 'coins' ? '随机三钱' : '手动卦'}`,
     `四柱：${result.ganzhi.year}年 ${result.ganzhi.month}月 ${result.ganzhi.day}日 ${result.ganzhi.hour}时`,
     `月建：${result.ganzhi.month.slice(-1)}｜日辰：${result.ganzhi.day.slice(-1)}｜旬空：${result.voidBranches.join('、')}`,
-    `本卦：${result.originalName}｜变卦：${result.changedName}｜互卦：${result.interName}`,
-    `卦宫：${result.palace.name}宫·${result.palace.wuxing}｜阶段：${result.palaceStage ?? '—'}｜${result.worldAndResponse.join('、')}`,
+    `本卦：${result.originalName}｜变卦：${result.changedName}｜互卦：${result.interName}｜错卦：${oppositeName}｜综卦：${reversedName}`,
+    `卦宫：${result.palace.name}宫·${result.palace.wuxing}｜阶段：${result.palaceStage ?? '—'}｜${worldResponseAndMoving}`,
     '', '六爻盘：', lineDisplay,
     ...(usefulGod ? ['', `事项定位：${focusLabel(profile!)}`, `用神六亲：${usefulGod.requestedSixRelative ?? '世爻'}｜候选：${usefulGod.candidates.map((item) => `${item.position}爻${item.kind === 'hidden' ? '伏' : ''}`).join('、') || '无'}｜最终取用：${usefulGod.chosenPosition ? `${usefulGod.chosenPosition}爻` : '未自动确定'}`, `取用说明：${usefulGod.selectionReason.join('；')}`] : []),
   ].join('\n');
-  const moving = result.changingYaos.map((line) => `${line.position}爻`).join('、') || '无';
+  const methodBasis = generationMethod === 'coins' ? '六次三钱记录，按初爻至上爻冻结输入' : '手动上下卦与动爻转换为 6/7/8/9 爻值';
+  const hiddenText = (result.hiddenSpirits ?? []).map((item) => `${item.position}爻伏${item.sixRelative}${item.najiaDizhi}${item.wuxing}，飞神${item.underYao.position}爻${item.underYao.sixRelative}${item.underYao.najiaDizhi}${item.underYao.wuxing}`).join('\n') || '无';
+  const changedLineText = changedLines.slice().reverse().map((line) => `${line.position}爻｜${line.sixGod}｜${line.sixRelative}｜${line.naJia.stem}${line.naJia.branch}${line.wuxing}｜${line.isWorld ? '世' : line.isResponse ? '应' : '—'}｜${line.yaoType}｜${line.sourceIsChanging ? `由动爻化出：${line.changeRelations.join('、') || '无附加关系'}${line.changeDirection ? `、${line.changeDirection}` : ''}` : '静爻在变卦中的完整纳甲位'}${line.isVoid ? '｜化空' : ''}`).join('\n');
+  const promptSection = [
+    `起卦方式：${generationMethod === 'coins' ? '随机三钱' : '手动卦'}`,
+    `六个爻值（初至上）：${result.yaoArray.join('、')}`,
+    `起卦时间：${context.inputWallClock}（${timezoneLabel(context.calculationTimezoneOffsetMinutes)}）`,
+    `四柱：${result.ganzhi.year}年 ${result.ganzhi.month}月 ${result.ganzhi.day}日 ${result.ganzhi.hour}时`,
+    `月建：${result.ganzhi.month.slice(-1)}｜日辰：${result.ganzhi.day.slice(-1)}｜旬空：${result.voidBranches.join('、')}`,
+    `本卦：${result.originalName}｜变卦：${result.changedName}｜互卦：${result.interName}｜错卦：${oppositeName}｜综卦：${reversedName}`,
+    `卦宫：${result.palace.name}宫｜宫五行：${result.palace.wuxing}｜八宫阶段：${result.palaceStage ?? '—'}｜${worldResponseAndMoving}`,
+    `整卦六合／六冲：${result.hexagramRelations?.original ?? '无'}｜变卦：${result.hexagramRelations?.changed ?? '无'}｜转换：${result.hexagramRelations?.transition ?? '无'}`,
+    `反吟／伏吟：${result.fanfuRelations?.labels.join('、') || '无'}`,
+    `特殊卦型：${result.specialPattern ?? '无'}${result.specialAdvice ? `｜${result.specialAdvice}` : ''}`,
+    '', '本卦六爻（上至初）：', lineDisplay,
+    '', '变卦完整六爻（上至初）：', changedLineText,
+    '', '伏神与飞神：', hiddenText,
+    '', `用神六亲：${usefulGod?.requestedSixRelative ?? (profile?.questionCategory === 'travel' ? '世爻（项目兼容口径）' : '未指定')}`,
+    `明现候选：${usefulGod?.visibleCandidates.join('、') || '无'}`,
+    `伏藏候选：${usefulGod?.hiddenCandidates.join('、') || '无'}`,
+    `是否唯一取用：${usefulGod?.chosenPosition ? '是' : '否'}`,
+    `最终取用：${usefulGod?.chosenPosition ? `${usefulGod.chosenPosition}爻` : '未自动确定'}`,
+    `选择理由：${usefulGod?.selectionReason.join('；') || '未选择所测事项，不自动定用神'}`,
+  ].join('\n');
+  const limitations = ['纳甲天干按京房八宫经卦纳干表补齐；未自动扩展无来源神煞。'];
   return envelope('liuyao', result.timestamp, {
     ...contextInput(context), generationMethod, yaoValues: result.yaoArray,
     ...(result.generation?.coinThrows ? { coinThrows: result.generation.coinThrows } : {}),
@@ -315,8 +431,11 @@ function formatLiuyao(date: Date, options: Options, context: CalculationContext)
     calendar: { fourPillars: result.ganzhi, monthBuild: result.ganzhi.month.slice(-1), dayChen: result.ganzhi.day.slice(-1), voidBranches: result.voidBranches },
     palace: { ...result.palace, stage: result.palaceStage },
     primary: { name: result.originalName, lines },
-    changed: { name: result.changedName, lines: lines.map((line) => line.changedLine) },
+    changed: { name: result.changedName, lines: changedLines },
     mutual: result.interName,
+    opposite: oppositeName,
+    reversed: reversedName,
+    worldAndResponse: { text: worldResponse, worldPosition: lines.find((line) => line.isWorld)?.position ?? null, responsePosition: lines.find((line) => line.isResponse)?.position ?? null },
     hexagramRelations: result.hexagramRelations,
     fanfuRelations: result.fanfuRelations,
     hiddenSpirits: result.hiddenSpirits,
@@ -331,12 +450,14 @@ function formatLiuyao(date: Date, options: Options, context: CalculationContext)
     evidenceAnalysis: result.evidenceAnalysis,
     usefulGod,
     generation: result.generation,
-  }, display, ['纳甲天干按京房八宫经卦纳干表补齐；未自动扩展无来源神煞。'],
-  `本卦${result.originalName}，动爻${moving}，${result.worldAndResponse.join('、')}，变卦${result.changedName}；月建${result.ganzhi.month.slice(-1)}、日辰${result.ganzhi.day.slice(-1)}、旬空${result.voidBranches.join('、')}${usefulGod ? `；用神${usefulGod.requestedSixRelative ?? '世爻'}${usefulGod.chosenPosition ? `在${usefulGod.chosenPosition}爻` : '未自动唯一确定'}` : ''}`);
+  }, display, limitations,
+  `本卦${result.originalName}，${worldResponse}，动爻${moving}，变卦${result.changedName}；月建${result.ganzhi.month.slice(-1)}、日辰${result.ganzhi.day.slice(-1)}、旬空${result.voidBranches.join('、')}${usefulGod ? `；用神${usefulGod.requestedSixRelative ?? '世爻'}${usefulGod.chosenPosition ? `在${usefulGod.chosenPosition}爻` : '未自动唯一确定'}` : ''}`,
+  '', buildTraditionalPrompt(options, profile, '六爻纳甲', methodBasis, context, promptSection, limitations));
 }
 
-function formatQimen(date: Date, context: CalculationContext) {
+function formatQimen(date: Date, options: Options, context: CalculationContext) {
   const result = generateQimen(date, 'zhuanpan', 'hour', 'chaibu');
+  const profile = readFocus(options);
   const patternTags = result.patternTags ?? [];
   const orderedPalaces = [...result.jiuGongGe].sort((a, b) => a.gong - b.gong);
   const palaces = orderedPalaces
@@ -353,7 +474,20 @@ function formatQimen(date: Date, context: CalculationContext) {
     '九宫盘：',
     palaces,
   ].join('\n');
-  return envelope('qimen', result.timestamp, { ...contextInput(context), family: '时家', scope: 'hour', layout: 'zhuanpan', juMethod: 'chaibu' }, {
+  const limitations = ['当前方法固定为时家转盘拆补法；不要按飞盘、置闰或其他流派重新排盘。', '盘面事实不等同于事项断语。'];
+  const promptSection = [
+    '方法：时家／转盘／拆补法',
+    `起局时间：${context.inputWallClock}（${timezoneLabel(context.calculationTimezoneOffsetMinutes)}）`,
+    `四柱：${result.ganzhi.year}年 ${result.ganzhi.month}月 ${result.ganzhi.day}日 ${result.ganzhi.hour}时`,
+    `节气：${text(result.timeInfo?.solarTerm)}`,
+    `遁局：${result.isYangDun ? '阳遁' : '阴遁'}${result.juShu}局`,
+    `值符：${result.zhiFu}｜值使：${result.zhiShi}`,
+    `空亡：${list(result.voidBranches)}｜驿马：${text(result.horseStar?.branch)}`,
+    `全部格局标签：${list(patternTags)}`,
+    '', '九宫完整天地人神盘：', palaces,
+    '', `应期证据：${result.yingQi?.description ?? '当前盘只给出相对节奏，没有唯一日期'}`,
+  ].join('\n');
+  return envelope('qimen', result.timestamp, { ...contextInput(context), family: '时家', scope: 'hour', layout: 'zhuanpan', juMethod: 'chaibu', ...profileInput(profile) }, {
     ganzhi: result.ganzhi,
     isYangDun: result.isYangDun,
     juShu: result.juShu,
@@ -365,9 +499,10 @@ function formatQimen(date: Date, context: CalculationContext) {
     patternTags,
     yingQi: result.yingQi,
     palaces: orderedPalaces,
-  }, display, ['首版固定为时家、转盘、拆补法；盘面事实不等同于事项断语。'],
+  }, display, limitations,
   `${result.isYangDun ? '阳遁' : '阴遁'}${result.juShu}局，值符${result.zhiFu}，值使${result.zhiShi}${patternTags.length ? `；格局${patternTags.join('、')}` : ''}`,
-  result.yingQi?.description ?? '当前盘只给出相对节奏，没有唯一日期。');
+  result.yingQi?.description ?? '当前盘只给出相对节奏，没有唯一日期。',
+  buildTraditionalPrompt(options, profile, '奇门遁甲', '时家转盘拆补法', context, promptSection, limitations));
 }
 
 function liurenGeneralDistribution(result: ReturnType<typeof generateLiuren>) {
@@ -437,6 +572,27 @@ function formatLiuren(date: Date, options: Options, context: CalculationContext)
       `十二天将：${liurenGeneralDistribution(result).map((item) => `${item.under}上${item.branch}乘${item.god}`).join('、')}`,
     ] : []),
   ].join('\n');
+  const limitations = ['输出为结构化课盘与取传事实；类神候选不得冒充唯一类神，不重新猜测十二天将。'];
+  const heavenlyPlateText = liurenGeneralDistribution(result).map((item) => `${item.under}上${item.branch}乘${item.god}`).join('、');
+  const promptSection = [
+    '方法：月将加时',
+    `起课时间：${context.inputWallClock}（${timezoneLabel(context.calculationTimezoneOffsetMinutes)}）`,
+    `四柱：${result.ganzhi.year}年 ${result.ganzhi.month}月 ${result.ganzhi.day}日 ${result.ganzhi.hour}时`,
+    `昼夜：${text(result.dayNight)}｜月将：${result.monthLeader}｜占时：${result.divinationBranch}｜贵人：${text(result.noblemanBranch)}`,
+    `旬空：${list(result.xunKong)}`,
+    `完整天地盘十二位：${heavenlyPlateText}`,
+    '', '四课：', lessons,
+    '', `取传法：${text(result.transmissionRule)}`,
+    '三传：', transmissions,
+    `课体：${list(guaTi)}`,
+    ...(focus ? [
+      `类神候选：${focus.classSpiritCandidates.join('、') || '无'}`,
+      `所在位置：${focus.locations.map((item) => `${item.under}上${item.branch}乘${item.god}`).join('、') || '未现'}`,
+      `入课：${focus.inLessons.map((item) => item.name).join('、') || '否'}｜入传：${focus.inTransmissions.map((item) => item.stage).join('、') || '否'}`,
+      `与日干／日支关系：${focus.relationToDayStem ?? '—'}／${focus.relationToDayBranch ?? '—'}`,
+    ] : ['类神候选：未选择所测事项']),
+    `应期证据：${result.timingEvidence?.join('；') || '当前课只给出先后与触发条件，没有唯一日期'}`,
+  ].join('\n');
   return envelope('liuren', result.timestamp, { ...contextInput(context), method: '月将加时', ...profileInput(profile) }, {
     ganzhi: result.ganzhi,
     dayNight: result.dayNight,
@@ -455,9 +611,10 @@ function formatLiuren(date: Date, options: Options, context: CalculationContext)
     guaTi,
     timingEvidence: result.timingEvidence,
     ...(focus ? { focus } : {}),
-  }, display, ['输出为结构化课盘与取传事实；神煞、课体仍应结合所问事项人工辨用。'],
+  }, display, limitations,
   `月将${result.monthLeader}，${text(result.transmissionRule)}；三传${result.threeTransmissions.map((item) => item.branch).join('→')}${guaTi.length ? `；${guaTi.join('、')}` : ''}${focus ? `；${focus.categoryLabel}类神候选${focus.classSpiritCandidates.join('、')}` : ''}`,
-  result.timingEvidence?.join('；') ?? '当前课只给出先后与触发条件，没有唯一日期。');
+  result.timingEvidence?.join('；') ?? '当前课只给出先后与触发条件，没有唯一日期。',
+  buildTraditionalPrompt(options, profile, '大六壬', '月将加时、四课三传', context, promptSection, limitations));
 }
 
 function xiaoliurenFocus(primary: { name: string; verse: string }, profile: FocusProfile) {
@@ -491,6 +648,16 @@ function formatXiaoliuren(date: Date, options: Options, context: CalculationCont
     '',
     `复算：月数 ${result.calculation.monthSeed} → 日数 ${result.calculation.daySeed} → 时数 ${result.calculation.hourSeed}`,
   ].join('\n');
+  const limitations = [`按${timezoneLabel(context.calculationTimezoneOffsetMinutes)}民用日零点换日；闰月沿用同名月序。`, '当前没有独立核验的结构化事项表，应用未从口诀关键词自动选句；请结合问题解释主宫与原始口诀。'];
+  const promptSection = [
+    '方法：月日时三步法',
+    `计算时区：${timezoneLabel(context.calculationTimezoneOffsetMinutes)}｜换日：民用零点`,
+    `农历：${result.isLeapMonth ? '闰' : ''}${result.lunarMonth}月${result.lunarDay}日｜时辰：${result.hourLabel}`,
+    `月宫：${result.sequence.month.name}｜日宫：${result.sequence.day.name}｜时宫：${result.sequence.hour.name}`,
+    `主宫：${result.primary.name}`,
+    `原始口诀：${result.primary.verse}`,
+    `复算过程：月数 ${result.calculation.monthSeed} → 日数 ${result.calculation.daySeed} → 时数 ${result.calculation.hourSeed}`,
+  ].join('\n');
   return envelope('xiaoliuren', result.timestamp, { ...contextInput(context), school: '六宫月日时三步法', method: 'time', monthPolicy: '农历月序', leapMonthPolicy: '沿用同名月序', hourBranchPolicy: '十二时支', ...profileInput(profile) }, {
     lunarMonth: result.lunarMonth,
     lunarDay: result.lunarDay,
@@ -502,8 +669,9 @@ function formatXiaoliuren(date: Date, options: Options, context: CalculationCont
     ...(focus ? { focus } : {}),
     primaryPalace: result.primary.name,
     primaryVerse: result.primary.verse,
-  }, display, [`按${timezoneLabel(context.calculationTimezoneOffsetMinutes)}民用日零点换日；闰月沿用同名月序。`],
-  `月宫${result.sequence.month.name}、日宫${result.sequence.day.name}、时宫${result.sequence.hour.name}；主宫${result.primary.name}${focus ? `；${focus.categoryLabel}仅保留原始口诀，不自动匹配事项句` : ''}`);
+  }, display, limitations,
+  `月宫${result.sequence.month.name}、日宫${result.sequence.day.name}、时宫${result.sequence.hour.name}；主宫${result.primary.name}${focus ? `；${focus.categoryLabel}仅保留原始口诀，不自动匹配事项句` : ''}`,
+  '', buildTraditionalPrompt(options, profile, '小六壬', '农历月日时三步排宫', context, promptSection, limitations));
 }
 
 function formatMeihua(date: Date, options: Options, context: CalculationContext) {
@@ -531,6 +699,19 @@ function formatMeihua(date: Date, options: Options, context: CalculationContext)
     '',
     text(result.mainHexagram.movingYaoCi),
   ].join('\n');
+  const limitations = ['时间起卦与数字起卦为不同输入口径；不得只用“体克用”等单一关系替代完整判断。'];
+  const promptSection = [
+    `起卦方式：${method === 'number' ? '数字一数法' : '时间起卦'}`,
+    `公式版本：${method === 'number' ? 'mingyu-one-number-v1' : 'mingyu-lunar-time-v1'}`,
+    `复算参数：${JSON.stringify(result.calculation)}`,
+    `主卦：${result.mainHexagram.symbol} ${result.originalName}｜互卦：${text(result.interHexagram?.symbol)} ${text(result.interName)}｜变卦：${text(result.changedHexagram?.symbol)} ${text(result.changedName)}`,
+    `动爻：第${result.movingYao.position}爻｜${result.movingYao.yaoName}｜爻辞：${text(result.mainHexagram.movingYaoCi)}`,
+    `体卦：${result.tiGua.name}·${result.tiGua.element}｜用卦：${result.yongGua.name}·${result.yongGua.element}`,
+    `互体：${result.interTiGua ? `${result.interTiGua.name}·${result.interTiGua.element}（${result.analysis.inter1Relation}）` : '—'}｜互用：${result.interYongGua ? `${result.interYongGua.name}·${result.interYongGua.element}（${result.analysis.inter2Relation}）` : '—'}`,
+    `体用关系：${result.analysis.tiYongRelation}｜体旺衰：${result.analysis.tiSeasonState}｜用旺衰：${result.analysis.yongSeasonState}`,
+    `变卦对原体关系：${result.analysis.changedRelation}`,
+    `应期证据：${result.analysis.yingQi?.join('；') || '当前卦没有形成明确应期线索'}`,
+  ].join('\n');
   return envelope('meihua', result.timestamp, { ...contextInput(context), method, formulaVersion: method === 'number' ? 'mingyu-one-number-v1' : 'mingyu-lunar-time-v1', ...(method === 'number' ? { number } : {}), ...profileInput(profile) }, {
     ganzhi: result.ganzhi,
     originalName: result.originalName,
@@ -548,9 +729,10 @@ function formatMeihua(date: Date, options: Options, context: CalculationContext)
       categoryLabel: focusLabel(profile),
       selfRole: '体卦／求测人', matterRole: '用卦／所测之事', mode: '简化体用版',
     } } : {}),
-  }, display, ['时间起卦与数字起卦为不同输入口径；结果保留所用方法和复算字段。'],
+  }, display, limitations,
   `主卦${result.originalName}，第${result.movingYao.position}爻动，变${result.changedName}；${result.analysis.tiYongRelation}${profile ? `；${focusLabel(profile)}以体为求测人、用为所测之事` : ''}`,
-  result.analysis.yingQi?.join('；') ?? '当前卦没有形成明确应期线索。');
+  result.analysis.yingQi?.join('；') ?? '当前卦没有形成明确应期线索。',
+  buildTraditionalPrompt(options, profile, '梅花易数', method === 'number' ? '数字一数法' : '时间起卦', context, promptSection, limitations));
 }
 
 function formatJinkoujue(date: Date, options: Options, context: CalculationContext) {
@@ -622,6 +804,20 @@ function formatJinkoujue(date: Date, options: Options, context: CalculationConte
     result.mainLine,
     result.summary,
   ].join('\n');
+  const limitations = ['随机起课未接入；同六亲位置只作为候选，当前没有来源充分的唯一选择器，最终取用未自动指定。'];
+  const promptSection = [
+    `起课方式：${result.methodLabel}`,
+    `时间：${context.inputWallClock}（${timezoneLabel(context.calculationTimezoneOffsetMinutes)}）`,
+    `四柱：${result.ganzhi.year}年 ${result.ganzhi.month}月 ${result.ganzhi.day}日 ${result.ganzhi.hour}时`,
+    `地分：${result.diFenBranch}｜月将：${result.monthLeader}｜贵人：${result.noblemanBranch}｜昼夜：${result.dayNight}｜旬空：${list(result.xunKong)}`,
+    '四位：', positions,
+    `四位关系：${text(result.relations)}`,
+    `阴阳取用：${result.yinYangUse.pattern}，用${result.yinYangUse.usePosition}`,
+    '动象：', movements,
+    `复算过程：${JSON.stringify(result.calculation)}`,
+    `事项六亲候选：${focus?.requestedSixRelative ?? '未指定'}｜位置：${focus?.candidates.join('、') || '无'}`,
+    '最终取用状态：未自动指定',
+  ].join('\n');
   return envelope('jinkoujue', result.timestamp, { ...contextInput(context), method, ...(method === 'branch' ? { branch: params.branch } : {}), ...(method === 'number' ? { number: params.number } : {}), inputPolicy: '只消费当前 method 所需参数，其他参数不参与计算', ...profileInput(profile) }, {
     ganzhi: result.ganzhi,
     method: result.method,
@@ -635,8 +831,9 @@ function formatJinkoujue(date: Date, options: Options, context: CalculationConte
     movements: result.movements,
     calculation: result.calculation,
     ...(focus ? { focus } : {}),
-  }, display, ['随机起课未接入；首版提供时间、指定地分和数字三种可复算输入。'],
-  `地分${result.diFenBranch}，${result.yinYangUse.pattern}用${result.yinYangUse.usePosition}${result.movements.length ? `；动象${result.movements.map((item) => item.name).join('、')}` : ''}${focus ? `；${focus.categoryLabel}六亲候选${focus.requestedSixRelative ?? '未指定'}${focus.candidates.length ? `在${focus.candidates.join('、')}` : '不现'}` : ''}`);
+  }, display, limitations,
+  `地分${result.diFenBranch}，${result.yinYangUse.pattern}用${result.yinYangUse.usePosition}${result.movements.length ? `；动象${result.movements.map((item) => item.name).join('、')}` : ''}${focus ? `；${focus.categoryLabel}六亲候选${focus.requestedSixRelative ?? '未指定'}${focus.candidates.length ? `在${focus.candidates.join('、')}` : '不现'}` : ''}`,
+  '', buildTraditionalPrompt(options, profile, '金口诀', '时间／指定地分／数字起课', context, promptSection, limitations));
 }
 
 function formatTaiyi(date: Date, options: Options, context: CalculationContext) {
@@ -675,6 +872,20 @@ function formatTaiyi(date: Date, options: Options, context: CalculationContext) 
     '',
     result.judgments.join('\n'),
   ].join('\n');
+  const limitations = ['年计按积年起局；月、日、时计采用现代历法定位复现通行四计。主算、客算、定算是盘面数值，不能仅按大小直接判断胜负。'];
+  const promptSection = [
+    `计式：${scope === 'year' ? '年计' : scope === 'month' ? '月计' : scope === 'day' ? '日计' : '时计'}`,
+    `采用模型：${text(result.model)}`,
+    `时间：${context.inputWallClock}（${timezoneLabel(context.calculationTimezoneOffsetMinutes)}）｜干支：${result.ganZhi}`,
+    `积数：${result.accumulatedLabel} ${result.accumulatedValue}`,
+    `遁局：${result.yinYang}${result.bureau}局`,
+    `太乙位置：${result.taiyiPosition}｜宫：${result.taiyiPalace}｜卦：${result.taiyiGua}｜方向：${result.taiyiDir}`,
+    `文昌：${result.wenChangPosition}｜始击：${result.shiJiPosition}｜计神：${result.jiShenPosition}`,
+    `主算：${result.lordCount}｜客算：${result.guestCount}｜定算：${result.setCount}`,
+    '上游 judgments：', result.judgments.join('\n'),
+    `事项角色映射：${focus ? `主算=${focus.lordMeaning}，客算=${focus.guestMeaning}` : '未指定所测事项'}`,
+    '角色限制：映射仅为项目辅助标签，数值不自动等同胜负。',
+  ].join('\n');
   return envelope('taiyi', resultTimestamp, { ...contextInput(context), scope, ...profileInput(profile) }, {
     scope: result.scope,
     ganZhi: result.ganZhi,
@@ -695,8 +906,9 @@ function formatTaiyi(date: Date, options: Options, context: CalculationContext) 
     judgments: result.judgments,
     model: result.model,
     ...(focus ? { focus } : {}),
-  }, display, ['年计按积年起局；月、日、时计采用现代历法定位复现通行四计。主客数值不直接等同胜负。'],
-  `${result.yinYang}${result.bureau}局，太乙${result.taiyiPosition}，文昌${result.wenChangPosition}，始击${result.shiJiPosition}；主算${result.lordCount}（${focus?.lordMeaning ?? '己方'}）、客算${result.guestCount}（${focus?.guestMeaning ?? '对方／外部'}）、定算${result.setCount}`);
+  }, display, limitations,
+  `${result.yinYang}${result.bureau}局，太乙${result.taiyiPosition}，文昌${result.wenChangPosition}，始击${result.shiJiPosition}；主算${result.lordCount}（${focus?.lordMeaning ?? '己方'}）、客算${result.guestCount}（${focus?.guestMeaning ?? '对方／外部'}）、定算${result.setCount}`,
+  '', buildTraditionalPrompt(options, profile, '太乙神数', '年／月／日／时四计七十二局基础盘', context, promptSection, limitations));
 }
 
 function parseLocalDate(value: string, label: string): number {
@@ -725,7 +937,7 @@ function formatAlmanac(date: Date, options: Options, context: CalculationContext
   const rangeDays = Math.floor((endTimestamp - startTimestamp) / 86_400_000) + 1;
   if (rangeDays > 180) throw new Error('择日范围不能超过 180 天。');
   const result = generateAlmanacSelection({ topic, startDate, endDate });
-  const shownDays = result.days.slice(0, 12);
+  const shownDays = result.days.slice(0, 5);
   const candidates = shownDays.map((day, index) => [
     `${index + 1}. ${day.date} ${day.weekday}｜农历 ${day.lunarDate}｜${day.ganzhi.day}日`,
     `   建除 ${day.dayOfficer}｜十二神 ${day.twelveStar}｜冲煞 ${day.clash}`,
@@ -738,6 +950,30 @@ function formatAlmanac(date: Date, options: Options, context: CalculationContext
     '',
     candidates,
   ].join('\n');
+  const limitations = ['未提供参与人生辰，不计算个人刑冲破害。', 'DATE12 水瓶区间在权威来源修正前继续明确标记为未决；不得猜改。'];
+  const symbolic = options.symbolicTiming && typeof options.symbolicTiming === 'object' && !Array.isArray(options.symbolicTiming)
+    ? options.symbolicTiming as Record<string, unknown> : {};
+  const traditionalTiming = options.traditionalTiming && typeof options.traditionalTiming === 'object' && !Array.isArray(options.traditionalTiming)
+    ? options.traditionalTiming as Record<string, unknown> : {};
+  const prompt = [
+    '【择日解读输入】', '',
+    `问题：${questionText(options)}`,
+    `事项：${result.topicLabel}`,
+    `范围：${result.startDate}至${result.endDate}`,
+    `计算时区：${timezoneLabel(context.calculationTimezoneOffsetMinutes)}`,
+    '', '【应用已生成的象征性时间结果】',
+    `塔罗结果：${text(symbolic.tarot)}`,
+    `占星结果：${text(symbolic.astrology)}`,
+    '', '说明：以上塔罗与占星内容是应用已经生成的结果，请直接作为输入使用，不要求重新核验抽牌或骰子过程。',
+    '', '【传统应期参考】',
+    `奇门：${text(traditionalTiming.qimen)}`,
+    `大六壬：${text(traditionalTiming.liuren)}`,
+    `梅花：${text(traditionalTiming.meihua)}`,
+    '', '【黄历候选｜前5条】', candidates || '无候选',
+    '', '【资料边界】', limitations.join('\n'),
+    '', '【解读要求】',
+    '综合已生成的象征性时间结果、传统应期与黄历候选。\n优先比较支持条件、限制条件和现实可执行性。\n不要重新抽牌、掷骰或排盘。\n不要把象征性应期说成唯一确定日期。',
+  ].join('\n');
   return envelope('almanac', result.timestamp, { ...contextInput(context), topic, startDate, endDate, rangeDays }, {
     topic: result.topic,
     topicLabel: result.topicLabel,
@@ -747,10 +983,11 @@ function formatAlmanac(date: Date, options: Options, context: CalculationContext
     displayedDays: shownDays,
     totalDays: result.days.length,
     page: 1,
-    pageSize: 12,
-  }, display, ['未提供参与人生辰时，不计算与参与人的刑冲破害；候选是透明规则筛选，不替代现实条件判断。'],
+    pageSize: 5,
+  }, display, limitations,
   `${result.topicLabel}候选：${shownDays.slice(0, 3).map((day) => day.date).join('、')}`,
-  `${result.topicLabel}候选：${shownDays.slice(0, 3).map((day) => day.date).join('、')}`);
+  `${result.topicLabel}候选：${shownDays.slice(0, 3).map((day) => day.date).join('、')}`,
+  { aiPromptVersion: AI_PROMPT_VERSION, aiPromptSection: `黄历候选（前${shownDays.length}条）：\n${candidates}`, aiPrompt: prompt });
 }
 
 export function calculate(method: string, timestamp: number, optionsJson = '{}'): string {
@@ -766,7 +1003,7 @@ export function calculate(method: string, timestamp: number, optionsJson = '{}')
     const result = (() => {
       switch (method) {
         case 'liuyao': return formatLiuyao(date, options, context);
-        case 'qimen': return formatQimen(date, context);
+        case 'qimen': return formatQimen(date, options, context);
         case 'liuren': return formatLiuren(date, options, context);
         case 'xiaoliuren': return formatXiaoliuren(date, options, context);
         case 'meihua': return formatMeihua(date, options, context);

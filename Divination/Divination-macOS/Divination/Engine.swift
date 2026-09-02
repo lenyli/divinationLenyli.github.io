@@ -67,6 +67,8 @@ final class Engine: ObservableObject {
     let SPECIAL_TAROT_START = 156
     let LENORMAND_SPECIAL_START = 43
     let ORACLE_SPECIAL_START = 49
+    private let specialDeckUnlockKey = "specialDeckUnlockedV1"
+    private let oracleAINotice = "提示：复古神谕是本项目的独立牌组，AI 可能无法仅凭以上摘要准确理解完整牌义。"
 
     var S: L10n { L10n.of(lang) }
     var mods: [String] { S.mods }
@@ -153,6 +155,20 @@ final class Engine: ObservableObject {
 
     init() { loadHistories() }
 
+    func requestSpecialDeckChange(_ enabled: Bool) -> Bool {
+        if !enabled { includeSpecial = false; resetTarotSessions(); return true }
+        guard UserDefaults.standard.bool(forKey: specialDeckUnlockKey) else { return false }
+        includeSpecial = true; resetTarotSessions(); return true
+    }
+
+    func unlockSpecialDeck(code: String) -> Bool {
+        guard code == "820813" else { return false }
+        UserDefaults.standard.set(true, forKey: specialDeckUnlockKey)
+        includeSpecial = true
+        resetTarotSessions()
+        return true
+    }
+
     func toggleLang() {
         lang = (lang == .zh) ? .en : .zh
         UserDefaults.standard.set(lang.rawValue, forKey: "divination_lang")
@@ -176,9 +192,6 @@ final class Engine: ObservableObject {
         return (qianTable()[i], i)
     }
     private func pickQian() -> [String] { pickQianWithIndex().row }
-    private func qianSourceStatus(_ index: Int) -> String? {
-        [41, 42].contains(index) ? "原始《抽牌.xlsm》对应签文存在截断，保留原文且不补写。" : nil
-    }
 
     // ================= 输出辅助 =================
     private func ap(_ t: String, bold: Bool = false, italic: Bool = false) {
@@ -254,13 +267,29 @@ final class Engine: ObservableObject {
         if curModule == 13 { divineDate(q); return }
         if curModule == 14 { divineOracle(q); return }
         if curModule >= 7 && curModule <= 13 { divineTraditional(q); return }
+        if curModule == 1 {
+            do {
+                let calculation = try calculateSharedLiuYao(q, date: Date())
+                copyText = calculation.result.aiPrompt
+                output = [Seg(text: calculation.result.display)]
+                let record: [String: Any] = [
+                    "methodVersion": calculation.result.methodVersion,
+                    "input": calculation.result.input,
+                    "options": calculation.options,
+                    "calculatedFacts": calculation.result.calculatedFacts,
+                    "aiPrompt": calculation.result.aiPrompt,
+                ]
+                let data = try? JSONSerialization.data(withJSONObject: record, options: [.sortedKeys])
+                let reproducible = data.flatMap { String(data: $0, encoding: .utf8) } ?? "{}"
+                addHistoryText(copyText + "\n【六爻复算记录】" + reproducible)
+            } catch {
+                copyText = ""; output = [Seg(text: error.localizedDescription, red: true)]
+            }
+            return
+        }
         var lines: [[String]] = []
         let result: String
-        if curModule == 1 {
-            let useSelection = !liuYaoUpperTrigram.isEmpty && !liuYaoLowerTrigram.isEmpty
-            result = divineLiuYao(&lines, useSelection: useSelection)
-        }
-        else if curModule == 3 { result = divineLenormand(&lines) }
+        if curModule == 3 { result = divineLenormand(&lines) }
         else if curModule == 4 { result = divineRunes(&lines) }
         else { result = divineAstro(&lines) }
         copyText = copyBlock(q, title: S.mods[curModule], body: result)
@@ -278,7 +307,7 @@ final class Engine: ObservableObject {
 
     private func divineTraditional(_ q: String) {
         let method = traditionalMethods[curModule - 7]
-        var options: [String: Any] = [:]
+        var options: [String: Any] = ["question": q]
         var date = traditionalDate
         if method == "meihua" {
             options = ["method": traditionalMethod, "number": traditionalNumber]
@@ -295,14 +324,15 @@ final class Engine: ObservableObject {
                        "endDate": formatter.string(from: almanacEndDate)]
             date = almanacStartDate
         }
-        if method != "qimen" && method != "almanac" {
+        options["question"] = q
+        if method != "almanac" {
             options.merge(focusOptions()) { current, _ in current }
         }
         options.merge(fixedEast8Options) { current, _ in current }
         do {
             let result = try TraditionalAlgorithmEngine.shared.calculate(method: method, date: date, options: options)
-            copyText = traditionalCopyBlock(q, fallbackTitle: S.mods[curModule], display: result.display)
-            output = [Seg(text: copyText)]
+            copyText = result.aiPrompt
+            output = [Seg(text: result.display)]
             addHistory()
         } catch {
             copyText = ""
@@ -475,6 +505,36 @@ final class Engine: ObservableObject {
         return S.liuYaoSummary(ben: ben, dong: dong, bian: bian, hu: hu, cuo: cuog, zong: zong) + liuYaoFocusSummary(ben: ben, upper: upper, lower: lower)
     }
 
+    private func selectedLiuYaoValues() -> [Int] {
+        selectedLiuYaoLines().h.map { line in
+            let moving = line.contains("○"), yang = line.hasPrefix("阳")
+            return moving ? (yang ? 9 : 6) : (yang ? 7 : 8)
+        }
+    }
+
+    private func frozenCoinThrows() -> [[String: Any]] {
+        var generator = SystemRandomNumberGenerator()
+        return (0..<6).map { _ in
+            let coins = (0..<3).map { _ in Bool.random(using: &generator) ? 3 : 2 }
+            return ["coins": coins, "total": coins.reduce(0, +)]
+        }
+    }
+
+    private func calculateSharedLiuYao(_ q: String, date: Date, forceRandom: Bool = false, coinThrows: [[String: Any]]? = nil) throws -> (result: TraditionalCalculation, options: [String: Any]) {
+        let useSelection = !forceRandom && !liuYaoUpperTrigram.isEmpty && !liuYaoLowerTrigram.isEmpty
+        var options: [String: Any] = ["question": q]
+        options.merge(focusOptions()) { current, _ in current }
+        options.merge(fixedEast8Options) { current, _ in current }
+        if useSelection {
+            options["generationMethod"] = "manual"
+            options["yaos"] = selectedLiuYaoValues()
+        } else {
+            options["generationMethod"] = "coins"
+            options["coinThrows"] = coinThrows ?? frozenCoinThrows()
+        }
+        return (try TraditionalAlgorithmEngine.shared.calculate(method: "liuyao", date: date, options: options), options)
+    }
+
     // ================= 占星骰子 =================
     private func cjk(_ s: String) -> String {
         var start: String.Index? = nil
@@ -535,7 +595,9 @@ final class Engine: ObservableObject {
         copyText = copyBlock(q, title: S.mods[14], body: oraclePromptSummary(drawn))
         addHistory()
         output = []
-        ap(copyText + "\n\n" + S.briefNote + "\n")
+        ap(copyText + "\n")
+        ap(oracleAINotice + "\n", italic: true)
+        ap("\n" + S.briefNote + "\n")
         for (i, item) in drawn.enumerated() {
             ap(S.cardPre[i])
             ap(item.card[2] + "（" + (item.upright ? "正位" : "逆位") + "）", bold: true)
@@ -580,18 +642,24 @@ final class Engine: ObservableObject {
     }
 
     // ================= 玄天灵签 =================
+    private func qianAIPrompt(_ q: String, row: [String]) -> String {
+        [
+            "【占卜解读输入】", "", "问题：" + q, "所测事项：" + (focusDescription.isEmpty ? "未指定" : focusDescription),
+            "方法：玄天灵签", "方法口径：玄天上帝感应签，应用本地随机抽签", "", "【计算事实】",
+            "签号：" + row[0], "等级：" + row[1], "签名：" + row[2], "圣意：" + row[3], "谋望：" + row[4],
+            "家宅：" + row[5], "婚姻：" + row[6], "失物：" + row[7], "官事：" + row[8], "行人：" + row[9],
+            "占病：" + row[10], "解曰：" + row[11], "", "【资料边界】",
+            "以上为应用已抽得的签文，不重新抽签，不改写签文原文。", "", "【解读要求】",
+            "结合用户问题优先解释相关栏目，同时以圣意与解曰校正，不把不相关栏目强行套用。"
+        ].joined(separator: "\n")
+    }
+
     private func divineQian(_ q: String) {
-        let picked = pickQianWithIndex(), s = picked.row
-        let head = s[0] + "\u{3000}" + s[1] + "\u{3000}" + s[2]
-        let labels = S.qianLabels
-        var bodyLines = [head] + labels.indices.map { labels[$0] + "：" + s[$0 + 3] }
-        if let note = qianSourceStatus(picked.index) { bodyLines.append("资料状态：" + note) }
-        let body = bodyLines.joined(separator: "\n")
-        copyText = copyBlock(q, title: S.mods[6], body: body)
+        let s = pickQian()
+        copyText = qianAIPrompt(q, row: s)
         addHistory()
         output = []
         appendQian(s)
-        if let note = qianSourceStatus(picked.index) { ap("\n资料状态：", bold: true); ap(note) }
     }
     private func appendQian(_ s: [String]) {
         let head = s[0] + "\u{3000}" + s[1] + "\u{3000}" + s[2]
@@ -716,10 +784,11 @@ final class Engine: ObservableObject {
         let len = divineLenormand(&dummy)
         let runes = divineRunes(&dummy)
         let astro = divineAstro(&dummy)
-        let liuyao = divineLiuYao(&dummy)
         let oracle = oraclePromptSummary(drawOracleCards())
         let pickedQian = pickQianWithIndex(), qs = pickedQian.row
         let qianHead = qs[0] + "　" + qs[1] + "　" + qs[2]
+        let coinThrows = frozenCoinThrows()
+        let liuyaoCalculation = try? calculateSharedLiuYao(q, date: castDate, forceRandom: true, coinThrows: coinThrows)
         let traditionalSpecs: [(String, String, [String: Any])] = [
             ("qimen", "奇门遁甲", [:]),
             ("liuren", "大六壬", [:]),
@@ -728,32 +797,42 @@ final class Engine: ObservableObject {
             ("taiyi", "太乙神数", ["scope": "day"]),
             ("jinkoujue", "金口诀", ["method": "time"]),
         ]
-        let traditionalLines = traditionalSpecs.map { method, label, options -> String in
+        let traditionalResults = traditionalSpecs.map { method, label, options -> (String, TraditionalCalculation?, String?) in
             var methodOptions = options
-            if method != "qimen" { methodOptions.merge(focusOptions()) { current, _ in current } }
+            methodOptions["question"] = q
+            methodOptions.merge(focusOptions()) { current, _ in current }
             methodOptions.merge(fixedEast8Options) { current, _ in current }
             do {
                 let result = try TraditionalAlgorithmEngine.shared.calculate(method: method, date: castDate, options: methodOptions)
-                return label + "：" + (result.summary.isEmpty ? "计算失败（没有返回摘要）" : result.summary)
-            } catch { return label + "：计算失败（" + error.localizedDescription + "）" }
+                return (label, result, nil)
+            } catch { return (label, nil, error.localizedDescription) }
         }
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "zh_CN")
         formatter.dateFormat = "yyyy-MM-dd HH:mm"
-        var sections = ["【综合占卜】", "问题：" + q]
-        if !focusDescription.isEmpty {
-            sections.append((S.isEn ? "Question type / gender: " : "所测何事／性别：") + focusDescription)
-        }
+        formatter.timeZone = TimeZone(secondsFromGMT: 8 * 3600)
+        var sections = ["【综合占卜解读输入】", "问题：" + q, "事项／性别：" + (focusDescription.isEmpty ? "未指定" : focusDescription)]
         sections += [
-            "起卦时间：" + formatter.string(from: castDate), "",
+            "统一起卦时间：" + formatter.string(from: castDate) + "（UTC+08:00）", "",
             "【卡牌与卦象】", "塔罗牌：" + tarot, "雷诺曼牌：" + len, "复古神谕：" + oracle,
             "卢恩符文：" + runes, "占星骰子：" + astro,
         ]
-        sections += ["", "【传统术数】", "六爻纳甲：" + liuyao] + traditionalLines
-        if let note = qianSourceStatus(pickedQian.index) { sections += ["", "灵签资料状态：" + note] }
-        sections += ["", "解读要求：综合各体系的共同指向与矛盾，只依据以上数据。"]
+        sections += ["", "【传统术数】", liuyaoCalculation.map { "【六爻纳甲】\n" + $0.result.aiPromptSection } ?? "六爻纳甲：计算失败"]
+        for item in traditionalResults {
+            sections.append(item.1.map { "【" + item.0 + "】\n" + $0.aiPromptSection } ?? (item.0 + "：计算失败（" + (item.2 ?? "未知错误") + "）"))
+        }
+        sections += ["", "【解读要求】", "先分别尊重各体系自身规则，再综合共同指向与矛盾。\n不得为了得到一致结论而删去冲突信息。\n区分强共识、弱共识、单一体系提示和资料不足。\n只依据以上数据，不重新抽牌、掷骰或排盘。"]
         copyText = sections.joined(separator: "\n")
-        addHistoryText(copyText + "\n" + qianHead)
+        var liuyaoHistory: [String: Any] = ["coinThrows": coinThrows]
+        if let calculation = liuyaoCalculation {
+            liuyaoHistory["methodVersion"] = calculation.result.methodVersion
+            liuyaoHistory["input"] = calculation.result.input
+            liuyaoHistory["calculatedFacts"] = calculation.result.calculatedFacts
+            liuyaoHistory["aiPrompt"] = calculation.result.aiPrompt
+        }
+        let liuyaoData = try? JSONSerialization.data(withJSONObject: liuyaoHistory, options: [.sortedKeys])
+        let liuyaoText = liuyaoData.flatMap { String(data: $0, encoding: .utf8) } ?? "{}"
+        addHistoryText(copyText + "\n" + qianHead + "\n【六爻复算记录】" + liuyaoText)
         output = []
         ap(copyText)
         ap("\n\n")
@@ -761,6 +840,7 @@ final class Engine: ObservableObject {
     }
 
     private func divineDate(_ q: String) {
+        copyText = ""
         var pool = Array(4...55)
         var drawn: [String] = []
         var ace: String? = nil
@@ -801,21 +881,30 @@ final class Engine: ObservableObject {
             ("liuren", "六壬应期", [:]),
             ("meihua", "梅花应期", ["method": "time"]),
         ]
+        var traditionalTiming: [String: String] = [:]
         let timingLines = timingSpecs.map { method, label, options -> String in
             var methodOptions = options
+            methodOptions["question"] = q
             methodOptions.merge(fixedEast8Options) { current, _ in current }
             do {
                 let result = try TraditionalAlgorithmEngine.shared.calculate(method: method, date: castDate, options: methodOptions)
-                return label + "：" + (result.timingSummary.isEmpty ? "计算失败（没有返回应期摘要）" : result.timingSummary)
-            } catch { return label + "：计算失败（" + error.localizedDescription + "）" }
+                let value = result.timingSummary.isEmpty ? "计算失败（没有返回应期摘要）" : result.timingSummary
+                traditionalTiming[method] = value
+                return label + "：" + value
+            } catch {
+                let value = "计算失败（" + error.localizedDescription + "）"; traditionalTiming[method] = value; return label + "：" + value
+            }
         }
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "yyyy-MM-dd"
         var almanacOptions: [String: Any] = [
+            "question": q,
             "topic": almanacTopic,
             "startDate": formatter.string(from: almanacStartDate),
             "endDate": formatter.string(from: almanacEndDate),
+            "symbolicTiming": ["tarot": tarotResult ?? "", "astrology": S.baseDuration + "：" + p2[2] + "；" + S.unit + "：" + s2[2] + "；" + S.adjustNum + "：" + h2[2]],
+            "traditionalTiming": ["qimen": traditionalTiming["qimen"] ?? "—", "liuren": traditionalTiming["liuren"] ?? "—", "meihua": traditionalTiming["meihua"] ?? "—"],
         ]
         almanacOptions.merge(fixedEast8Options) { current, _ in current }
         if !timingLines.isEmpty {
@@ -824,11 +913,12 @@ final class Engine: ObservableObject {
         do {
             let almanacResult = try TraditionalAlgorithmEngine.shared.calculate(method: "almanac", date: almanacStartDate, options: almanacOptions)
             body += "\n\n" + (almanacResult.display.isEmpty ? "择日黄历：计算失败（没有返回盘面）" : almanacResult.display)
+            copyText = almanacResult.aiPrompt
         } catch { body += "\n\n择日黄历：计算失败（" + error.localizedDescription + "）" }
-        copyText = copyBlock(q, title: S.mods[13].replacingOccurrences(of: "/", with: ""), body: body)
+        if copyText.isEmpty { copyText = "【择日解读输入】\n问题：" + q + "\n计算失败，未生成可复制结果。" }
         addHistory()
         output = []
-        ap(copyText + "\n\n" + S.briefNote + "\n")
+        ap(body + "\n\n" + S.briefNote + "\n")
         ap(S.tarotOrder, bold: true)
         ap("：" + drawn.joined(separator: "、") + "\n")
         ap(S.astroDice, bold: true)

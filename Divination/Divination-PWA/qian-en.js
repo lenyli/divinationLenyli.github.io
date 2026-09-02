@@ -586,7 +586,7 @@ const QIAN_EN = [
     "Petty folk raise strange blame without cause. The good panic; heart and gall grow cold. Heaven's way will not allow human affairs to twist. The upright will not suffer deceit.",
     "Weary travel, poor roads, entangled between. Leaving was easy; return is hard. If you ask the day of coming home, wait until fish and dragon leave the shallow shoal.",
     "Heaven's stars unaligned bring offense. Why at crisis cry to sages? Only keep good thoughts within your heart. Then a hundred illnesses recover of themselves.",
-    "Household and people: peaceful; self: going out auspicious; seeking wealth: fulfilled; traveler: about to arrive; seeking office: gains the post,"
+    "Household and people: peaceful; self: going out auspicious; seeking wealth: fulfilled; traveler: about to arrive; seeking office: gains the post; lawsuit: in the right; marriage: harmonious; pregnancy: a son; crops: abundant; livestock: thriving; all affairs: greatly auspicious."
   ],
   [
     "Slip 43",
@@ -600,7 +600,7 @@ const QIAN_EN = [
     "Right and wrong without cause trap the innocent. Why worry the heart fearing the cane? A noble will come and shout it scattered. In the end no prison—need not startle.",
     "An old friend long gone at the world's edge. Ten thousand waters, a thousand hills—not yet home. Today the goose transmits letters arriving. Peace reported—free of sighs.",
     "In peace without trouble you burn no incense. Only at crisis do you cry to the Highest Vault. If your illness would know the day of recovery, you must first cast off worldly filth.",
-    "Household and people: peaceful; self: has joy; lost goods: not lost; illness: no harm; seeking wealth: greatly favorable; traveler"
+    "Household and people: peaceful; self: has joy; lost goods: not lost; illness: no harm; seeking wealth: greatly favorable; traveler: has news; lawsuit: in the right; seeking office: gains the post; marriage: achievable; pregnancy: a son; crops: abundant; livestock: thriving."
   ],
   [
     "Slip 44",

@@ -3,6 +3,9 @@ import JavaScriptCore
 
 struct TraditionalCalculation {
     let display: String
+    let aiPrompt: String
+    let aiPromptSection: String
+    let aiPromptVersion: String
     let summary: String
     let timingSummary: String
     let methodVersion: String
@@ -69,6 +72,9 @@ final class TraditionalAlgorithmEngine {
         }
         return TraditionalCalculation(
             display: display,
+            aiPrompt: result["aiPrompt"] as? String ?? "",
+            aiPromptSection: result["aiPromptSection"] as? String ?? "",
+            aiPromptVersion: result["aiPromptVersion"] as? String ?? "",
             summary: result["summary"] as? String ?? "",
             timingSummary: result["timingSummary"] as? String ?? "",
             methodVersion: result["methodVersion"] as? String ?? "",

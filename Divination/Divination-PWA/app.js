@@ -258,6 +258,8 @@ const state = {
   pageCopy: new Array(18).fill(null),
   segs: []
 };
+const SPECIAL_DECK_UNLOCK_KEY = 'specialDeckUnlockedV1';
+const ORACLE_AI_NOTICE = '提示：复古神谕是本项目的独立牌组，AI 可能无法仅凭以上摘要准确理解完整牌义。';
 
 // ================= 工具 =================
 function randomIndex(n) {
@@ -474,6 +476,45 @@ function divineLiuYao(lines, useSelection=false) {
   return s.liuYaoSummary(ben, dong, 1, 2, bian, hu, cuog, zong)+liuYaoFocusSummary(ben,upper,lower);
 }
 
+function selectedLiuYaoValues(){
+  const {h}=selectedLiuYaoLines();
+  return h.map(line=>{
+    const moving=line.includes('○'), yang=line.startsWith('阳');
+    return moving?(yang?9:6):(yang?7:8);
+  });
+}
+
+function frozenCoinThrows(){
+  return Array.from({length:6},()=>{
+    const coins=Array.from({length:3},()=>rnd(2)===0?2:3);
+    return {coins,total:coins[0]+coins[1]+coins[2]};
+  });
+}
+
+function calculateSharedLiuYao(q,castTime,{forceRandom=false,coinThrows=null}={}){
+  const useSelection=!forceRandom&&$('liu-upper')?.value!==''&&$('liu-lower')?.value!=='';
+  const options={question:q,...focusOptions(),...fixedEast8Context()};
+  if(useSelection){
+    options.generationMethod='manual';
+    options.yaos=selectedLiuYaoValues();
+  }else{
+    options.generationMethod='coins';
+    options.coinThrows=coinThrows||frozenCoinThrows();
+  }
+  const response=calculateTraditional('liuyao',castTime.getTime(),options);
+  return {response,options};
+}
+
+function divineSharedLiuYao(q){
+  const castTime=new Date();
+  const {response,options}=calculateSharedLiuYao(q,castTime);
+  if(!response.ok){ window.alert(response.error); return false; }
+  state.copyText=response.result.aiPrompt;
+  state.segs=[]; seg(response.result.display); flushOut();
+  addHistory({kind:'liuyao',schemaVersion:3,methodVersion:response.result.methodVersion,input:response.result.input,coinThrows:options.coinThrows||null,yaoValues:response.result.input.yaoValues,calculatedFacts:response.result.calculatedFacts,aiPrompt:response.result.aiPrompt});
+  return true;
+}
+
 // ================= 占星骰子 =================
 function cjk(s) {
   const m = s.match(/[一-龥]+/);
@@ -513,7 +554,9 @@ function divineOracle(q){
   state.copyText=copyBlock(q,L().mods[14],oraclePromptSummary(drawn));
   addHistory();
   const s=L(), pre=s.cardPre;
-  state.segs=[]; seg(state.copyText+"\n\n"+s.briefNote+"\n");
+  state.segs=[]; seg(state.copyText+"\n");
+  seg(ORACLE_AI_NOTICE+"\n",{italic:true});
+  seg("\n"+s.briefNote+"\n");
   drawn.forEach(({card,upright},i)=>{
     seg(pre[i]);
     seg(`${card[2]}（${upright?'正位':'逆位'}）`,{bold:true});
@@ -559,8 +602,15 @@ function divineRunes(lines) {
 function qianTable() {
   return (lang === 'en' && typeof QIAN_EN !== 'undefined') ? QIAN_EN : QIAN;
 }
-function qianSourceStatus(index){
-  return [41,42].includes(index)?{complete:false,note:'原始《抽牌.xlsm》对应签文存在截断，保留原文且不补写。'}:{complete:true,note:''};
+function qianSourceStatus(){ return {complete:true,note:''}; }
+function qianAiPrompt(q,s){
+  const focus=focusDescription()||'未指定';
+  return [
+    '【占卜解读输入】','',`问题：${q}`,`所测事项：${focus}`,'方法：玄天灵签','方法口径：玄天上帝感应签，应用本地随机抽签','',
+    '【计算事实】',`签号：${s[0]}`,`等级：${s[1]}`,`签名：${s[2]}`,`圣意：${s[3]}`,`谋望：${s[4]}`,`家宅：${s[5]}`,`婚姻：${s[6]}`,`失物：${s[7]}`,`官事：${s[8]}`,`行人：${s[9]}`,`占病：${s[10]}`,`解曰：${s[11]}`,'',
+    '【资料边界】','以上为应用已抽得的签文，不重新抽签，不改写签文原文。','',
+    '【解读要求】','结合用户问题优先解释相关栏目，同时以圣意与解曰校正，不把不相关栏目强行套用。'
+  ].join('\n');
 }
 function divineQian(q) {
   const table = qianTable();
@@ -568,7 +618,7 @@ function divineQian(q) {
   const labels = L().qianLabels;
   const head = s[0]+"　"+s[1]+"　"+s[2];
   const body=[head,...labels.map((lb,i)=>lb+"："+s[i+3]),...(sourceStatus.complete?[]:[`资料状态：${sourceStatus.note}`])].join('\n');
-  state.copyText = copyBlock(q,L().mods[6],body);
+  state.copyText = qianAiPrompt(q,s);
   addHistory({kind:'qian',schemaVersion:2,sourceIndex:index+1,sourceComplete:sourceStatus.complete,sourceNote:sourceStatus.note});
   state.segs = [];
   appendQian(s);
@@ -700,13 +750,14 @@ function divineHome(q) {
   const len = divineLenormand(dummy);
   const runes = divineRunes(dummy);
   const astro = divineAstro(dummy);
-  const liuyao = divineLiuYao(dummy);
+  const coinThrows=frozenCoinThrows();
+  const liuyaoCalculation=calculateSharedLiuYao(q,castTime,{forceRandom:true,coinThrows});
   const oracle = oraclePromptSummary(drawOracleCards());
   const qTable = qianTable();
   const qianIndex=rnd(qTable.length), qs = qTable[qianIndex], qianStatus=qianSourceStatus(qianIndex);
   const qianHead = qs[0]+"　"+qs[1]+"　"+qs[2];
   const calculationContext=fixedEast8Context();
-  const traditionalLines = [
+  const traditionalResults = [
     ['qimen','奇门遁甲',{}],
     ['liuren','大六壬',{}],
     ['xiaoliuren','小六壬',{}],
@@ -714,15 +765,15 @@ function divineHome(q) {
     ['taiyi','太乙神数',{scope:'day'}],
     ['jinkoujue','金口诀',{method:'time'}],
   ].map(([method,label,options])=>{
-    const methodOptions=method==='qimen'?{...options,...calculationContext}:{...options,...focus,...calculationContext};
+    const methodOptions={question:q,...options,...focus,...calculationContext};
     const response=calculateTraditional(method,castTime.getTime(),methodOptions);
-    return response.ok && response.result.summary ? `${label}：${response.result.summary}` : `${label}：计算失败（${response.error||'没有返回摘要'}）`;
+    return {label,response};
   });
-  const sections=['【综合占卜】',`问题：${q}`];
+  const sections=['【综合占卜解读输入】',`问题：${q}`];
   const focusText=focusDescription();
-  if(focusText) sections.push(`${lang==='en'?'Question type / gender':'所测何事／性别'}：${focusText}`);
+  sections.push(`事项／性别：${focusText||'未指定'}`);
   sections.push(
-    `起卦时间：${localDateTimeValue(castTime).replace('T',' ')}`,
+    `统一起卦时间：${east8DateTimeValue(castTime)}（UTC+08:00）`,
     '',
     '【卡牌与卦象】',
     `塔罗牌：${tarot}`,
@@ -731,11 +782,12 @@ function divineHome(q) {
     `卢恩符文：${runes}`,
     `占星骰子：${astro}`
   );
-  sections.push('', '【传统术数】', `六爻纳甲：${liuyao}`, ...traditionalLines);
-  if(!qianStatus.complete) sections.push('', `灵签资料状态：${qianStatus.note}`);
-  sections.push('', '解读要求：综合各体系的共同指向与矛盾，只依据以上数据。');
+  sections.push('', '【传统术数】');
+  sections.push(liuyaoCalculation.response.ok?`【六爻纳甲】\n${liuyaoCalculation.response.result.aiPromptSection}`:`六爻纳甲：计算失败（${liuyaoCalculation.response.error}）`);
+  traditionalResults.forEach(({label,response})=>sections.push(response.ok?`【${label}】\n${response.result.aiPromptSection}`:`${label}：计算失败（${response.error||'没有返回事实段'}）`));
+  sections.push('', '【解读要求】','先分别尊重各体系自身规则，再综合共同指向与矛盾。\n不得为了得到一致结论而删去冲突信息。\n区分强共识、弱共识、单一体系提示和资料不足。\n只依据以上数据，不重新抽牌、掷骰或排盘。');
   state.copyText=sections.join('\n');
-  addHistoryText(state.copyText+"\n"+qianHead,{kind:'combined',schemaVersion:2,castTimestampUtc:castTime.getTime(),calculationContext,focus,includeSpecial,tarotDraws,qian:{sourceIndex:qianIndex+1,sourceComplete:qianStatus.complete}});
+  addHistoryText(state.copyText+"\n"+qianHead,{kind:'combined',schemaVersion:3,castTimestampUtc:castTime.getTime(),calculationContext,focus,includeSpecial,tarotDraws,liuyao:liuyaoCalculation.response.ok?{methodVersion:liuyaoCalculation.response.result.methodVersion,input:liuyaoCalculation.response.result.input,coinThrows,calculatedFacts:liuyaoCalculation.response.result.calculatedFacts,aiPrompt:liuyaoCalculation.response.result.aiPrompt}:null,qian:{sourceIndex:qianIndex+1,sourceComplete:qianStatus.complete}});
   state.segs=[];
   seg(state.copyText+"\n");
   appendQian(qs);
@@ -770,22 +822,25 @@ function divineDate(q) {
   }
   const p2=PLANETS[rnd(PLANETS.length)], sg2=SIGNS[rnd(SIGNS.length)], h2=HOUSES[rnd(HOUSES.length)];
   let body = `${s.tarotPred}（自定义日期启发式，DATE12 水瓶区间源表存在重叠，未擅自改写）：${tarotResult}\n\n${s.astroPred}\n${s.baseDuration}：${p2[2]}\n${s.unit}：${sg2[2]}\n${s.adjustNum}：${h2[2]}`;
-  const timingLines=[];
+  const timingLines=[], traditionalTiming={};
   [['qimen','奇门应期',{}],['liuren','六壬应期',{}],['meihua','梅花应期',{method:'time'}]].forEach(([method,label,options])=>{
-    const response=calculateTraditional(method,castTime.getTime(),{...options,...fixedEast8Context()});
-    timingLines.push(response.ok && response.result.timingSummary?`${label}：${response.result.timingSummary}`:`${label}：计算失败（${response.error||'没有返回应期摘要'}）`);
+    const response=calculateTraditional(method,castTime.getTime(),{question:q,...options,...fixedEast8Context()});
+    const value=response.ok&&response.result.timingSummary?response.result.timingSummary:`计算失败（${response.error||'没有返回应期摘要'}）`;
+    traditionalTiming[method]=value;
+    timingLines.push(`${label}：${value}`);
   });
   const start=$('traditional-start')?.value||localDateValue();
   const fallbackEnd=new Date(); fallbackEnd.setDate(fallbackEnd.getDate()+30);
   const end=$('traditional-end')?.value||localDateValue(fallbackEnd);
   const topic=$('traditional-topic')?.value||'custom';
-  const almanac=calculateTraditional('almanac',new Date(`${start}T12:00`).getTime(),{topic,startDate:start,endDate:end,...fixedEast8Context()});
+  const astrologyResult=`${s.baseDuration}：${p2[2]}；${s.unit}：${sg2[2]}；${s.adjustNum}：${h2[2]}`;
+  const almanac=calculateTraditional('almanac',new Date(`${start}T12:00`).getTime(),{question:q,topic,startDate:start,endDate:end,symbolicTiming:{tarot:tarotResult,astrology:astrologyResult},traditionalTiming:{qimen:traditionalTiming.qimen,liuren:traditionalTiming.liuren,meihua:traditionalTiming.meihua},...fixedEast8Context()});
   if(timingLines.length) body += "\n\n【应期参考】\n"+timingLines.join("\n");
   body += almanac.ok && almanac.result.display ? "\n\n"+almanac.result.display : `\n\n择日黄历：计算失败（${almanac.error||'没有返回盘面'}）`;
-  state.copyText=copyBlock(q,s.mods[13].replace('/',''),body);
+  state.copyText=almanac.ok?almanac.result.aiPrompt:`【择日解读输入】\n问题：${q}\n计算失败：${almanac.error||'没有返回盘面'}`;
   addHistory({kind:'timing',schemaVersion:2,castTimestampUtc:castTime.getTime(),tarotOrder:drawn,tarotResult,astroDice:{planet:p2[0],sign:sg2[0],house:h2[0]},date12SourceStatus:'水瓶区间源表重叠，未改写'});
   state.segs=[];
-  seg(state.copyText+"\n\n"+s.briefNote+"\n");
+  seg(body+"\n\n"+s.briefNote+"\n");
   seg(s.tarotOrder,{bold:true});
   seg("："+drawn.join("、")+"\n");
   seg(s.astroDice,{bold:true});
@@ -891,9 +946,7 @@ function renderTabs(){
     const lb=document.createElement('label'); lb.className='chk';
     const c=document.createElement('input'); c.type='checkbox'; c.checked=state.includeSpecial;
     c.onchange=()=>{
-      state.includeSpecial=c.checked;
-      resetTarotSessions();
-      if (c.checked) openSpecialWarn();
+      requestSpecialDeckChange(c.checked,c);
     };
     lb.appendChild(c); lb.appendChild(document.createTextNode(s.includeSpecial));
     sub.appendChild(lb);
@@ -906,6 +959,11 @@ function renderAll(){ renderTabs(); }
 function localDateTimeValue(date=new Date()){
   const p=n=>String(n).padStart(2,'0');
   return `${date.getFullYear()}-${p(date.getMonth()+1)}-${p(date.getDate())}T${p(date.getHours())}:${p(date.getMinutes())}`;
+}
+
+function east8DateTimeValue(date){
+  const shifted=new Date(date.getTime()+480*60000), p=n=>String(n).padStart(2,'0');
+  return `${shifted.getUTCFullYear()}-${p(shifted.getUTCMonth()+1)}-${p(shifted.getUTCDate())} ${p(shifted.getUTCHours())}:${p(shifted.getUTCMinutes())}`;
 }
 
 function localDateValue(date=new Date()){
@@ -1019,14 +1077,14 @@ function renderTraditionalInputs(){
   if(timeInput) timeInput.onchange=()=>{ row.dataset.time=timeInput.value; };
 }
 
-function traditionalOptions(method){
+function traditionalOptions(method,question=''){
   const focus=focusOptions();
   const context=fixedEast8Context();
-  if(method==='meihua') return {method:$('traditional-method').value,number:Number($('traditional-number').value),...focus,...context};
-  if(method==='taiyi') return {scope:$('traditional-scope').value,...focus,...context};
-  if(method==='jinkoujue') return {method:$('traditional-method').value,branch:$('traditional-branch').value,number:Number($('traditional-number').value),...focus,...context};
-  if(method==='almanac') return {topic:$('traditional-topic').value,startDate:$('traditional-start').value,endDate:$('traditional-end').value,...context};
-  return {...focus,...context};
+  if(method==='meihua') return {question,method:$('traditional-method').value,number:Number($('traditional-number').value),...focus,...context};
+  if(method==='taiyi') return {question,scope:$('traditional-scope').value,...focus,...context};
+  if(method==='jinkoujue') return {question,method:$('traditional-method').value,branch:$('traditional-branch').value,number:Number($('traditional-number').value),...focus,...context};
+  if(method==='almanac') return {question,topic:$('traditional-topic').value,startDate:$('traditional-start').value,endDate:$('traditional-end').value,...context};
+  return {question,...focus,...context};
 }
 
 function calculateTraditional(method,timestamp,options={}){
@@ -1044,10 +1102,10 @@ function divineTraditional(q){
   const method=TRADITIONAL_METHODS[state.curModule-7];
   const timeInput=$('traditional-time');
   const timestamp=timeInput ? new Date(timeInput.value).getTime() : new Date(`${$('traditional-start').value}T12:00`).getTime();
-  const response=calculateTraditional(method,timestamp,traditionalOptions(method));
+  const response=calculateTraditional(method,timestamp,traditionalOptions(method,q));
   if(!response.ok){ window.alert(response.error); return false; }
-  state.copyText=traditionalCopyBlock(q,L().mods[state.curModule],response.result.display);
-  state.segs=[]; seg(state.copyText); flushOut(); addHistory();
+  state.copyText=response.result.aiPrompt;
+  state.segs=[]; seg(response.result.display); flushOut(); addHistory();
   return true;
 }
 
@@ -1073,11 +1131,11 @@ function divine(){
   else if (state.curModule===13){ divineDate(q); }
   else if (state.curModule===14) divineOracle(q);
   else if (state.curModule>=7 && state.curModule<=13){ if(!divineTraditional(q)) return; }
+  else if (state.curModule===1){ if(!divineSharedLiuYao(q)) return; }
   else {
     const lines=[];
     let result;
-    if (state.curModule===1) result=divineLiuYao(lines, $('liu-upper').value!=='' && $('liu-lower').value!=='');
-    else if (state.curModule===3) result=divineLenormand(lines);
+    if (state.curModule===3) result=divineLenormand(lines);
     else if (state.curModule===4) result=divineRunes(lines);
     else result=divineAstro(lines);
     state.copyText=copyBlock(q,L().mods[state.curModule],result);
@@ -1121,6 +1179,48 @@ function openSpecialWarn(){
   $('special-warn').style.display = 'flex';
 }
 
+let pendingSpecialCheckbox=null;
+function specialDeckUnlocked(){
+  try { return localStorage.getItem(SPECIAL_DECK_UNLOCK_KEY)==='1'; } catch(e) { return false; }
+}
+function requestSpecialDeckChange(enabled,checkbox){
+  if(!enabled){
+    state.includeSpecial=false;
+    checkbox.checked=false;
+    resetTarotSessions();
+    return;
+  }
+  if(specialDeckUnlocked()){
+    state.includeSpecial=true;
+    checkbox.checked=true;
+    resetTarotSessions();
+    return;
+  }
+  state.includeSpecial=false;
+  checkbox.checked=false;
+  pendingSpecialCheckbox=checkbox;
+  $('special-code').value='';
+  $('special-code-error').textContent='';
+  $('special-unlock').style.display='flex';
+  setTimeout(()=>$('special-code').focus(),0);
+}
+
+function confirmSpecialDeckUnlock(){
+  if($('special-code').value!=='820813'){
+    $('special-code-error').textContent='验证码不正确';
+    return;
+  }
+  try { localStorage.setItem(SPECIAL_DECK_UNLOCK_KEY,'1'); } catch(e) {}
+  state.includeSpecial=true;
+  if(pendingSpecialCheckbox) pendingSpecialCheckbox.checked=true;
+  pendingSpecialCheckbox=null;
+  $('special-code').value='';
+  $('special-code-error').textContent='';
+  $('special-unlock').style.display='none';
+  resetTarotSessions();
+  openSpecialWarn();
+}
+
 function openHistory(){
   const mod=state.curModule;
   const s = L();
@@ -1162,8 +1262,14 @@ window.addEventListener('DOMContentLoaded', ()=>{
   $('histbtn').onclick=openHistory;
   $('helpbtn').onclick=()=>{ $('help-body').textContent=L().helpText; $('help').style.display='flex'; };
   $('langbtn').onclick=toggleLang;
+  $('special-confirm').onclick=confirmSpecialDeckUnlock;
+  $('special-code').addEventListener('keydown',e=>{ if(e.key==='Enter') confirmSpecialDeckUnlock(); });
+  $('special-cancel').onclick=()=>{ pendingSpecialCheckbox=null; state.includeSpecial=false; };
   document.querySelectorAll('.modal-close').forEach(b=>{
-    b.onclick=()=>{ b.closest('.modal').style.display='none'; };
+    b.onclick=()=>{
+      if(b.id==='special-cancel'){ pendingSpecialCheckbox=null; state.includeSpecial=false; }
+      b.closest('.modal').style.display='none';
+    };
   });
   document.querySelectorAll('.modal').forEach(m=>{
     m.addEventListener('click',e=>{ if(e.target===m) m.style.display='none'; });

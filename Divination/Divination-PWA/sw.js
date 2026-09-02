@@ -1,5 +1,5 @@
 // 离线缓存
-const CACHE = 'divination-v25-oracle-display';
+const CACHE = 'divination-v27-jinkou-oracle-liuyao-ui';
 const ASSETS = [
   './',
   './index.html',

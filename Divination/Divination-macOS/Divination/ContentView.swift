@@ -37,6 +37,9 @@ struct ContentView: View {
     @State private var showHistory = false
     @State private var showHelp = false
     @State private var showSpecialWarn = false
+    @State private var showSpecialUnlock = false
+    @State private var specialCode = ""
+    @State private var specialCodeError = ""
 
     private var newMethodTabs: [String] {
         eng.lang == .zh
@@ -68,11 +71,7 @@ struct ContentView: View {
                     ForEach(0..<eng.tarotTabs.count, id: \.self) { i in
                         TabButton(title: eng.tarotTabs[i], selected: eng.curTab == i) { eng.switchTab(i) }
                     }
-                    Toggle(eng.S.includeSpecial, isOn: $eng.includeSpecial)
-                        .onChange(of: eng.includeSpecial) { newVal in
-                            eng.resetTarotSessions()
-                            if newVal { showSpecialWarn = true }
-                        }
+                    Toggle(eng.S.includeSpecial, isOn: specialDeckBinding)
                 }
             }
             if eng.curModule == 1 {
@@ -133,6 +132,9 @@ struct ContentView: View {
         .sheet(isPresented: $showHistory) {
             HistoryView(eng: eng, module: eng.curModule)
         }
+        .sheet(isPresented: $showSpecialUnlock) {
+            specialUnlockView
+        }
         .alert(eng.S.helpTitle, isPresented: $showHelp) {
             Button(eng.S.ok, role: .cancel) {}
         } message: {
@@ -142,6 +144,51 @@ struct ContentView: View {
             Button(eng.S.ok, role: .cancel) {}
         } message: {
             Text(eng.S.specialWarnText)
+        }
+    }
+
+    private var specialDeckBinding: Binding<Bool> {
+        Binding(
+            get: { eng.includeSpecial },
+            set: { enabled in
+                guard !eng.requestSpecialDeckChange(enabled) else { return }
+                specialCode = ""
+                specialCodeError = ""
+                showSpecialUnlock = true
+            }
+        )
+    }
+
+    private var specialUnlockView: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text(eng.lang == .en ? "Enter the verification code to enable the special deck." : "请输入验证码以启用特殊牌组。")
+            SecureField(eng.lang == .en ? "Verification code" : "验证码", text: $specialCode)
+                .textFieldStyle(.roundedBorder)
+                .onSubmit { verifySpecialCode() }
+            if !specialCodeError.isEmpty {
+                Text(specialCodeError).foregroundColor(.red)
+            }
+            HStack {
+                Button(eng.lang == .en ? "Cancel" : "取消", role: .cancel) {
+                    showSpecialUnlock = false
+                }
+                Spacer()
+                Button(eng.lang == .en ? "Verify" : "验证") {
+                    verifySpecialCode()
+                }
+                .keyboardShortcut(.defaultAction)
+            }
+        }
+        .padding(20)
+        .frame(width: 380)
+    }
+
+    private func verifySpecialCode() {
+        if eng.unlockSpecialDeck(code: specialCode) {
+            showSpecialUnlock = false
+            showSpecialWarn = true
+        } else {
+            specialCodeError = eng.lang == .en ? "Incorrect verification code" : "验证码不正确"
         }
     }
 
