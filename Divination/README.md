@@ -2,6 +2,10 @@
 
 十五个占卜模块的多端应用。卡牌与签文模块仍以 **`Divination.cs`（Windows WinForms，单文件 C#）作为静态数据与算法基准**，PWA / iOS / macOS 三端的数据表由它转换生成；七种传统术数共用 [`TraditionalAlgorithms/adapter.ts`](TraditionalAlgorithms/adapter.ts) 与离线构建产物。Windows 构建会把兼容算法资源直接嵌入 EXE，运行时不依赖 PWA 文件夹。
 
+## 规则适用范围
+
+本目录是 Zhanbu 项目的嵌套产品说明，执行任务时先遵守 `/Volumes/Leny/Projects/CLAUDE.md` 与上级 [`README.md`](../README.md)。修改 `Divination.cs` 时，同步生成受影响的三端数据表属于该源码改动的一部分；`--check`、传统术数构建、应用运行、测试和出包仍须由用户按总规则明确开启相应阶段。本文件不另行授权 Git、截图或状态文档写入。
+
 正式 PWA 地址：<https://lenyli.github.io/divinationLenyli.github.io/Divination/Divination-PWA/>
 （站点级说明与另一个应用见仓库根目录 [`../README.md`](../README.md)）
 

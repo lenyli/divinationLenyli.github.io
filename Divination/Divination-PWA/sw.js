@@ -1,5 +1,5 @@
 // 离线缓存
-const CACHE = 'divination-v27-jinkou-oracle-liuyao-ui';
+const CACHE = 'divination-v28-single-copy-no-brackets';
 const ASSETS = [
   './',
   './index.html',

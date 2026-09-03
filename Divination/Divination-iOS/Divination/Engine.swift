@@ -130,7 +130,7 @@ final class Engine: ObservableObject {
     private func copyBlock(_ q: String, title: String, body: String) -> String {
         let context = [focusEnabled ? focusDescription : "", title].filter { !$0.isEmpty }
         let prefix = context.isEmpty ? "" : "（" + context.joined(separator: "／") + "）"
-        return "【" + prefix + q + "：" + body + "】"
+        return prefix + q + "：" + body
     }
 
     private func traditionalCopyBlock(_ q: String, fallbackTitle: String, display: String) -> String {

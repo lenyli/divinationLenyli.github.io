@@ -1003,7 +1003,7 @@ function copyHeader(q){
 function copyBlock(q,title,body){
   const context=[focusEnabled()?focusDescription():'',title].filter(Boolean);
   const prefix=context.length?`（${context.join('／')}）`:'';
-  return `【${prefix}${q}：${body}】`;
+  return `${prefix}${q}：${body}`;
 }
 
 function traditionalCopyBlock(q,fallbackTitle,display){

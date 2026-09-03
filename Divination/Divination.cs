@@ -1872,7 +1872,7 @@ public class MainForm : Form
         if (description != "") context.Add(description);
         if (title != "") context.Add(title);
         string prefix = context.Count == 0 ? "" : "（" + string.Join("／", context.ToArray()) + "）";
-        return "【" + prefix + q + "：" + body + "】";
+        return prefix + q + "：" + body;
     }
 
     string TraditionalCopyBlock(string q, string fallbackTitle, string display)
