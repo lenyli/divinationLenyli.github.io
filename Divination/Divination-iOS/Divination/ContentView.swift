@@ -3,25 +3,60 @@ import UIKit
 
 let selectedColor = Color(red: 0.69, green: 0.77, blue: 0.87) // LightSteelBlue
 
-func render(_ segs: [Seg], baseSize: CGFloat = 15) -> AttributedString {
-    var a = AttributedString()
-    for s in segs {
-        var t = AttributedString(s.text)
-        var font = Font.system(size: baseSize + (s.big ? 2 : 0))
-        if s.bold { font = font.bold() }
-        if s.italic { font = font.italic() }
-        t.font = font
-        t.foregroundColor = s.red ? .red : .primary
-        a += t
-    }
-    return a
-}
-
 struct SelectableResultText: UIViewRepresentable {
-    let attributedText: AttributedString
+    let segments: [Seg]
+    var baseSize: CGFloat = 15
+
+    private final class ResultTextView: UITextView {
+        private var bodyAttributedText: NSAttributedString?
+
+        func applyBodyAttributedText(_ value: NSAttributedString, force: Bool = false) {
+            bodyAttributedText = value
+            guard force || !attributedText.isEqual(to: value) else { return }
+
+            let preservedSelectedRange = selectedRange
+            let preservedContentOffset = contentOffset
+            attributedText = value
+            if preservedSelectedRange.location != NSNotFound,
+               NSMaxRange(preservedSelectedRange) <= value.length {
+                selectedRange = preservedSelectedRange
+            }
+            setContentOffset(preservedContentOffset, animated: false)
+        }
+
+        override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+            super.traitCollectionDidChange(previousTraitCollection)
+            guard let previousTraitCollection,
+                  previousTraitCollection.hasDifferentColorAppearance(comparedTo: traitCollection),
+                  let bodyAttributedText else { return }
+            applyBodyAttributedText(bodyAttributedText, force: true)
+        }
+    }
+
+    private var bodyAttributedText: NSAttributedString {
+        let result = NSMutableAttributedString()
+        for segment in segments {
+            let size = baseSize + (segment.big ? 2 : 0)
+            let baseFont = UIFont.systemFont(ofSize: size)
+            var traits: UIFontDescriptor.SymbolicTraits = []
+            if segment.bold { traits.insert(.traitBold) }
+            if segment.italic { traits.insert(.traitItalic) }
+            let font = baseFont.fontDescriptor.withSymbolicTraits(traits).map {
+                UIFont(descriptor: $0, size: size)
+            } ?? baseFont
+            result.append(NSAttributedString(
+                string: segment.text,
+                attributes: [
+                    .font: font,
+                    .foregroundColor: segment.red ? UIColor.systemRed : UIColor.label,
+                ]
+            ))
+        }
+        return result
+    }
 
     func makeUIView(context: Context) -> UITextView {
-        let view = UITextView()
+        let view = ResultTextView()
         view.isEditable = false
         view.isSelectable = true
         view.isScrollEnabled = true
@@ -35,17 +70,7 @@ struct SelectableResultText: UIViewRepresentable {
     }
 
     func updateUIView(_ view: UITextView, context: Context) {
-        let value = NSAttributedString(attributedText)
-        guard !view.attributedText.isEqual(to: value) else { return }
-
-        let selectedRange = view.selectedRange
-        let contentOffset = view.contentOffset
-        view.attributedText = value
-        if selectedRange.location != NSNotFound,
-           NSMaxRange(selectedRange) <= value.length {
-            view.selectedRange = selectedRange
-        }
-        view.setContentOffset(contentOffset, animated: false)
+        (view as? ResultTextView)?.applyBodyAttributedText(bodyAttributedText)
     }
 }
 
@@ -184,7 +209,7 @@ struct ContentView: View {
                 .minimumScaleFactor(0.6)
                 .frame(maxWidth: .infinity)
             }
-            SelectableResultText(attributedText: render(eng.output))
+            SelectableResultText(segments: eng.output)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
             .background(Color(UIColor.systemBackground))
             .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.gray.opacity(0.4)))
