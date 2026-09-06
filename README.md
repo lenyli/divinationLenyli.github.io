@@ -1,5 +1,7 @@
 # zhanbu — 占卜工具合集
 
+通用权限、Git、验证/出包、记录与镜像规则统一遵循 [总规则](../CLAUDE.md)；本文件只补充项目事实和更严格的产品边界。当前进度见 [CURRENT_STATUS.md](CURRENT_STATUS.md)。
+
 个人占卜工具合集，基于 GitHub Pages 部署的纯静态 PWA，全部支持离线使用、可添加到手机主屏幕。
 
 当前阶段、限制和下一步统一见 [`CURRENT_STATUS.md`](CURRENT_STATUS.md)。
@@ -101,21 +103,15 @@ Zhanbu/
 
 - **用户隐私与离线**：纯静态前端，无任何用户数据收集、上传或跟踪；
 - **无凭据与秘密**：无 API Key、无 Secret、无服务端通信；
-- **Git 操作**：所有 Git 操作一律由用户执行，AI 不得主动执行任何 Git 命令。
 
 ## 任务验收标准
 
-任务完成至少满足：
-
 以下构建、测试、运行和交付项仅在用户按总规则明确开启相应阶段时适用；默认代码阶段只做静态自检并交付源码。
 
-1. **修改范围明确**：只修改本次需求直接相关的代码与文档，严禁顺手重构；
-2. **数据一致性验证**：若改动 `Divination.cs`，重新运行 `gen_data.py` 并验证生成数据一致性；
-3. **缓存版本同步**：若改动 PWA 静态资源，同步更新对应 `sw.js` 缓存版本与文件列表；
-4. **语法检查通过**：JavaScript 与 Python 脚本通过语法检查（`node -c` / `python3 -m py_compile`）；
-5. **记录同步**：按总规则区分文档职责；当前事实变化只更新两处 `CURRENT_STATUS.md`，长期规则、运行方式、架构边界或 Agent/Skill 关系变化才同步两处 `README.md`，并同步更新 `/Volumes/Leny/Projects/PROJECT_NEXT.md` 中 Zhanbu 章节；
-6. **人工验收标记**：页面交互动效、离线 PWA 安装与跨端排版需明确标记为“待用户验收”，不得冒充已验证；
-7. **最终报告**：如实汇报修改文件、验证命令结果与真实限制。
+1. **数据一致性验证**：若改动 `Divination.cs`，重新运行 `gen_data.py` 并验证生成数据一致性；
+2. **缓存版本同步**：若改动 PWA 静态资源，同步更新对应 `sw.js` 缓存版本与文件列表；
+3. **语法检查通过**：JavaScript 与 Python 脚本通过语法检查（`node -c` / `python3 -m py_compile`）；
+4. **人工验收标记**：页面交互动效、离线 PWA 安装与跨端排版需明确标记为“待用户验收”，不得冒充已验证；
 
 ## 当前能力
 
@@ -142,7 +138,5 @@ Zhanbu/
 ## 项目规则
 
 - 开始任务先读 `/Volumes/Leny/Projects/CLAUDE.md`，再读本文件与 `CURRENT_STATUS.md`；只维护本项目根及 `/Volumes/Leny/ProjectRecord/Zhanbu/`，不修改其他项目记录。
-- 状态变化只覆盖更新两处 `CURRENT_STATUS.md`；不新建 progress、Next、Notes、HANDOFF 或 audit 状态文档。
-- 状态变化时同步更新根 `PROJECT_NEXT.md` 中本项目的 `Updated` / `Current` / `Next` 并刷新 `Generated`；不得改其他项目章节。
 - Divination 与 Drawing 保持独立；Divination 原有模块以 `Divination.cs` 为数据权威，新增术数共用版本化离线算法包；Drawing 固定 99 签。
 - 修改静态资源后同步对应 `sw.js` 缓存清单与版本号。

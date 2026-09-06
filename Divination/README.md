@@ -7,7 +7,6 @@
 本目录是 Zhanbu 项目的嵌套产品说明，执行任务时先遵守 `/Volumes/Leny/Projects/CLAUDE.md` 与上级 [`README.md`](../README.md)。修改 `Divination.cs` 时，同步生成受影响的三端数据表属于该源码改动的一部分；`--check`、传统术数构建、应用运行、测试和出包仍须由用户按总规则明确开启相应阶段。本文件不另行授权 Git、截图或状态文档写入。
 
 正式 PWA 地址：<https://lenyli.github.io/divinationLenyli.github.io/Divination/Divination-PWA/>
-（站点级说明与另一个应用见仓库根目录 [`../README.md`](../README.md)）
 
 ## 模块
 
@@ -50,8 +49,6 @@ PWA 在手机宽度下采用与 iOS 相同的四列四行导航：首页／择�
 | **iOS** | `Divination-iOS/` | Xcode 14+ / iOS 16+；SwiftUI 通过系统 JavaScriptCore 读取共用离线算法资源 | `DivinationData.swift` + 共用离线算法包 |
 | **macOS** | `Divination-macOS/` | Xcode 14+ / macOS 13+；SwiftUI 通过系统 JavaScriptCore 读取共用离线算法资源 | `DivinationData.swift` + 共用离线算法包 |
 
-三端数据表**不要手改**，一律由 [`gen_data.py`](gen_data.py) 从 `Divination.cs` 生成，见下方「数据同步」。
-
 历史记录：Windows/macOS 存 `~/Library/Application Support/Divination/history.dat`（同格式），iOS 存 App 沙盒同名路径，PWA 存当前浏览器的 `localStorage`。这些记录均为本机数据，不会自动跨设备或跨浏览器同步；清除站点/App 数据会同时清除对应本机记录与特殊牌解锁标记。
 
 各端另有更细的说明：`Divination-PWA/README-PWA.txt`、`Divination-iOS/README-iOS.txt`、`Divination-macOS/README-macOS.txt`。
@@ -60,7 +57,7 @@ PWA 在手机宽度下采用与 iOS 相同的四列四行导航：首页／择�
 
 ## 数据同步
 
-**改完 `Divination.cs` 后必须跑一次转换脚本**，否则三端数据会和源脱节：
+三端数据表**禁止手改**，修改 `Divination.cs` 后须用 [`gen_data.py`](gen_data.py) 同步生成；校验和构建仍按上方阶段权限执行：
 
 ```bash
 python3 gen_data.py            # 生成三端数据表
