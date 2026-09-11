@@ -1,5 +1,7 @@
 # zhanbu — 占卜工具合集
 
+项目状态：已完成
+
 通用权限、Git、验证/出包、记录与镜像规则统一遵循 [总规则](../CLAUDE.md)；本文件只补充项目事实和更严格的产品边界。当前进度见 [CURRENT_STATUS.md](CURRENT_STATUS.md)。
 
 个人占卜工具合集，基于 GitHub Pages 部署的纯静态 PWA，全部支持离线使用、可添加到手机主屏幕。
