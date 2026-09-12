@@ -139,6 +139,6 @@ Zhanbu/
 
 ## 项目规则
 
-- 开始任务先读 `/Volumes/Leny/Projects/CLAUDE.md`，再读本文件与 `CURRENT_STATUS.md`；只维护本项目根及 `/Volumes/Leny/ProjectRecord/Zhanbu/`，不修改其他项目记录。
+- 遵守 `/Volumes/Leny/Projects/CLAUDE.md`；首次接手或阶段不明时读本文件与 `CURRENT_STATUS.md`，局部任务只补读相关章节；只维护本项目根及 `/Volumes/Leny/ProjectRecord/Zhanbu/`，不修改其他项目记录。
 - Divination 与 Drawing 保持独立；Divination 原有模块以 `Divination.cs` 为数据权威，新增术数共用版本化离线算法包；Drawing 固定 99 签。
 - 修改静态资源后同步对应 `sw.js` 缓存清单与版本号。
