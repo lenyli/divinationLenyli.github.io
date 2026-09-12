@@ -1,14 +1,37 @@
 # Divination — 综合占卜工具
 
+项目状态：已完成
+
+记录类型：项目
+
+## 项目资料
+
+| 字段 | 内容 |
+|---|---|
+| 项目名称 | Divination |
+| 项目类型 | 软件 |
+| 领域 | 综合占卜工具 |
+| 平台 | 浏览器 / PWA；iOS 16+、macOS 13+、Windows |
+| 技术 | JavaScript / TypeScript、Swift / SwiftUI / JavaScriptCore、C# WinForms、Python 数据生成 |
+| 架构 | 卡牌词条与传统算法分别保持单一源，多端生成；离线运行，Windows 单 EXE |
+| Agent | 当前无 canonical 项目 Agent；历史/平台配置见下文 |
+| Skill | 历史已使用 research、implement、pwa-app、spreadsheets；当前无项目专属 Skill |
+| 源码 | /Volumes/Leny/Projects/Zhanbu/Divination |
+| 关联 | 与 Drawing 同在 Zhanbu 合集，作为独立项目维护 |
+
+资料来自本项目记录与能力清单；“已登记”不代表当前启用，“待确定”不等于读取失败。当前进度与验证以 CURRENT_STATUS.md 为准。
+
+## 定位与范围
+
 十五个占卜模块的多端应用。卡牌与签文模块仍以 **`Divination.cs`（Windows WinForms，单文件 C#）作为静态数据与算法基准**，PWA / iOS / macOS 三端的数据表由它转换生成；七种传统术数共用 [`TraditionalAlgorithms/adapter.ts`](TraditionalAlgorithms/adapter.ts) 与离线构建产物。Windows 构建会把兼容算法资源直接嵌入 EXE，运行时不依赖 PWA 文件夹。
 
-## 规则适用范围
+### 规则适用范围
 
-本目录是 Zhanbu 项目的嵌套产品说明，执行任务时先遵守 `/Volumes/Leny/Projects/CLAUDE.md` 与上级 [`README.md`](../README.md)。修改 `Divination.cs` 时，同步生成受影响的三端数据表属于该源码改动的一部分；`--check`、传统术数构建、应用运行、测试和出包仍须由用户按总规则明确开启相应阶段。本文件不另行授权 Git、截图或状态文档写入。
+本目录是独立 Divination 项目的唯一记录源，Zhanbu 仅作合集入口，执行任务时先遵守 `/Volumes/Leny/Projects/CLAUDE.md` 与上级 [`README.md`](../README.md)。修改 `Divination.cs` 时，同步生成受影响的三端数据表属于该源码改动的一部分；`--check`、传统术数构建、应用运行、测试和出包仍须由用户按总规则明确开启相应阶段。本文件不另行授权 Git、截图或状态文档写入。
 
 正式 PWA 地址：<https://lenyli.github.io/divinationLenyli.github.io/Divination/Divination-PWA/>
 
-## 模块
+### 模块
 
 | 模块 | 数据表（PWA `data.js`） | 说明 |
 | --- | --- | --- |
@@ -40,35 +63,7 @@ PWA 在手机宽度下采用与 iOS 相同的四列四行导航：首页／择�
 
 综合占卜按卡牌与卦象、传统术数分段使用专用 Prompt；事项分类会传给六爻纳甲、奇门、大六壬、小六壬、梅花、太乙和金口诀。择日／黄历只显示和复制排序后的前 5 条候选，内部 `allDays` 仍保留完整范围；灵签正文只在界面与灵签单项 Prompt 中出现，不进入综合 AI Prompt。
 
-## 各端
-
-| 端 | 位置 | 构建 / 运行 | 数据表 |
-| --- | --- | --- | --- |
-| **Windows** | `Divination.cs` + `Divination.bat` / `build.bat`（`Divination.ico` 可选） | WinForms 原生界面；算法已压缩内嵌在 CS 中，BAT 只编译 CS，生成后的 `Divination.exe` 可单文件运行，不需要外部 JS 或 `Divination-PWA/` | 源文件内嵌 + CS 内嵌兼容算法 |
-| **PWA** | `Divination-PWA/` | 正式地址见上方；本地可用 `python3 -m http.server`，需 https/localhost 才能安装与离线 | `data.js` + 共用离线算法包 |
-| **iOS** | `Divination-iOS/` | Xcode 14+ / iOS 16+；SwiftUI 通过系统 JavaScriptCore 读取共用离线算法资源 | `DivinationData.swift` + 共用离线算法包 |
-| **macOS** | `Divination-macOS/` | Xcode 14+ / macOS 13+；SwiftUI 通过系统 JavaScriptCore 读取共用离线算法资源 | `DivinationData.swift` + 共用离线算法包 |
-
-历史记录：Windows/macOS 存 `~/Library/Application Support/Divination/history.dat`（同格式），iOS 存 App 沙盒同名路径，PWA 存当前浏览器的 `localStorage`。这些记录均为本机数据，不会自动跨设备或跨浏览器同步；清除站点/App 数据会同时清除对应本机记录与特殊牌解锁标记。
-
-各端另有更细的说明：`Divination-PWA/README-PWA.txt`、`Divination-iOS/README-iOS.txt`、`Divination-macOS/README-macOS.txt`。
-
-新增传统术数的采用口径、来源、限制、构建边界和第三方许可见 [`ALGORITHM_SOURCES.md`](ALGORITHM_SOURCES.md) 与 [`TraditionalAlgorithms/`](TraditionalAlgorithms/)。固定结果摘要在 `TraditionalAlgorithms/golden.json`，可运行 `node TraditionalAlgorithms/verify.js` 校验。
-
-## 数据同步
-
-三端数据表**禁止手改**，修改 `Divination.cs` 后须用 [`gen_data.py`](gen_data.py) 同步生成；校验和构建仍按上方阶段权限执行：
-
-```bash
-python3 gen_data.py            # 生成三端数据表
-python3 gen_data.py --check    # 只校验现有文件是否与 cs 一致（可用作提交前检查）
-```
-
-`gen_data.py` 从 cs 解析 13 张表（`TRI_ELEM` / `HEXAGRAMS` / `POS` / `PLANETS` / `SIGNS` / `HOUSES` / `LENORMAND` / `ORACLE` / `RUNES` / `QIAN` / `TAROT` / `YESNO` / `DATE12`），写出 `Divination-PWA/data.js` 与 iOS、macOS 两份 `DivinationData.swift`（后两者内容相同）。脚本同时会报告 cs 里残留的私用区乱码字符。
-
-传统术数适配层变化后，另在 `TraditionalAlgorithms/` 运行 `pnpm run build:windows`，更新供 BAT 嵌入 EXE 的 IE11 兼容资源。该资源仅是构建输入，生成后的 EXE 不需要旁路脚本文件。
-
-## 2026-09-02 指南修复状态
+### 2026-09-02 指南修复状态
 
 本轮继续按用户提供的整改规范完成全端修复：四端六爻入口统一到共享算法，并在世爻、应爻后追加动爻；统一 `aiPromptVersion` / `aiPromptSection` / `aiPrompt` 合同；综合页冻结同一时间与投掷；择日仅展示前 5 条；42/43 签补全；四端增加特殊牌一次性验证码；复古神谕提示改为单项界面独立一行且不进入复制或综合结果；PWA 金口诀恢复七格常显，缓存更新为 `divination-v27-jinkou-oracle-liuyao-ui`。
 
@@ -80,7 +75,7 @@ python3 gen_data.py --check    # 只校验现有文件是否与 cs 一致（可�
 
 > 该脚本是 2026-07-23 重写的——原转换脚本已遗失，导致源改了、三端没跟上。重写后用**未修改的 cs** 做过回归：生成结果与当时的三端文件逐字节一致（仅差当时已知的两处内容），确认与原转换器行为相同。
 
-## 已修复：灵签乱码（2026-07-23）
+### 已修复：灵签乱码（2026-07-23）
 
 玄天灵签数据里曾有一个私用区乱码字符 `U+E5F1`，共 7 处，**全部应为「处」**。现已在 cs 中改正并回流三端：
 
@@ -98,6 +93,65 @@ python3 gen_data.py --check    # 只校验现有文件是否与 cs 一致（可�
 
 现状：四份文件乱码计数均为 **0**，`gen_data.py --check` 三端全部通过。
 
-## 参考资料（保留）
+### 参考资料（保留）
 
 `抽牌.xlsm`（算法原始出处）、`塔罗普通牌含义.xlsx`、`特殊牌.txt`（牌义已写入 `Divination.cs`，原文留作对照）。
+
+## 架构与技术
+
+### 资料核验依据
+
+平台、技术与架构依据：[TraditionalAlgorithms/package.json](</Volumes/Leny/Projects/Zhanbu/Divination/TraditionalAlgorithms/package.json>)、[gen_data.py](</Volumes/Leny/Projects/Zhanbu/Divination/gen_data.py>)、[Divination.cs](</Volumes/Leny/Projects/Zhanbu/Divination/Divination.cs>)、[Divination-PWA/manifest.webmanifest](</Volumes/Leny/Projects/Zhanbu/Divination/Divination-PWA/manifest.webmanifest>)。能力核对：项目根未发现 manifest、canonical Agent 或项目 Skill；沿用正文明确的无配置/未选型状态。核对包括既有 Agent 的 required-skills；供应商内嵌能力、历史适配和规划与项目当前配置分开登记。以上为源码/文档静态证据，运行与验收状态以 CURRENT_STATUS 为准。
+
+### 数据同步
+
+三端数据表**禁止手改**，修改 `Divination.cs` 后须用 [`gen_data.py`](gen_data.py) 同步生成；校验和构建仍按上方阶段权限执行：
+
+```bash
+python3 gen_data.py            # 生成三端数据表
+python3 gen_data.py --check    # 只校验现有文件是否与 cs 一致（可用作提交前检查）
+```
+
+`gen_data.py` 从 cs 解析 13 张表（`TRI_ELEM` / `HEXAGRAMS` / `POS` / `PLANETS` / `SIGNS` / `HOUSES` / `LENORMAND` / `ORACLE` / `RUNES` / `QIAN` / `TAROT` / `YESNO` / `DATE12`），写出 `Divination-PWA/data.js` 与 iOS、macOS 两份 `DivinationData.swift`（后两者内容相同）。脚本同时会报告 cs 里残留的私用区乱码字符。
+
+传统术数适配层变化后，另在 `TraditionalAlgorithms/` 运行 `pnpm run build:windows`，更新供 BAT 嵌入 EXE 的 IE11 兼容资源。该资源仅是构建输入，生成后的 EXE 不需要旁路脚本文件。
+
+## 运行与验证
+
+### 各端
+
+| 端 | 位置 | 构建 / 运行 | 数据表 |
+| --- | --- | --- | --- |
+| **Windows** | `Divination.cs` + `Divination.bat` / `build.bat`（`Divination.ico` 可选） | WinForms 原生界面；算法已压缩内嵌在 CS 中，BAT 只编译 CS，生成后的 `Divination.exe` 可单文件运行，不需要外部 JS 或 `Divination-PWA/` | 源文件内嵌 + CS 内嵌兼容算法 |
+| **PWA** | `Divination-PWA/` | 正式地址见上方；本地可用 `python3 -m http.server`，需 https/localhost 才能安装与离线 | `data.js` + 共用离线算法包 |
+| **iOS** | `Divination-iOS/` | Xcode 14+ / iOS 16+；SwiftUI 通过系统 JavaScriptCore 读取共用离线算法资源 | `DivinationData.swift` + 共用离线算法包 |
+| **macOS** | `Divination-macOS/` | Xcode 14+ / macOS 13+；SwiftUI 通过系统 JavaScriptCore 读取共用离线算法资源 | `DivinationData.swift` + 共用离线算法包 |
+
+历史记录：Windows/macOS 存 `~/Library/Application Support/Divination/history.dat`（同格式），iOS 存 App 沙盒同名路径，PWA 存当前浏览器的 `localStorage`。这些记录均为本机数据，不会自动跨设备或跨浏览器同步；清除站点/App 数据会同时清除对应本机记录与特殊牌解锁标记。
+
+各端另有更细的说明：`Divination-PWA/README-PWA.txt`、`Divination-iOS/README-iOS.txt`、`Divination-macOS/README-macOS.txt`。
+
+新增传统术数的采用口径、来源、限制、构建边界和第三方许可见 [`ALGORITHM_SOURCES.md`](ALGORITHM_SOURCES.md) 与 [`TraditionalAlgorithms/`](TraditionalAlgorithms/)。固定结果摘要在 `TraditionalAlgorithms/golden.json`，可运行 `node TraditionalAlgorithms/verify.js` 校验。
+
+## Agent 与 Skill
+
+Agent：当前无 canonical 项目 Agent；Zhanbu 目录曾有 frontend-developer / pwa-release-checker 平台配置，仅作历史，不视为本项目当前常驻。
+
+Skill：历史已使用 research、implement、pwa-app、spreadsheets；当前无项目专属 Skill。
+
+## 项目约束
+
+遵守总规则；本项目保持完全离线的 PWA 数据与运行边界。静态资源变化同步本项目 Service Worker 清单及版本；不擅自引入服务端或在线 AI。
+
+原有模块以 Divination.cs 为权威，新增术数共用版本化离线算法包；禁止手改派生数据或在各端重复维护规则。
+
+遵守总规则和以上项目边界；本次记录整理不改变产品状态或授权阶段。
+
+## 记录与链接
+
+README.md、CURRENT_STATUS.md 的唯一编辑源为本目录；决定源为 `/Volumes/Leny/Projects/Zhanbu/Divination/DECISION_EVENTS.md`。三个记录文件同步为 ProjectRecord 的同名逐字副本；只在唯一源编辑，消费者不得反向修改副本。
+
+- 总规则：[CLAUDE.md](/Volumes/Leny/Projects/CLAUDE.md)
+- 当前状态：[CURRENT_STATUS.md](/Volumes/Leny/Projects/Zhanbu/Divination/CURRENT_STATUS.md)
+- 决策历史：[DECISION_EVENTS.md](/Volumes/Leny/Projects/Zhanbu/Divination/DECISION_EVENTS.md)
+- PR 入口：`/Volumes/Leny/ProjectRecord/Divination`。README 与状态的相对路径以唯一编辑源目录解析；PR 不复制源码、素材或 Agent/Skill 定义。

@@ -1,6 +1,10 @@
 # Zhanbu Decision Events
 
-## 2026-08-29 — 新增七种传统术数共用离线算法包
+记录约定：唯一源在项目目录，ProjectRecord 提供同名逐字副本。2026-09-12 的格式整理不改写历史决定含义；缺少可证关系的旧记录明确保留待考，不由格式整理推断。
+
+### 历史来源：2026-08-29 — 新增七种传统术数共用离线算法包
+
+以下原始说明已由 ZHANBU-20260831-001 正式登记，不重复计为 Event。
 
 - decision：奇门遁甲、大六壬、小六壬、梅花易数、太乙神数、金口诀、择日/黄历共用一个版本化结果适配层和静态算法包；PWA 直接加载，iOS/macOS 通过系统 JavaScriptCore 读取同一资源。
 - reason：避免在 JavaScript、Swift、C# 中分别维护规则表造成算法漂移，同时保留完全离线、可复算、可追溯的结果 envelope。
@@ -14,7 +18,7 @@
 
 - date: 2026-08-31
 - type: decision
-- project: Zhanbu
+- project: Divination
 - relates_to: none
 - supersedes: none
 
@@ -30,6 +34,8 @@
 
 将本文件中 2026-08-29 的未编号既有决定纳入当前统一 Event ID 体系，使后续修订可以建立有效关系。
 
+2026-09-12 按用户要求将本产品独立登记为 Divination；原 project 为 Zhanbu（合集名），保留原 ZHANBU Event ID 及其引用，不重复创建决定。
+
 ### Rejected
 
 none
@@ -42,7 +48,7 @@ none
 
 - date: 2026-08-31
 - type: revision
-- project: Zhanbu
+- project: Divination
 - relates_to: ZHANBU-20260831-001
 - supersedes: ZHANBU-20260831-001
 
@@ -58,6 +64,8 @@ Windows 改为单 EXE 内嵌传统术数算法，不再依赖或打开外部 PWA
 
 用户确认 BAT 生成的 EXE 应直接具备全部算法；外部 PWA 文件夹依赖会导致 EXE 单独分发后新增算法不可用，也破坏 Windows 与 Mac 的使用一致性。
 
+2026-09-12 按用户要求将本产品独立登记为 Divination；原 project 为 Zhanbu（合集名），保留原 ZHANBU Event ID 及其引用，不重复创建决定。
+
 ### Rejected
 
 继续打开外部 `Divination-PWA`；要求用户另装 Node；引入需要额外分发文件的 WebView2 方案。
@@ -70,7 +78,7 @@ Windows 改为单 EXE 内嵌传统术数算法，不再依赖或打开外部 PWA
 
 - date: 2026-08-31
 - type: decision
-- project: Zhanbu
+- project: Divination
 - relates_to: none
 - supersedes: none
 
@@ -85,6 +93,8 @@ Windows 改为单 EXE 内嵌传统术数算法，不再依赖或打开外部 PWA
 ### Reason
 
 保留现有雷诺曼牌库与用户已经习惯的单一特殊牌控制入口，同时让四端使用同一份完整神谕数据和一致的综合提示边界。
+
+2026-09-12 按用户要求将本产品独立登记为 Divination；原 project 为 Zhanbu（合集名），保留原 ZHANBU Event ID 及其引用，不重复创建决定。
 
 ### Rejected
 
