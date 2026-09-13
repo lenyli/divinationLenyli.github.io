@@ -1,0 +1,29 @@
+{
+  "hooks" : {
+    "beforeSubmitPrompt" : [
+      {
+        "command" : "'\/Applications\/AI Watcher.app\/Contents\/MacOS\/aiwatch' 'ingest' '--adapter' 'cursor' '--event' 'beforeSubmitPrompt' '--home' '\/Users\/liminghan\/Library\/Application Support\/AIWatcher'",
+        "timeout" : 1
+      }
+    ],
+    "postToolUse" : [
+      {
+        "command" : "'\/Applications\/AI Watcher.app\/Contents\/MacOS\/aiwatch' 'ingest' '--adapter' 'cursor' '--event' 'postToolUse' '--home' '\/Users\/liminghan\/Library\/Application Support\/AIWatcher'",
+        "timeout" : 1
+      }
+    ],
+    "preToolUse" : [
+      {
+        "command" : "'\/Applications\/AI Watcher.app\/Contents\/MacOS\/aiwatch' 'ingest' '--adapter' 'cursor' '--event' 'preToolUse' '--home' '\/Users\/liminghan\/Library\/Application Support\/AIWatcher'",
+        "timeout" : 1
+      }
+    ],
+    "stop" : [
+      {
+        "command" : "'\/Applications\/AI Watcher.app\/Contents\/MacOS\/aiwatch' 'ingest' '--adapter' 'cursor' '--event' 'stop' '--home' '\/Users\/liminghan\/Library\/Application Support\/AIWatcher'",
+        "timeout" : 1
+      }
+    ]
+  },
+  "version" : 1
+}
