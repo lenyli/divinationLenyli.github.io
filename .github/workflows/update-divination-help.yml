@@ -35,7 +35,7 @@ jobs:
           s = p.read_text(encoding='utf-8')
           zh_js = 'helpText: ' + repr(zh).replace("'", '"').replace('\\n', '\\\\n') + ','
           en_js = 'helpText: ' + repr(en).replace("'", '"').replace('\\n', '\\\\n') + ','
-          s, n1 = re.subn(r'helpText:\s*"1\. 首页-综合占卜:.*?",\n\s*liuYaoSummary:', zh_js + '\n    liuYaoSummary:', s, count=1, flags=re.S)
+          s, n1 = re.subn(r'helpText:\s*"1\. 首页-综合占卜：.*?",\n\s*liuYaoSummary:', zh_js + '\n    liuYaoSummary:', s, count=1, flags=re.S)
           s, n2 = re.subn(r'helpText:\s*"1\. Home - Combined:.*?",\n\s*liuYaoSummary:', en_js + '\n    liuYaoSummary:', s, count=1, flags=re.S)
           if (n1, n2) != (1, 1):
               raise SystemExit(f'PWA help replacement failed: zh={n1}, en={n2}')
@@ -50,7 +50,7 @@ jobs:
               s = p.read_text(encoding='utf-8')
               zh_swift = 'helpText: """\n        ' + zh.replace('\n\n', '\n\n        ') + '\n        """'
               en_swift = 'helpText: """\n        ' + en.replace('\n\n', '\n\n        ') + '\n        """'
-              s, a = re.subn(r'helpText:\s*"""\n\s*1\. 首页-综合占卜:.*?\n\s*"""', zh_swift, s, count=1, flags=re.S)
+              s, a = re.subn(r'helpText:\s*"""\n\s*1\. 首页-综合占卜：.*?\n\s*"""', zh_swift, s, count=1, flags=re.S)
               s, b = re.subn(r'helpText:\s*"""\n\s*1\. Home - Combined:.*?\n\s*"""', en_swift, s, count=1, flags=re.S)
               if (a, b) != (1, 1):
                   raise SystemExit(f'{rel} help replacement failed: zh={a}, en={b}')
