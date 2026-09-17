@@ -1,0 +1,96 @@
+name: Update Divination Help
+
+on:
+  push:
+    paths:
+      - '.github/workflows/update-divination-help.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  update-help:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update help text across platforms
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          zh = (
+              '1. 选择占卜方式：综合=多体系合参；塔罗／复古神谕／卢恩=心理、关系与建议；雷诺曼=现实事件与消息；占星骰子=快速看影响领域；玄天灵签=整体签意；六爻=具体事件成败与应期；奇门=行动、时机与方向；大六壬=复杂人事过程；小六壬=临时小事；梅花=即时趋势与应期；太乙=宏观局势；金口诀=近期具体人事；择日／黄历=选日期。\n\n'
+              '2. 提问建议：尽量一事一问；婚恋／婚姻需选择性别；同一事项没有新变化时不建议反复重占。\n\n'
+              '3. 其他：“包含特殊牌”同时启用塔罗特殊牌、雷诺曼扩展牌和复古神谕强调牌；每个模块保存最近30条历史；“复制结果”可直接用于AI解读。'
+          )
+          en = (
+              '1. Choose a method: Combined=multi-system overview; Tarot/Old Style Oracle/Runes=psychology, relationships and guidance; Lenormand=real-world events and messages; Astro Dice=quick influence/area check; Fortune Slip=overall oracle; I Ching=specific outcomes and timing; Qimen=action, timing and direction; Da Liu Ren=complex people/events; Xiao Liu Ren=quick everyday matters; Meihua=immediate trend/timing; Taiyi=macro trends; Jin Kou Jue=near-term concrete matters; Date Selection=choose dates.\n\n'
+              '2. Questions: keep to one matter per reading; love/marriage questions require gender; avoid repeated readings unless the situation has materially changed.\n\n'
+              '3. Other: Include special cards enables Tarot specials, Lenormand extensions and Oracle accent cards; each module keeps the latest 30 history items; Copy Result is ready for AI interpretation.'
+          )
+
+          # PWA
+          p = Path('Divination/Divination-PWA/app.js')
+          s = p.read_text(encoding='utf-8')
+          zh_js = 'helpText: ' + repr(zh).replace("'", '"').replace('\\n', '\\\\n') + ','
+          en_js = 'helpText: ' + repr(en).replace("'", '"').replace('\\n', '\\\\n') + ','
+          s, n1 = re.subn(r'helpText:\s*"1\. 首页-综合占卜:.*?",\n\s*liuYaoSummary:', zh_js + '\n    liuYaoSummary:', s, count=1, flags=re.S)
+          s, n2 = re.subn(r'helpText:\s*"1\. Home - Combined:.*?",\n\s*liuYaoSummary:', en_js + '\n    liuYaoSummary:', s, count=1, flags=re.S)
+          if (n1, n2) != (1, 1):
+              raise SystemExit(f'PWA help replacement failed: zh={n1}, en={n2}')
+          p.write_text(s, encoding='utf-8')
+
+          # Apple platforms
+          for rel in [
+              'Divination/Divination-iOS/Divination/L10n.swift',
+              'Divination/Divination-macOS/Divination/L10n.swift',
+          ]:
+              p = Path(rel)
+              s = p.read_text(encoding='utf-8')
+              zh_swift = 'helpText: """\n        ' + zh.replace('\n\n', '\n\n        ') + '\n        """'
+              en_swift = 'helpText: """\n        ' + en.replace('\n\n', '\n\n        ') + '\n        """'
+              s, a = re.subn(r'helpText:\s*"""\n\s*1\. 首页-综合占卜:.*?\n\s*"""', zh_swift, s, count=1, flags=re.S)
+              s, b = re.subn(r'helpText:\s*"""\n\s*1\. Home - Combined:.*?\n\s*"""', en_swift, s, count=1, flags=re.S)
+              if (a, b) != (1, 1):
+                  raise SystemExit(f'{rel} help replacement failed: zh={a}, en={b}')
+              p.write_text(s, encoding='utf-8')
+
+          # Windows
+          p = Path('Divination/Divination.cs')
+          s = p.read_text(encoding='utf-8')
+          def csharp_block(title, text):
+              parts = text.split('\n\n')
+              lines = [f'            msg = "{title}" + nl + nl']
+              for i, part in enumerate(parts):
+                  esc = part.replace('\\', '\\\\').replace('"', '\\"')
+                  suffix = ' + nl + nl' if i < len(parts)-1 else ';'
+                  lines.append(f'                + "{esc}"{suffix}')
+              return '\n'.join(lines)
+          replacement = (
+              '        if (isEnglish) {\n' + csharp_block('Help', en) + '\n'
+              '        } else {\n' + csharp_block('使用说明', zh) + '\n'
+              '        }\n'
+              '        MessageBox.Show(this, msg, isEnglish ? "Help" : "使用说明", MessageBoxButtons.OK, MessageBoxIcon.Information);'
+          )
+          pattern = r'        if \(isEnglish\) \{\n\s*msg = "Help" \+ nl \+ nl.*?        MessageBox\.Show\(this, msg, isEnglish \? "Help" : "使用说明", MessageBoxButtons\.OK, MessageBoxIcon\.Information\);'
+          s, n = re.subn(pattern, replacement, s, count=1, flags=re.S)
+          if n != 1:
+              raise SystemExit(f'Windows help replacement failed: {n}')
+          p.write_text(s, encoding='utf-8')
+
+          # Force PWA clients to refresh cached app.js.
+          p = Path('Divination/Divination-PWA/sw.js')
+          s = p.read_text(encoding='utf-8')
+          s, n = re.subn(r"const CACHE = '([^']+)'", lambda m: "const CACHE = 'divination-v29-help-guide'", s, count=1)
+          if n != 1:
+              raise SystemExit('Service worker cache replacement failed')
+          p.write_text(s, encoding='utf-8')
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Divination/Divination-PWA/app.js Divination/Divination-PWA/sw.js Divination/Divination-iOS/Divination/L10n.swift Divination/Divination-macOS/Divination/L10n.swift Divination/Divination.cs
+          git commit -m "docs: refresh built-in divination help"
+          git push
