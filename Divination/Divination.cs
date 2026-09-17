@@ -2148,17 +2148,14 @@ public class MainForm : Form
         string msg;
         if (isEnglish) {
             msg = "Help" + nl + nl
-                + "1. Combined reading now includes Old Style Oracle; its AI prompt contains card, orientation, domain, and flow only." + nl + nl
-                + "2. Include special cards also enables Guose Huaguang Lenormand extensions and Oracle accent cards." + nl + nl
-                + "3. The seven traditional methods run inside this EXE and do not require the PWA folder." + nl + nl
-                + "4. History keeps the latest 30 entries for each method; Copy result copies the full result text.";
+                + "1. Choose a method: Combined=multi-system overview; Tarot/Old Style Oracle/Runes=psychology, relationships and guidance; Lenormand=real-world events and messages; Astro Dice=quick influence/area check; Fortune Slip=overall oracle; I Ching=specific outcomes and timing; Qimen=action, timing and direction; Da Liu Ren=complex people/events; Xiao Liu Ren=quick everyday matters; Meihua=immediate trend/timing; Taiyi=macro trends; Jin Kou Jue=near-term concrete matters; Date Selection=choose dates." + nl + nl
+                + "2. Questions: keep to one matter per reading; love/marriage questions require gender; avoid repeated readings unless the situation has materially changed." + nl + nl
+                + "3. Other: Include special cards enables Tarot specials, Lenormand extensions and Oracle accent cards; each module keeps the latest 30 history items; Copy Result is ready for AI interpretation.";
         } else {
             msg = "使用说明" + nl + nl
-                + "1. 首页-综合占卜：一次生成塔罗、雷诺曼、复古神谕、卢恩、占星骰子和六爻纳甲；神谕提示只含牌名、正逆位、领域与流向。" + nl + nl
-                + "2. 七种传统术数已内嵌在 EXE 中，不需要保留 Divination-PWA 文件夹。" + nl + nl
-                + "3. “包含特殊牌”同时控制塔罗特殊牌、国色华光雷诺曼扩展牌与复古神谕强调牌；YES OR NO 与大牌不受此选项影响。" + nl + nl
-                + "4. 历史记录会保存30条，下次打开程序仍可查看。" + nl + nl
-                + "5. 复制结果可直接粘贴到AI解读。";
+                + "1. 选择占卜方式：综合=多体系合参；塔罗／复古神谕／卢恩=心理、关系与建议；雷诺曼=现实事件与消息；占星骰子=快速看影响领域；玄天灵签=整体签意；六爻=具体事件成败与应期；奇门=行动、时机与方向；大六壬=复杂人事过程；小六壬=临时小事；梅花=即时趋势与应期；太乙=宏观局势；金口诀=近期具体人事；择日／黄历=选日期。" + nl + nl
+                + "2. 提问建议：尽量一事一问；婚恋／婚姻需选择性别；同一事项没有新变化时不建议反复重占。" + nl + nl
+                + "3. 其他：“包含特殊牌”同时启用塔罗特殊牌、雷诺曼扩展牌和复古神谕强调牌；每个模块保存最近30条历史；“复制结果”可直接用于AI解读。";
         }
         MessageBox.Show(this, msg, isEnglish ? "Help" : "使用说明", MessageBoxButtons.OK, MessageBoxIcon.Information);
     }

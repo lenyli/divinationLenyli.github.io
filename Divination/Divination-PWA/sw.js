@@ -1,5 +1,5 @@
 // 离线缓存
-const CACHE = 'divination-v28-single-copy-no-brackets';
+const CACHE = 'divination-v29-help-guide';
 const ASSETS = [
   './',
   './index.html',
