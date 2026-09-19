@@ -150,9 +150,8 @@ Skill：历史已使用 research、implement、pwa-app、spreadsheets；当前�
 
 ## 记录与链接
 
-README.md、CURRENT_STATUS.md 的唯一编辑源为本目录；决定源为 `/Volumes/Leny/Projects/Zhanbu/Divination/DECISION_EVENTS.md`。三个记录文件同步为 ProjectRecord 的同名逐字副本；只在唯一源编辑，消费者不得反向修改副本。
+README.md、CURRENT_STATUS.md 与 DECISION_EVENTS.md 的唯一编辑源为本目录，只维护本项目根，不向其他目录维护副本。
 
 - 总规则：[CLAUDE.md](/Volumes/Leny/Projects/CLAUDE.md)
 - 当前状态：[CURRENT_STATUS.md](/Volumes/Leny/Projects/Zhanbu/Divination/CURRENT_STATUS.md)
 - 决策历史：[DECISION_EVENTS.md](/Volumes/Leny/Projects/Zhanbu/Divination/DECISION_EVENTS.md)
-- PR 入口：`/Volumes/Leny/ProjectRecord/Divination`。README 与状态的相对路径以唯一编辑源目录解析；PR 不复制源码、素材或 Agent/Skill 定义。
