@@ -1,1 +1,0 @@
-# divinationLenyli.github.io

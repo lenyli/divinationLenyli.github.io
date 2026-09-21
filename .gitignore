@@ -1,0 +1,14 @@
+# Legacy public website only. Keep AI rules and project notes local.
+# Review each new runtime path; never bypass this list with git add -f.
+*
+!*/
+!/.gitignore
+!/Divination-PWA/index.html
+!/Divination-PWA/app.js
+!/Divination-PWA/data.js
+!/Divination-PWA/sw.js
+!/Divination-PWA/manifest.json
+!/Divination-PWA/manifest.webmanifest
+!/Divination-PWA/IMG_0854.JPG
+!/Divination-PWA/icons/icon-192.png
+!/Divination-PWA/icons/icon-512.png
