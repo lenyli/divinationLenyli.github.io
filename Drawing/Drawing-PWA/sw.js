@@ -1,5 +1,4 @@
-// 离线缓存
-const CACHE = 'drawing-lots-v30';
+const CACHE = 'drawing-lots-v31-public';
 const ASSETS = [
   './',
   './index.html',
@@ -20,29 +19,27 @@ const ASSETS = [
   './icons/icon-192.png',
   './icons/icon-512.png'
 ];
+const APP_PATHS = new Set(ASSETS.map(asset => new URL(asset, self.location.href).pathname));
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
 });
-
 self.addEventListener('activate', e => {
-  e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-    ).then(() => self.clients.claim())
-      .then(() => self.clients.matchAll({ type: 'window' }))
-      .then(clients => Promise.all(clients.map(client => client.navigate(client.url))))
-  );
+  e.waitUntil(caches.keys().then(keys => Promise.all(
+    keys.filter(k => k.startsWith('drawing-lots-') && k !== CACHE).map(k => caches.delete(k))
+  )).then(() => self.clients.claim())
+    .then(() => self.clients.matchAll({ type: 'window' }))
+    .then(clients => Promise.all(clients.map(client => client.navigate(client.url)))));
 });
-
 self.addEventListener('fetch', e => {
-  e.respondWith(
-    caches.match(e.request).then(r => r || fetch(e.request).then(resp => {
-      if (e.request.method === 'GET' && resp.ok && new URL(e.request.url).origin === location.origin) {
-        const clone = resp.clone();
-        caches.open(CACHE).then(c => c.put(e.request, clone));
-      }
-      return resp;
-    }))
-  );
+  if (e.request.method !== 'GET') return;
+  const url = new URL(e.request.url);
+  if (url.origin !== self.location.origin || !APP_PATHS.has(url.pathname)) return;
+  e.respondWith(caches.open(CACHE).then(async cache => {
+    const cached = await cache.match(e.request);
+    if (cached) return cached;
+    const response = await fetch(e.request);
+    if (response.ok) await cache.put(e.request, response.clone());
+    return response;
+  }));
 });

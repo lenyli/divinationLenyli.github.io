@@ -1,29 +1,36 @@
-
-# macOS AppleDouble 垃圾
-._*
-.DS_Store
-.AppleDouble
-
-# 可由锁文件重新安装的 Node / pnpm 本地依赖
-node_modules/
-.pnpm-store/
-
-# Xcode 个人状态与本机构建缓存
-xcuserdata/
-*.xcuserstate
-DerivedData/
-.build/
-
-# 本地编译与解释器缓存
-bin/
-obj/
-*.exe
-*.pdb
-__pycache__/
-*.py[cod]
-
-# Windows 与编辑器临时文件
-Thumbs.db
-*.log
-*.tmp
-GEMINI.md
+# Public website only. Native projects, source material, AI configuration and notes stay local.
+# New runtime files require an explicit reviewed entry; do not bypass with git add -f.
+*
+!*/
+!/.gitignore
+!/.nojekyll
+!/.github/workflows/public-files.yml
+!/index.html
+!/Divination/Divination-PWA/index.html
+!/Divination/Divination-PWA/app.js
+!/Divination/Divination-PWA/data.js
+!/Divination/Divination-PWA/qian-en.js
+!/Divination/Divination-PWA/traditional-algorithms.js
+!/Divination/Divination-PWA/sw.js
+!/Divination/Divination-PWA/manifest.webmanifest
+!/Divination/Divination-PWA/icons/icon-192.png
+!/Divination/Divination-PWA/icons/icon-512.png
+!/Divination/Divination-PWA/THIRD_PARTY_NOTICES.txt
+!/Drawing/Drawing-PWA/index.html
+!/Drawing/Drawing-PWA/app.js
+!/Drawing/Drawing-PWA/data.js
+!/Drawing/Drawing-PWA/programmatic-scroll.js
+!/Drawing/Drawing-PWA/sw.js
+!/Drawing/Drawing-PWA/manifest.webmanifest
+!/Drawing/Drawing-PWA/icons/icon-192.png
+!/Drawing/Drawing-PWA/icons/icon-512.png
+!/Drawing/Drawing-PWA/assets/fonts/fahua-wenkai/FahuaWenKai-Regular.ttf
+!/Drawing/Drawing-PWA/assets/bamboo-slips.png
+!/Drawing/Drawing-PWA/assets/lotus-lacquer.png
+!/Drawing/Drawing-PWA/assets/cup-render.webp
+!/Drawing/Drawing-PWA/assets/sequence/cup-source.png
+!/Drawing/Drawing-PWA/assets/sequence/scroll-paper-source.png
+!/Drawing/Drawing-PWA/assets/sequence/scroll-roll-plain.png
+!/Drawing/Drawing-PWA/assets/sequence/lotus-overlay.png
+!/Drawing/Drawing-PWA/assets/sequence/bg-landscape-source.png
+!/Drawing/Drawing-PWA/assets/sequence/bg-portrait-source.png
