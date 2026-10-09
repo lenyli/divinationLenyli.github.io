@@ -1,4 +1,4 @@
-const CACHE = 'divination-v30-public';
+const CACHE = 'divination-v31-lenormand-single-draw';
 const ASSETS = [
   './',
   './index.html',

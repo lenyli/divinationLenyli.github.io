@@ -244,6 +244,7 @@ const state = {
   drawnGen: [], drawnMajor: [],
   sessGen: -1, sessMaj: -1,
   tarotSessionKeyGen: '', tarotSessionKeyMaj: '',
+  drawnLenormand: [], sessLenormand: -1, lenormandSessionKey: '',
   histories: Array.from({length:15},()=>[]),
   pageHtml: new Array(18).fill(null),
   pageCopy: new Array(18).fill(null),
@@ -521,6 +522,38 @@ function divineAstro(lines) {
 }
 
 // ================= 雷诺曼 / 卢恩 =================
+function lenormandDraw(q) {
+  const hi=state.includeSpecial?LENORMAND.length:LENORMAND_SPECIAL_START;
+  const sessionKey=`${hi}|${q}`;
+  if(state.lenormandSessionKey!==sessionKey){
+    state.drawnLenormand=[]; state.sessLenormand=-1;
+    state.lenormandSessionKey=sessionKey;
+  }
+  const drawn=state.drawnLenormand;
+  const available=Array.from({length:hi},(_,i)=>i).filter(i=>!drawn.includes(i));
+  if(!available.length) return;
+  drawn.push(available[rnd(available.length)]);
+  state.copyText=copyBlock(q,L().mods[3],drawn.map(i=>LENORMAND[i][0]).join('、'));
+  const h=state.histories[3];
+  const entry=makeHistoryEntry(state.copyText,{kind:'lenormand-session',schemaVersion:1,includeSpecial:state.includeSpecial,draws:[...drawn]});
+  if(state.sessLenormand>=0&&state.sessLenormand<h.length) h[state.sessLenormand]=entry;
+  else {
+    h.push(entry);
+    if(h.length>30) h.shift();
+    state.sessLenormand=h.length-1;
+  }
+  saveHistories();
+  state.segs=[];
+  seg(state.copyText+'\n\n'+L().briefNote+'\n');
+  drawn.forEach((index,k)=>{
+    const card=LENORMAND[index];
+    seg(card[0],{bold:true});
+    seg('：'+card[1]);
+    if(k<drawn.length-1) seg('\n');
+  });
+  flushOut();
+}
+
 function divineLenormand(lines) {
   const idx=[];
   const hi=state.includeSpecial?LENORMAND.length:LENORMAND_SPECIAL_START;
@@ -663,6 +696,9 @@ function drawTarotRecords(profile,count){
 }
 
 function resetTarotSessions() {
+  state.drawnLenormand=[]; state.sessLenormand=-1; state.lenormandSessionKey='';
+  state.pageHtml[6]=null; state.pageCopy[6]=null;
+  if(state.curModule===3) restoreState();
   state.drawnGen = [];
   state.sessGen = -1;
   state.tarotSessionKeyGen = '';
@@ -1119,6 +1155,7 @@ function divine(){
   if (state.curModule===0){ divineHome(q); }
   else if (state.curModule===6) divineQian(q);
   else if (state.curModule===2) divineTarot(q);
+  else if (state.curModule===3) lenormandDraw(q);
   else if (state.curModule===13){ divineDate(q); }
   else if (state.curModule===14) divineOracle(q);
   else if (state.curModule>=7 && state.curModule<=13){ if(!divineTraditional(q)) return; }
@@ -1126,8 +1163,7 @@ function divine(){
   else {
     const lines=[];
     let result;
-    if (state.curModule===3) result=divineLenormand(lines);
-    else if (state.curModule===4) result=divineRunes(lines);
+    if (state.curModule===4) result=divineRunes(lines);
     else result=divineAstro(lines);
     state.copyText=copyBlock(q,L().mods[state.curModule],result);
     state.segs=[];
@@ -1147,6 +1183,7 @@ function divine(){
 }
 
 function clearPage(){
+  if(state.curModule===3){ state.drawnLenormand=[]; state.sessLenormand=-1; state.lenormandSessionKey=''; }
   $('q').value=''; state.copyText='';
   state.questionCategory=''; state.gender='';
   if(state.curModule===1){
@@ -1223,6 +1260,7 @@ function openHistory(){
   };
   $('hist-clear').onclick=()=>{
     state.histories[mod]=[];
+    if(mod===3){ state.drawnLenormand=[]; state.sessLenormand=-1; state.lenormandSessionKey=''; }
     if (mod===2){ state.sessGen=-1; state.sessMaj=-1; state.tarotSessionKeyGen=''; state.tarotSessionKeyMaj=''; }
     saveHistories(); renderHistoryBody(mod);
   };
