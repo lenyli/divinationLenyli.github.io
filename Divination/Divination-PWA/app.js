@@ -812,7 +812,7 @@ function divineHome(q) {
   sections.push('', '【传统术数】');
   sections.push(liuyaoCalculation.response.ok?`【六爻纳甲】\n${liuyaoCalculation.response.result.aiPromptSection}`:`六爻纳甲：计算失败（${liuyaoCalculation.response.error}）`);
   traditionalResults.forEach(({label,response})=>sections.push(response.ok?`【${label}】\n${response.result.aiPromptSection}`:`${label}：计算失败（${response.error||'没有返回事实段'}）`));
-  sections.push('', '【解读要求】','先分别尊重各体系自身规则，再综合共同指向与矛盾。\n不得为了得到一致结论而删去冲突信息。\n区分强共识、弱共识、单一体系提示和资料不足。\n只依据以上数据，不重新抽牌、掷骰或排盘。');
+  sections.push('', '【解读要求】','先按各体系自身规则分别判断，再综合共同指向与矛盾；不为求一致而删去冲突信息。\n结论分为强共识、弱共识、单一体系提示和资料不足。\n用神或类神有多个候选时分别讨论，不自行指定一个。\n应期只依据已给出的应期证据，不硬造唯一日期。\n只依据以上数据，不重新抽牌、掷骰或排盘。');
   state.copyText=sections.join('\n');
   addHistoryText(state.copyText+"\n"+qianHead,{kind:'combined',schemaVersion:3,castTimestampUtc:castTime.getTime(),calculationContext,focus,includeSpecial,tarotDraws,liuyao:liuyaoCalculation.response.ok?{methodVersion:liuyaoCalculation.response.result.methodVersion,input:liuyaoCalculation.response.result.input,coinThrows,calculatedFacts:liuyaoCalculation.response.result.calculatedFacts,aiPrompt:liuyaoCalculation.response.result.aiPrompt}:null,qian:{sourceIndex:qianIndex+1,sourceComplete:qianStatus.complete}});
   state.segs=[];
