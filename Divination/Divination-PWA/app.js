@@ -1,6 +1,8 @@
 // 占卜逻辑：完整移植自 Divination.cs
 'use strict';
 
+const MODULE_TEXT_COLORS = ['#3E5B63','#43565B','#6E4E8E','#6A8F4E','#5A6C7A','#355C8C','#9E4F44','#3E6A57','#3E5975','#5E8B7E','#8A5A7B','#B08B2F','#9C6A3C','#C4A85A','#8C3F57'];
+
 const LANG_KEY = 'divination_lang';
 const SPECIAL_TAROT_START = 156;
 const LENORMAND_SPECIAL_START = 43;
@@ -285,12 +287,27 @@ function drawUnique(items, count) {
 }
 
 function seg(text, opt) { state.segs.push(Object.assign({text}, opt || {})); }
-function segC(text) { seg(text, {bold:true, red:true, big:true}); }
+function segC(text) { seg(text, {bold:true, big:true}); }
 
 function renderSegs() {
+  let current=state.curModule;
+  const names=['','六爻纳甲','塔罗牌','雷诺曼牌','卢恩符文','占星骰子','玄天灵签','奇门遁甲','大六壬','小六壬','梅花易数','太乙神数','金口诀','择日黄历','复古神谕'];
   return state.segs.map(s => {
-    const cls = [s.bold&&'b', s.italic&&'i', s.red&&'red', s.big&&'big'].filter(Boolean).join(' ');
-    return cls ? `<span class="${cls}">${esc(s.text)}</span>` : esc(s.text);
+    if(state.curModule===0 && s.big) current=6;
+    const cls=[s.bold&&'b',s.italic&&'i',s.red&&'red',s.big&&'big'].filter(Boolean).join(' ');
+    const lines=s.text.split('\n');
+    return lines.map((line,index)=>{
+      if(state.curModule===0){
+        const title=line.trim();
+        if(['【综合占卜','【卡牌与卦象】','【传统术数】','【解读要求】'].some(h=>title.startsWith(h))) current=0;
+        else {
+          const matched=names.findIndex((name,i)=>i>0&&(title.startsWith(name+'：')||title.startsWith('【'+name)));
+          if(matched>0) current=matched;
+        }
+      }
+      const color=s.red?'#d00':MODULE_TEXT_COLORS[current];
+      return `<span class="${cls}" style="color:${color}">${esc(line)}${index<lines.length-1?'\n':''}</span>`;
+    }).join('');
   }).join('');
 }
 
@@ -919,20 +936,20 @@ function renderTabs(){
   [0,2,3,4,5,14,6,13].forEach(i=>{
     const b=document.createElement('button');
     b.className='tab'+(state.curModule===i?' sel':'');
-    b.textContent=s.modTabs[i]; b.title=s.mods[i];
+    b.textContent=s.modTabs[i]; b.title=s.mods[i]; b.style.color=MODULE_TEXT_COLORS[i];
     b.onclick=()=>{ saveState(); state.curModule=i; restoreState(); renderAll(); };
     bar.appendChild(b);
   });
   const methodBar=$('methodbar'); methodBar.innerHTML='';
   const liuYao=document.createElement('button');
   liuYao.className='tab'+(state.curModule===1?' sel':'');
-  liuYao.textContent=s.modTabs[1]; liuYao.title=s.mods[1];
+  liuYao.textContent=s.modTabs[1]; liuYao.title=s.mods[1]; liuYao.style.color=MODULE_TEXT_COLORS[1];
   liuYao.onclick=()=>{ saveState(); state.curModule=1; restoreState(); renderAll(); };
   methodBar.appendChild(liuYao);
   s.newMethodTabs.slice(0,6).forEach((t,i)=>{
     const b=document.createElement('button');
     const moduleIndex=7+i;
-    b.className='tab'+(state.curModule===moduleIndex?' sel':''); b.textContent=t; b.title=t;
+    b.className='tab'+(state.curModule===moduleIndex?' sel':''); b.textContent=t; b.title=t; b.style.color=MODULE_TEXT_COLORS[moduleIndex];
     b.onclick=()=>{ saveState(); state.curModule=moduleIndex; restoreState(); renderAll(); };
     methodBar.appendChild(b);
   });
@@ -947,7 +964,7 @@ function renderTabs(){
       b.textContent=s.langBtn; b.title=s.langTitle; b.onclick=toggleLang;
     }else{
       b.className+=state.curModule===item?' sel':'';
-      b.textContent=s.mobileTabs[item]; b.title=s.mods[item];
+      b.textContent=s.mobileTabs[item]; b.title=s.mods[item]; b.style.color=MODULE_TEXT_COLORS[item];
       b.onclick=()=>{ saveState(); state.curModule=item; restoreState(); renderAll(); };
     }
     mobileBar.appendChild(b);
