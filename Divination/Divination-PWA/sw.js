@@ -1,4 +1,4 @@
-const CACHE = 'divination-v34-result-colors';
+const CACHE = 'divination-v40-navigation-number';
 const ASSETS = [
   './',
   './index.html',

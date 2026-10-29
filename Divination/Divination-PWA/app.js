@@ -10,6 +10,9 @@ const ORACLE_SPECIAL_START = 49;
 
 const STR = {
   zh: {
+    closingNoticeTitle: '网页版即将关闭',
+    closingNoticeBody: '本网页版将于 2026 年 10 月 27 日关闭。之后请在 App Store 搜索“观兆问筮”下载 iOS 版继续使用。',
+    closingNoticeOK: '知道了',
     mods: ["首页","六爻纳甲","塔罗","雷诺曼","卢恩符文","占星骰子","玄天灵签","奇门遁甲","大六壬","小六壬","梅花易数","太乙神数","金口诀","择日/黄历","复古神谕"],
     modTabs: ["首页","六爻纳甲","塔罗牌","雷诺曼牌","卢恩符文","占星骰子","玄天灵签","奇门遁甲","大六壬","小六壬","梅花易数","太乙神数","金口诀","择日黄历","复古神谕"],
     mobileTabs: ["首页","六爻纳甲","塔罗牌","雷诺曼牌","卢恩符文","占星骰子","玄天灵签","奇门遁甲","大六壬","小六壬","梅花易数","太乙神数","金口诀","择日黄历","复古神谕"],
@@ -100,6 +103,9 @@ const STR = {
     }
   },
   en: {
+    closingNoticeTitle: 'This web version is closing',
+    closingNoticeBody: 'This web version will close on October 27, 2026. To keep using it, search for “Oracle Atlas” on the App Store and download the iOS app.',
+    closingNoticeOK: 'OK',
     mods: ["Home","I Ching","Tarot","Lenormand","Runes","Astro Dice","Fortune Slip","Qimen","Da Liu Ren","Xiao Liu Ren","Meihua Yishu","Taiyi","Jin Kou Jue","Date Selection","Old Style Oracle"],
     modTabs: ["Home","I Ching","Tarot","Lenormand","Runes","Astro Dice","Slip","Qimen","Da Liu Ren","Xiao Liu Ren","Meihua","Taiyi","Jin Kou Jue","Date Select","Old Oracle"],
     mobileTabs: ["Home","I Ching","Tarot","Lenormand","Runes","Astro Dice","Slip","Qimen","Da Liu Ren","Xiao Liu Ren","Meihua","Taiyi","Jin Kou Jue","Date Select","Old Oracle"],
@@ -219,6 +225,9 @@ function toggleLang() {
 
 function applyStaticI18n() {
   const s = L();
+  $('closing-notice-title').textContent = s.closingNoticeTitle;
+  $('closing-notice-body').textContent = s.closingNoticeBody;
+  $('closing-notice-ok').textContent = s.closingNoticeOK;
   $('upper-label').textContent = s.upperTrigram;
   $('lower-label').textContent = s.lowerTrigram;
   $('moving-label').textContent = s.movingLines;
@@ -247,6 +256,8 @@ const state = {
   sessGen: -1, sessMaj: -1,
   tarotSessionKeyGen: '', tarotSessionKeyMaj: '',
   drawnLenormand: [], sessLenormand: -1, lenormandSessionKey: '',
+  drawnRunes: [], sessRunes: -1, runeSessionKey: '',
+  drawnOracle: [], sessOracle: -1, oracleSessionKey: '',
   histories: Array.from({length:15},()=>[]),
   pageHtml: new Array(18).fill(null),
   pageCopy: new Array(18).fill(null),
@@ -289,26 +300,89 @@ function drawUnique(items, count) {
 function seg(text, opt) { state.segs.push(Object.assign({text}, opt || {})); }
 function segC(text) { seg(text, {bold:true, big:true}); }
 
+
+function orientedName(source,rune=false){
+ const reversed=rune?source.endsWith('逆位'):source.startsWith('逆位');
+ let base=reversed?(rune?source.slice(0,-2):source.slice(2)):source;
+ if(rune)base=base.replace(/[（）()]/g,' ').replace(/ +/g,' ');
+ return base.trim()+'（'+(lang==='zh'?(reversed?'逆位':'正位'):(reversed?'Reversed':'Upright'))+'）';
+}
+
+function renderTraditionalDiagram(){
+ const f=state.readingFacts||{}, label=(zh,en)=>lang==='zh'?zh:en;
+ if(state.curModule===1 && Array.isArray(f.primary?.lines) && f.primary.lines.length===6){
+  const primary=f.primary.lines.map(line=>String(line.yaoType).includes('阳'));
+  const figure=(title,name,lines)=>'<div><small>'+esc(title)+'</small><h3>'+esc(name||'')+'</h3>'+[...lines].reverse().map(y=>'<div class="hex-line'+(y?' yang':' yin')+'"><i></i>'+(y?'':'<i></i>')+'</div>').join('')+'</div>';
+  const primaryFigures=figure(label('本卦','Primary'),f.primary.name,primary)+figure(label('变卦','Changed'),f.changed?.name,(f.changed?.lines||[]).map(line=>String(line.yaoType).includes('阳')));
+  const otherFigures=figure(label('互卦','Mutual'),f.mutual,[1,2,3,2,3,4].map(i=>primary[i]))+figure(label('错卦','Opposite'),f.opposite,primary.map(y=>!y))+figure(label('综卦','Reversed'),f.reversed,[...primary].reverse());
+  return '<section class="result-block"><div class="hexagram-three hexagram-two">'+primaryFigures+'</div><div class="hexagram-three">'+otherFigures+'</div></section>';
+ }
+ if(state.curModule===7 && Array.isArray(f.palaces)){
+  return '<div class="palace-grid">'+[4,9,2,3,5,7,8,1,6].map(n=>{
+   const p=f.palaces.find(p=>p.gong===n)||{},sky=p.tianPan||{},ground=p.diPan||{},human=p.renPan||{},spirit=p.shenPan||{};
+   const fields=[[label('方位','Direction'),p.direction],[label('五行','Phase'),p.element],[label('天盘','Heaven stem'),sky.stem],[label('九星','Star'),sky.star],[label('寄星','Companion star'),sky.companionStar],[label('寄干','Companion stem'),sky.companionStem],[label('地盘','Earth stem'),ground.stem],[label('八门','Door'),human.door],[label('八神','Spirit'),spirit.god]].filter(pair=>pair[1]);
+   return '<details class="palace"><summary><h3>'+esc(p.name||'')+'</h3><div>'+esc((sky.star||'—')+' · '+(human.door||'—'))+'</div><div>'+esc(sky.stem||'—')+' ›</div></summary><dl>'+fields.map(([k,v])=>'<dt>'+esc(k)+'</dt><dd>'+esc(v)+'</dd>').join('')+'</dl></details>';
+  }).join('')+'</div>';
+ }
+ if(state.curModule===10 && f.mainHexagram){
+  const trigrams={'乾':[1,1,1],'兑':[1,1,0],'离':[1,0,1],'震':[1,0,0],'巽':[0,1,1],'坎':[0,1,0],'艮':[0,0,1],'坤':[0,0,0]};
+  return '<div class="hexagram-three">'+[[label('本卦','Primary'),f.mainHexagram],[label('互卦','Mutual'),f.interHexagram],[label('变卦','Changed'),f.changedHexagram]].map(([name,h])=>{
+   h=h||{};const lines=[...(trigrams[h.lower]||[]),...(trigrams[h.upper]||[])].reverse();
+   return '<div><small>'+name+'</small><h3>'+esc(h.name||'')+'</h3>'+lines.map(y=>'<div class="hex-line'+(y?' yang':' yin')+'"><i></i>'+(y?'':'<i></i>')+'</div>').join('')+'</div>';
+  }).join('')+'</div>';
+ }
+ if(state.curModule===11 && f.taiyiPalace){
+  // Matches the fixed upstream Taiyi palace and point tables.
+  const points={'戌':1,'乾':1,'巳':2,'午':2,'丑':3,'艮':3,'寅':4,'卯':4,'申':6,'酉':6,'未':7,'坤':7,'亥':8,'子':8,'辰':9,'巽':9};
+  const names={1:'乾',2:'离',3:'艮',4:'震',5:'中宫',6:'兑',7:'坤',8:'坎',9:'巽'};
+  return '<div class="palace-grid taiyi-grid">'+[9,2,7,4,5,6,3,8,1].map(n=>'<div class="palace'+(f.taiyiPalace===n?' active-palace':'')+'"><b class="palace-number">'+n+'</b><div>'+names[n]+'</div>'+[[label('太乙','Taiyi'),'taiyiPosition'],[label('文昌','Wenchang'),'wenChangPosition'],[label('始击','Shiji'),'shiJiPosition'],[label('计神','Jishen'),'jiShenPosition']].filter(pair=>points[f[pair[1]]]===n).map(([name,key])=>'<p>'+name+' · '+esc(f[key])+'</p>').join('')+'</div>').join('')+'</div>';
+ }
+ return '';
+}
+
 function renderSegs() {
-  let current=state.curModule;
-  const names=['','六爻纳甲','塔罗牌','雷诺曼牌','卢恩符文','占星骰子','玄天灵签','奇门遁甲','大六壬','小六壬','梅花易数','太乙神数','金口诀','择日黄历','复古神谕'];
-  return state.segs.map(s => {
-    if(state.curModule===0 && s.big) current=6;
-    const cls=[s.bold&&'b',s.italic&&'i',s.red&&'red',s.big&&'big'].filter(Boolean).join(' ');
-    const lines=s.text.split('\n');
-    return lines.map((line,index)=>{
-      if(state.curModule===0){
-        const title=line.trim();
-        if(['【综合占卜','【卡牌与卦象】','【传统术数】','【解读要求】'].some(h=>title.startsWith(h))) current=0;
-        else {
-          const matched=names.findIndex((name,i)=>i>0&&(title.startsWith(name+'：')||title.startsWith('【'+name)));
-          if(matched>0) current=matched;
-        }
-      }
-      const color=s.red?'#d00':MODULE_TEXT_COLORS[current];
-      return `<span class="${cls}" style="color:${color}">${esc(line)}${index<lines.length-1?'\n':''}</span>`;
-    }).join('');
-  }).join('');
+  if([2,3,4,14].includes(state.curModule) && !(state.curModule===2&&state.curTab===1) && !state.segs.some(part=>part.red)){
+    const rows=[];
+    state.segs.forEach(part=>{
+      if(part.italic)return;
+      if(part.bold&&part.text.includes('\n'))rows.push({title:part.text.trim(),body:''});
+      else if(rows.length)rows[rows.length-1].body+=part.text;
+    });
+    return '<div class="reading-cards">'+rows.map(row=>{
+      const rune=state.curModule===4, first=Array.from(row.title)[0], symbol=first&&first.codePointAt(0)>=0x16A0&&first.codePointAt(0)<=0x16FF?first:'';
+      const reversed=rune&&row.title.endsWith('逆位');
+      const formatted=[2,4].includes(state.curModule)?orientedName(row.title,rune):row.title;
+      const title=rune?formatted.slice(symbol.length).trim():formatted;
+      return '<section class="reading-card'+(rune?' rune-row':'')+'">'+(rune?'<div class="rune-symbol'+(symbol?'':' blank')+(reversed?' reversed':'')+'" aria-hidden="true">'+esc(symbol)+'</div>':'')+'<div><strong>'+esc(title)+'</strong><p>'+esc(row.body.trim())+'</p></div></section>';
+    }).join('')+'</div>'+state.segs.filter(part=>part.italic).map(part=>'<p class="reading-note">'+esc(part.text)+'</p>').join('');
+  }
+
+  const groups=[];
+  let current={title:'',parts:[]};
+  const finish=()=>{
+    if(current.title || current.parts.some(part=>part.text.trim())) groups.push(current);
+  };
+  state.segs.forEach(segment=>{
+    const lines=segment.text.split('\n');
+    lines.forEach((line,index)=>{
+      const clean=line.trim();
+      const heading=clean && (segment.big || /^【[^】]+】$/.test(clean) || (segment.bold && lines.length>1));
+      if(heading){ finish(); current={title:clean,parts:[]}; }
+      else current.parts.push({...segment,text:line+(index<lines.length-1?'\n':'')});
+    });
+  });
+  finish();
+  const html=groups.map(group=>'<section class="result-block">'+
+    (group.title?'<h3>'+esc(group.title)+'</h3>':'')+
+    '<div class="result-text">'+group.parts.map(part=>{
+      const cls=[part.bold&&'b',part.italic&&'i',part.red&&'red',part.big&&'big'].filter(Boolean).join(' ');
+      return '<span class="'+cls+'">'+esc(part.text)+'</span>';
+    }).join('')+'</div></section>').join('');
+  if(state.curModule===0 || state.curModule===6)return html;
+  const diagram=renderTraditionalDiagram();
+  if(diagram)return diagram+'<div class="result-text">'+html+'</div>';
+
+  return html;
 }
 
 function timeStamp() {
@@ -349,7 +423,7 @@ function pageIndex() {
 }
 function saveState() {
   const p = pageIndex();
-  state.pageHtml[p] = renderSegs();
+  state.pageHtml[p] = $('out').innerHTML;
   state.pageCopy[p] = state.copyText;
 }
 function restoreState() {
@@ -358,7 +432,7 @@ function restoreState() {
   if (state.pageHtml[p] == null) { state.copyText = ""; setOutHtml(""); }
   else { state.copyText = state.pageCopy[p]; setOutHtml(state.pageHtml[p]); }
 }
-function setOutHtml(h) { document.getElementById('out').innerHTML = h; }
+function setOutHtml(h) { document.getElementById('out').innerHTML = h; updateActionState(); }
 function flushOut() { setOutHtml(renderSegs()); }
 
 // ================= 六爻 =================
@@ -518,6 +592,7 @@ function divineSharedLiuYao(q){
   const castTime=new Date();
   const {response,options}=calculateSharedLiuYao(q,castTime);
   if(!response.ok){ window.alert(response.error); return false; }
+  state.readingFacts=response.result.calculatedFacts;
   state.copyText=response.result.aiPrompt;
   state.segs=[]; seg(response.result.display); flushOut();
   addHistory({kind:'liuyao',schemaVersion:3,methodVersion:response.result.methodVersion,input:response.result.input,coinThrows:options.coinThrows||null,yaoValues:response.result.input.yaoValues,calculatedFacts:response.result.calculatedFacts,aiPrompt:response.result.aiPrompt});
@@ -564,7 +639,7 @@ function lenormandDraw(q) {
   seg(state.copyText+'\n\n'+L().briefNote+'\n');
   drawn.forEach((index,k)=>{
     const card=LENORMAND[index];
-    seg(card[0],{bold:true});
+    seg(`${card[0]}\n`,{bold:true});
     seg('：'+card[1]);
     if(k<drawn.length-1) seg('\n');
   });
@@ -590,22 +665,34 @@ function oraclePromptSummary(drawn){
   return drawn.map(({card,upright})=>`${card[2]}（${upright?'正位':'逆位'}；领域：${card[3]}；流向：${card[4]}）`).join('、')+'；';
 }
 
-function divineOracle(q){
-  const drawn=drawOracleCards();
-  state.copyText=copyBlock(q,L().mods[14],oraclePromptSummary(drawn));
-  addHistory();
-  const s=L(), pre=s.cardPre;
-  state.segs=[]; seg(state.copyText+"\n");
-  seg(ORACLE_AI_NOTICE+"\n",{italic:true});
-  seg("\n"+s.briefNote+"\n");
-  drawn.forEach(({card,upright},i)=>{
-    seg(pre[i]);
-    seg(`${card[2]}（${upright?'正位':'逆位'}）`,{bold:true});
-    seg(`：${card[5]}；${upright?card[6]:card[7]}。`);
-    if(i<drawn.length-1) seg("\n");
-  });
-  flushOut();
+function resetOracleSession(){state.drawnOracle=[];state.sessOracle=-1;state.oracleSessionKey='';}
+function oraclePoolExhausted(){
+ const q=$('q').value.trim()||L().emptyQuestion;
+ const key=[q,state.questionCategory,state.gender,state.questionCategory==='search'?state.searchTarget:'',state.includeSpecial].join('|');
+ const hi=state.includeSpecial?ORACLE.length:ORACLE_SPECIAL_START;
+ return state.oracleSessionKey===key && state.drawnOracle.length>=hi;
 }
+function divineOracle(q){
+ const key=[q,state.questionCategory,state.gender,state.questionCategory==='search'?state.searchTarget:'',state.includeSpecial].join('|');
+ if(state.oracleSessionKey!==key){resetOracleSession();state.oracleSessionKey=key;}
+ const hi=state.includeSpecial?ORACLE.length:ORACLE_SPECIAL_START;
+ const used=new Set(state.drawnOracle.map(item=>item.index));
+ const available=Array.from({length:hi},(_,i)=>i).filter(i=>!used.has(i));
+ if(!available.length)return;
+ state.drawnOracle.push({index:available[rnd(available.length)],upright:rnd(2)===0});
+ const drawn=state.drawnOracle.map(item=>({card:ORACLE[item.index],upright:item.upright}));
+ state.copyText=copyBlock(q,L().mods[14],oraclePromptSummary(drawn));
+ const history=state.histories[14],entry=makeHistoryEntry(state.copyText,{kind:'oracle-session',schemaVersion:1,draws:state.drawnOracle.map(item=>({...item}))});
+ if(state.sessOracle>=0&&state.sessOracle<history.length)history[state.sessOracle]=entry;
+ else{history.push(entry);if(history.length>30)history.shift();state.sessOracle=history.length-1;}
+ saveHistories();state.segs=[];
+ drawn.forEach(({card,upright})=>{
+  seg(`${card[2]}（${upright?'正位':'逆位'}）\n`,{bold:true});
+  seg(`${card[5]}；${upright?card[6]:card[7]}。\n\n`);
+ });
+ seg(ORACLE_AI_NOTICE,{italic:true});flushOut();
+}
+
 function buildRuneEntities() {
   const byName=new Map();
   RUNES.forEach((row,index)=>{
@@ -639,6 +726,40 @@ function divineRunes(lines) {
   return names.join("、")+"；";
 }
 
+function runeSessionKey(q){
+  return [q,state.questionCategory,state.gender,state.questionCategory==='search'?state.searchTarget:''].join('|');
+}
+function resetRuneSession(){
+  state.drawnRunes=[]; state.sessRunes=-1; state.runeSessionKey='';
+}
+function runePoolExhausted(){
+  const q=$('q').value.trim()||L().emptyQuestion;
+  return state.runeSessionKey===runeSessionKey(q) && state.drawnRunes.length>=RUNE_ENTITIES.length;
+}
+function runeDraw(q){
+  const key=runeSessionKey(q);
+  if(state.runeSessionKey!==key){ resetRuneSession(); state.runeSessionKey=key; }
+  const used=new Set(state.drawnRunes.map(record=>record.entityId));
+  const available=RUNE_ENTITIES.filter(entity=>!used.has(entity.id));
+  if(!available.length) return;
+  const entity=available[rnd(available.length)];
+  const reversed=entity.reversedIndex!==null && rnd(2)===1;
+  const rowIndex=reversed?entity.reversedIndex:entity.uprightIndex;
+  state.drawnRunes.push({entityId:entity.id,rowIndex});
+  state.copyText=copyBlock(q,L().mods[4],state.drawnRunes.map(record=>RUNES[record.rowIndex][0]).join('、'));
+  const history=state.histories[4];
+  const entry=makeHistoryEntry(state.copyText,{kind:'rune-session',schemaVersion:1,draws:state.drawnRunes.map(record=>({...record}))});
+  if(state.sessRunes>=0 && state.sessRunes<history.length) history[state.sessRunes]=entry;
+  else { history.push(entry); if(history.length>30)history.shift(); state.sessRunes=history.length-1; }
+  saveHistories();
+  state.segs=[];
+  state.drawnRunes.forEach((record,index)=>{
+    const row=RUNES[record.rowIndex];
+    seg(`${row[0]}\n`,{bold:true}); seg(row[1]+'\n\n');
+  });
+  flushOut();
+}
+
 // ================= 灵签 =================
 function qianTable() {
   return (lang === 'en' && typeof QIAN_EN !== 'undefined') ? QIAN_EN : QIAN;
@@ -666,13 +787,22 @@ function divineQian(q) {
   if(!sourceStatus.complete){ seg("\n资料状态：",{bold:true}); seg(sourceStatus.note); }
   flushOut();
 }
+function qianVerseLines(value){
+  if(!/[，。；！？]/.test(value))return value;
+  let count=0;
+  return value.replace(/[\r\n]/g,'').replace(/[，。；！？]/g,mark=>mark+(++count%2===0?'\n':'')).replace(/\n+$/,'');
+}
+function qianCopySection(source){
+  const labels=lang==='zh'?['签号','等级','签名',...L().qianLabels]:['Number','Grade','Title',...L().qianLabels];
+  return ['【玄天灵签】',...labels.map((label,index)=>label+'：'+source[index])].join('\n');
+}
 function appendQian(s) {
   const labels = L().qianLabels;
   segC(s[0]+"　"+s[1]+"　"+s[2]+"\n");
   labels.forEach((lb,i)=>{
-    seg(lb+"：",{bold:true});
-    seg(s[i+3]);
-    if (i<labels.length-1) seg("\n");
+    seg(lb+"：\n",{bold:true});
+    seg(qianVerseLines(s[i+3]));
+    if (i<labels.length-1) seg("\n\n");
   });
 }
 
@@ -755,7 +885,6 @@ function tarotDraw(q, gen) {
   saveHistories();
   const s = L();
   state.segs=[];
-  seg(state.copyText+"\n\n"+s.briefNote+"\n");
   if (gen) {
     const specials = drawn.filter(record=>record.special).map(record=>TAROT[record.rowIndex][0]);
     seg(s.specialCards,{bold:true});
@@ -763,9 +892,9 @@ function tarotDraw(q, gen) {
   }
   drawn.forEach((record,k)=>{
     const row=TAROT[record.rowIndex];
-    seg(row[0],{bold:true});
-    seg("："+row[1]);
-    if (k<drawn.length-1) seg("\n");
+    seg(`${row[0]}\n`,{bold:true});
+    seg(row[1]);
+    if (k<drawn.length-1) seg("\n\n");
   });
   flushOut();
 }
@@ -790,13 +919,14 @@ function divineHome(q) {
   const dummy=[];
   const tarotProfile=includeSpecial?'generalAll':'standard78';
   const tarotDraws=drawTarotRecords(tarotProfile,3);
-  const tarot = tarotDraws.map(record=>TAROT[record.rowIndex][0]).join("、")+"；";
+  const tarot = tarotDraws.map(record=>orientedName(TAROT[record.rowIndex][0])).join("、")+"；";
   const len = divineLenormand(dummy);
   const runes = divineRunes(dummy);
   const astro = divineAstro(dummy);
   const coinThrows=frozenCoinThrows();
   const liuyaoCalculation=calculateSharedLiuYao(q,castTime,{forceRandom:true,coinThrows});
-  const oracle = oraclePromptSummary(drawOracleCards());
+  const oracleCards = drawOracleCards();
+  const oracle = oraclePromptSummary(oracleCards);
   const qTable = qianTable();
   const qianIndex=rnd(qTable.length), qs = qTable[qianIndex], qianStatus=qianSourceStatus(qianIndex);
   const qianHead = qs[0]+"　"+qs[1]+"　"+qs[2];
@@ -830,10 +960,14 @@ function divineHome(q) {
   sections.push(liuyaoCalculation.response.ok?`【六爻纳甲】\n${liuyaoCalculation.response.result.aiPromptSection}`:`六爻纳甲：计算失败（${liuyaoCalculation.response.error}）`);
   traditionalResults.forEach(({label,response})=>sections.push(response.ok?`【${label}】\n${response.result.aiPromptSection}`:`${label}：计算失败（${response.error||'没有返回事实段'}）`));
   sections.push('', '【解读要求】','先按各体系自身规则分别判断，再综合共同指向与矛盾；不为求一致而删去冲突信息。\n结论分为强共识、弱共识、单一体系提示和资料不足。\n用神或类神有多个候选时分别讨论，不自行指定一个。\n应期只依据已给出的应期证据，不硬造唯一日期。\n只依据以上数据，不重新抽牌、掷骰或排盘。');
-  state.copyText=sections.join('\n');
+  state.copyText=sections.join('\n')+'\n\n'+qianCopySection(qs);
   addHistoryText(state.copyText+"\n"+qianHead,{kind:'combined',schemaVersion:3,castTimestampUtc:castTime.getTime(),calculationContext,focus,includeSpecial,tarotDraws,liuyao:liuyaoCalculation.response.ok?{methodVersion:liuyaoCalculation.response.result.methodVersion,input:liuyaoCalculation.response.result.input,coinThrows,calculatedFacts:liuyaoCalculation.response.result.calculatedFacts,aiPrompt:liuyaoCalculation.response.result.aiPrompt}:null,qian:{sourceIndex:qianIndex+1,sourceComplete:qianStatus.complete}});
   state.segs=[];
-  seg(state.copyText+"\n");
+  segC('卡牌与卦象\n');
+  seg(['塔罗牌：'+tarot,'雷诺曼牌：'+len,'复古神谕：'+oracleCards.map(item=>item.card[2]+(item.upright?'（正位）':'（逆位）')).join('、'),'卢恩符文：'+runes.replace(/[；;]$/,'').split('、').map(raw=>orientedName(raw,true).replace(/^[\u16a0-\u16ff]/u,'').trim()).join('、'),'占星骰子：'+astro].join('\n')+'\n\n');
+  segC('传统术数\n');
+  if(liuyaoCalculation.response.ok){segC('六爻纳甲\n');seg(liuyaoCalculation.response.result.display+'\n\n');}
+  traditionalResults.forEach(({label,response})=>{segC(label+'\n');seg((response.ok?response.result.display:response.error)+'\n\n');});
   appendQian(qs);
   flushOut();
 }
@@ -924,50 +1058,48 @@ function goText(){
   const s = L();
   switch(state.curModule){
     case 0: return s.goHome; case 1: return s.goLiuYao;
+    case 4: return runePoolExhausted()?(lang==='zh'?'已抽完':'All drawn'):(lang==='zh'?'抽取一枚':'Draw one rune');
     case 5: return s.goDice; case 6: return s.goQian;
     case 7: case 8: case 9: case 10: case 11: case 12: case 13: return s.calculate;
     default: return s.goDraw;
   }
 }
 
+const moduleTrail=[];
+function resetPageScroll(){
+  window.scrollTo({top:0,left:0,behavior:'instant'});
+  ['out','configuration','navigation'].forEach(id=>$(id).scrollTo({top:0,left:0,behavior:'instant'}));
+}
+function navigateModule(index){
+  if(index===state.curModule)return;
+  saveState(); if(index===0)moduleTrail.length=0; else moduleTrail.push(state.curModule); state.curModule=index;
+  restoreState(); renderAll(); resetPageScroll();
+}
+function goBack(){
+  if(state.curModule===0)return;
+  saveState(); state.curModule=moduleTrail.pop()??0;
+  restoreState(); renderAll(); resetPageScroll();
+}
+
 function renderTabs(){
   const s = L();
-  const bar=$('modbar'); bar.innerHTML='';
-  [0,2,3,4,5,14,6,13].forEach(i=>{
-    const b=document.createElement('button');
-    b.className='tab'+(state.curModule===i?' sel':'');
-    b.textContent=s.modTabs[i]; b.title=s.mods[i]; b.style.color=MODULE_TEXT_COLORS[i];
-    b.onclick=()=>{ saveState(); state.curModule=i; restoreState(); renderAll(); };
-    bar.appendChild(b);
-  });
-  const methodBar=$('methodbar'); methodBar.innerHTML='';
-  const liuYao=document.createElement('button');
-  liuYao.className='tab'+(state.curModule===1?' sel':'');
-  liuYao.textContent=s.modTabs[1]; liuYao.title=s.mods[1]; liuYao.style.color=MODULE_TEXT_COLORS[1];
-  liuYao.onclick=()=>{ saveState(); state.curModule=1; restoreState(); renderAll(); };
-  methodBar.appendChild(liuYao);
-  s.newMethodTabs.slice(0,6).forEach((t,i)=>{
-    const b=document.createElement('button');
-    const moduleIndex=7+i;
-    b.className='tab'+(state.curModule===moduleIndex?' sel':''); b.textContent=t; b.title=t; b.style.color=MODULE_TEXT_COLORS[moduleIndex];
-    b.onclick=()=>{ saveState(); state.curModule=moduleIndex; restoreState(); renderAll(); };
-    methodBar.appendChild(b);
-  });
+  $('navigation').setAttribute('aria-label',lang==='zh'?'占卜方式':'Divination method');
+  $('brand-name').textContent=lang==='zh'?'观兆问筮':'Oracle Atlas';
+  $('back').hidden=state.curModule===0;
+  $('back').textContent=lang==='zh'?'‹ 返回':'‹ Back';
+  $('method-title').textContent=state.curModule===0?(lang==='zh'?'综合结果':'Combined result'):s.mods[state.curModule];
+  $('out').dataset.empty=lang==='zh'?'占卜结果将在这里显示':'Your result will appear here';
   const mobileBar=$('mobilebar'); mobileBar.innerHTML='';
-  [0,13,14,'lang',2,3,4,5,1,7,8,9,10,11,12,6].forEach(item=>{
+  [0,13,14,null,2,3,4,5,1,7,8,9,10,11,12,6].forEach(item=>{
     if(item===null){
-      const gap=document.createElement('span'); gap.className='nav-empty'; gap.setAttribute('aria-hidden','true');
-      mobileBar.appendChild(gap); return;
+      const gap=document.createElement('span'); gap.className='nav-empty'; gap.setAttribute('aria-hidden','true'); mobileBar.appendChild(gap); return;
     }
-    const b=document.createElement('button'); b.className='tab';
-    if(item==='lang'){
-      b.textContent=s.langBtn; b.title=s.langTitle; b.onclick=toggleLang;
-    }else{
-      b.className+=state.curModule===item?' sel':'';
-      b.textContent=s.mobileTabs[item]; b.title=s.mods[item]; b.style.color=MODULE_TEXT_COLORS[item];
-      b.onclick=()=>{ saveState(); state.curModule=item; restoreState(); renderAll(); };
-    }
-    mobileBar.appendChild(b);
+    const button=document.createElement('button'); button.type='button';
+    button.className='tab'+(state.curModule===item?' sel':'');
+    button.textContent=s.mobileTabs[item]; button.title=s.mods[item];
+    button.setAttribute('aria-pressed',String(state.curModule===item));
+    button.onclick=()=>navigateModule(item);
+    mobileBar.appendChild(button);
   });
   const sub=$('subbar'); sub.innerHTML=''; sub.style.display='none';
   $('liurow').style.display=state.curModule===1?'flex':'none';
@@ -995,9 +1127,14 @@ function renderTabs(){
     lb.appendChild(c); lb.appendChild(document.createTextNode(s.includeSpecial));
     sub.appendChild(lb);
   }
-  $('go').textContent=goText();
+  updateActionState();
 }
 
+function updateActionState(){
+  $('go').textContent=goText();
+  $('go').disabled=(state.curModule===4&&runePoolExhausted())||(state.curModule===14&&oraclePoolExhausted());
+  $('copy').disabled=!state.copyText;
+}
 function renderAll(){ renderTabs(); }
 
 function localDateTimeValue(date=new Date()){
@@ -1102,10 +1239,11 @@ function renderTraditionalInputs(){
   const method=TRADITIONAL_METHODS[state.curModule-7];
   row.classList.toggle('almanac',method==='almanac');
   if(method==='meihua'){
-    row.insertAdjacentHTML('beforeend',`<label>${s.castMethod}<select id="traditional-method">${option('time',s.timeMethod)}${option('number',s.numberMethod)}</select></label><label id="traditional-number-wrap" style="display:none">${s.numberValue}<input id="traditional-number" type="number" min="1" step="1" value="1"></label>`);
-    $('traditional-method').onchange=()=>{ $('traditional-number-wrap').style.display=$('traditional-method').value==='number'?'flex':'none'; };
+    row.insertAdjacentHTML('beforeend',`<fieldset class="cast-methods"><legend>${s.castMethod}</legend><label><input type="radio" name="meihua-method" value="time" checked>${lang==='zh'?'时间起卦':'Time'}</label><label><input type="radio" name="meihua-method" value="number">${lang==='zh'?'数字起卦':'Number'}</label></fieldset><label id="traditional-number-wrap" style="display:none">${s.numberValue}<input id="traditional-number" type="number" min="1" step="1" value="1"></label>`);
+    row.querySelectorAll('[name="meihua-method"]').forEach(input=>input.onchange=()=>{ $('traditional-number-wrap').style.display=input.value==='number'?'flex':'none'; });
   }else if(method==='taiyi'){
-    row.insertAdjacentHTML('beforeend',`<label>${s.scope}<select id="traditional-scope">${option('year','年计')}${option('month','月计')}${option('day','日计')}${option('hour','时计')}</select></label>`);
+    row.insertAdjacentHTML('beforeend',`<fieldset class="cast-methods"><legend>${lang==='zh'?'起局方式':'Casting method'}</legend><label><input type="radio" name="taiyi-method" value="time" checked>${lang==='zh'?'时间起局':'Time'}</label><label><input type="radio" name="taiyi-method" value="manual">${lang==='zh'?'数字起局':'Bureau number'}</label></fieldset><div id="taiyi-manual" style="display:none"><label>${lang==='zh'?'局数（1–72）':'Bureau (1–72)'}<input id="taiyi-bureau" type="number" min="1" max="72" step="1" value="1"></label><label>${lang==='zh'?'阴阳遁':'Direction'}<select id="taiyi-direction">${option('阳遁',lang==='zh'?'阳遁':'Yang')}${option('阴遁',lang==='zh'?'阴遁':'Yin')}</select></label></div><label>${s.scope}<select id="traditional-scope">${option('year','年计')}${option('month','月计')}${option('day','日计')}${option('hour','时计')}</select></label>`);
+    row.querySelectorAll('[name="taiyi-method"]').forEach(input=>input.onchange=()=>{ $('taiyi-manual').style.display=input.value==='manual'?'grid':'none'; });
   }else if(method==='jinkoujue'){
     row.insertAdjacentHTML('beforeend',`<label>${s.diFenMethod}<select id="traditional-method">${option('time',s.timeMethod)}${option('branch',s.branchMethod)}${option('number',s.numberMethod)}</select></label><label id="traditional-branch-wrap" style="display:none">${s.branch}<select id="traditional-branch">${'子丑寅卯辰巳午未申酉戌亥'.split('').map(x=>option(x,x)).join('')}</select></label><label id="traditional-number-wrap" style="display:none">${s.numberValue}<input id="traditional-number" type="number" min="1" step="1" value="1"></label>`);
     $('traditional-method').onchange=()=>{
@@ -1124,8 +1262,11 @@ function renderTraditionalInputs(){
 function traditionalOptions(method,question=''){
   const focus=focusOptions();
   const context=fixedEast8Context();
-  if(method==='meihua') return {question,method:$('traditional-method').value,number:Number($('traditional-number').value),...focus,...context};
-  if(method==='taiyi') return {question,scope:$('traditional-scope').value,...focus,...context};
+  if(method==='meihua') return {question,method:document.querySelector('[name="meihua-method"]:checked').value,number:Number($('traditional-number').value),...focus,...context};
+  if(method==='taiyi') {
+    const castMethod=document.querySelector('[name="taiyi-method"]:checked').value;
+    return {question,scope:$('traditional-scope').value,method:castMethod,...(castMethod==='manual'?{bureau:Number($('taiyi-bureau').value),yinYang:$('taiyi-direction').value}:{}),...focus,...context};
+  }
   if(method==='jinkoujue') return {question,method:$('traditional-method').value,branch:$('traditional-branch').value,number:Number($('traditional-number').value),...focus,...context};
   if(method==='almanac') return {question,topic:$('traditional-topic').value,startDate:$('traditional-start').value,endDate:$('traditional-end').value,...context};
   return {question,...focus,...context};
@@ -1148,6 +1289,7 @@ function divineTraditional(q){
   const timestamp=timeInput ? new Date(timeInput.value).getTime() : new Date(`${$('traditional-start').value}T12:00`).getTime();
   const response=calculateTraditional(method,timestamp,traditionalOptions(method,q));
   if(!response.ok){ window.alert(response.error); return false; }
+  state.readingFacts=response.result.calculatedFacts;
   state.copyText=response.result.aiPrompt;
   state.segs=[]; seg(response.result.display); flushOut(); addHistory();
   return true;
@@ -1178,6 +1320,7 @@ function divine(){
   else if (state.curModule>=7 && state.curModule<=13){ if(!divineTraditional(q)) return; }
   else if (state.curModule===1){ if(!divineSharedLiuYao(q)) return; }
   else {
+    if(state.curModule===4){ runeDraw(q); saveState(); return; }
     const lines=[];
     let result;
     if (state.curModule===4) result=divineRunes(lines);
@@ -1200,6 +1343,8 @@ function divine(){
 }
 
 function clearPage(){
+  if(state.curModule===14)resetOracleSession();
+  if(state.curModule===4) resetRuneSession();
   if(state.curModule===3){ state.drawnLenormand=[]; state.sessLenormand=-1; state.lenormandSessionKey=''; }
   $('q').value=''; state.copyText='';
   state.questionCategory=''; state.gender='';
@@ -1214,6 +1359,7 @@ function clearPage(){
   const p=pageIndex();
   state.pageHtml[p]=null; state.pageCopy[p]=null;
   renderFocusInputs();
+  updateActionState();
 }
 
 function openSpecialWarn(){
@@ -1277,6 +1423,8 @@ function openHistory(){
   };
   $('hist-clear').onclick=()=>{
     state.histories[mod]=[];
+    if(mod===4) resetRuneSession();
+    if(mod===14)resetOracleSession();
     if(mod===3){ state.drawnLenormand=[]; state.sessLenormand=-1; state.lenormandSessionKey=''; }
     if (mod===2){ state.sessGen=-1; state.sessMaj=-1; state.tarotSessionKeyGen=''; state.tarotSessionKeyMaj=''; }
     saveHistories(); renderHistoryBody(mod);
@@ -1294,15 +1442,34 @@ function renderHistoryBody(mod){
 
 // ================= 初始化 =================
 window.addEventListener('DOMContentLoaded', ()=>{
+  $('back').onclick=goBack;
+  let swipeStart=null;
+  document.addEventListener('touchstart',event=>{
+    const modalOpen=[...document.querySelectorAll('.modal')].some(modal=>getComputedStyle(modal).display!=='none');
+    swipeStart=event.touches.length===1 && !modalOpen && event.touches[0].clientX<32 ? {x:event.touches[0].clientX,y:event.touches[0].clientY}:null;
+  },{passive:true});
+  document.addEventListener('touchend',event=>{
+    const start=swipeStart; swipeStart=null;
+    if(!start || !window.matchMedia('(orientation: portrait)').matches || !event.changedTouches.length)return;
+    const dx=event.changedTouches[0].clientX-start.x,dy=event.changedTouches[0].clientY-start.y;
+    if(dx>80 && Math.abs(dy)<dx/2)goBack();
+  },{passive:true});
+  document.addEventListener('touchcancel',()=>{swipeStart=null;},{passive:true});
+
   const requestedMethod = new URLSearchParams(window.location.search).get('method');
   const requestedIndex = TRADITIONAL_METHODS.indexOf(requestedMethod);
   if (requestedIndex >= 0) state.curModule = 7 + requestedIndex;
   document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
   loadHistories();
   applyStaticI18n();
+  const themeQuery=window.matchMedia('(prefers-color-scheme: dark)');
+  const syncTheme=()=>document.querySelector('meta[name="theme-color"]').setAttribute('content',themeQuery.matches?'#101b17':'#e8e4dd');
+  syncTheme(); themeQuery.addEventListener('change',syncTheme);
   renderAll();
   $('go').onclick=divine;
   $('q').addEventListener('keydown',e=>{ if(e.key==='Enter') divine(); });
+  $('q').addEventListener('input',updateActionState);
+  document.addEventListener('change',updateActionState);
   $('copy').onclick=()=>{ if(state.copyText) toClipboard(state.copyText); };
   $('clear').onclick=clearPage;
   $('histbtn').onclick=openHistory;
@@ -1318,6 +1485,25 @@ window.addEventListener('DOMContentLoaded', ()=>{
     };
   });
   document.querySelectorAll('.modal').forEach(m=>{
+    if(m.id==='closing-notice') return;
     m.addEventListener('click',e=>{ if(e.target===m) m.style.display='none'; });
   });
+  const notice = $('closing-notice');
+  const previousFocus = document.activeElement;
+  const closeNotice = ()=>{
+    notice.style.display='none';
+    (previousFocus && previousFocus !== document.body ? previousFocus : $('langbtn')).focus();
+  };
+  $('closing-notice-ok').onclick=closeNotice;
+  notice.addEventListener('keydown',e=>{
+    if(e.key==='Escape'){
+      e.preventDefault();
+      closeNotice();
+    } else if(e.key==='Tab'){
+      e.preventDefault();
+      $('closing-notice-ok').focus();
+    }
+  });
+  notice.style.display='flex';
+  $('closing-notice-ok').focus();
 });
